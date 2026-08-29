@@ -267,6 +267,98 @@ celebamaskhq_summary_table.md
 results/figures/celebamaskhq_per_class_metrics.png
     Per-class IoU and Dice performance figure.
 
+
+Qualitative Benchmark Evidence
+------------------------------
+A separate qualitative script is included to visualize the accepted
+CelebAMask-HQ segmentation protocol on selected benchmark images:
+
+celebamaskhq_segmentation_qualitative.py
+
+The qualitative analysis does not replace or modify the full quantitative
+evaluation. It uses the same PhysioTrack FaceRegions component, SegFace
+backend, 512 x 512 input size, 19-class label definition, CPU inference
+configuration, and full aligned-image initialization used by the accepted
+quantitative evaluator.
+
+The script first profiles the official 2,824-image test split using only the
+ground-truth semantic masks. It then builds a deterministic candidate pool and
+runs PhysioTrack inference only on those candidate images.
+
+Eight qualitative cases are selected:
+
+- strong_candidate
+- representative_candidate
+- challenging_candidate
+- eye_glasses
+- hat
+- earring
+- necklace
+- high_semantic_diversity
+
+The strong, representative, and challenging cases are selected using
+image-level foreground mIoU diagnostics within the deterministic candidate
+pool.
+
+The accessory-specific examples are selected to make the corresponding
+CelebAMask-HQ semantic classes visually interpretable:
+
+- eye_g
+- hat
+- ear_r
+- neck_l
+
+The high-semantic-diversity case is selected from images containing many
+ground-truth foreground classes.
+
+Each qualitative figure contains:
+
+- Original image
+- Ground-truth semantic overlay
+- PhysioTrack prediction overlay
+- Image-level qualitative diagnostics
+- Accepted full-benchmark metrics
+- Evaluation protocol summary
+- Complete semantic-class color legend
+
+The image-level Pixel Accuracy, mIoU, and Dice values shown in the side panel
+are diagnostic values for the displayed image only. They are not substituted
+for the accepted benchmark metrics. The official reported results remain the
+metrics calculated from the single dataset-level confusion matrix over all
+2,824 test images.
+
+No face-detection rectangle is drawn in the qualitative figures because the
+accepted protocol initializes FaceRegions with a bounding box covering the
+entire aligned 512 x 512 image. Adding a visible face box would therefore not
+provide additional localization information and could incorrectly suggest that
+face detection is being evaluated.
+
+Run the qualitative analysis after the accepted quantitative result files are
+present:
+
+python celebamaskhq_segmentation_qualitative.py
+
+The qualitative outputs are written under:
+
+results/qualitative/
+
+Expected qualitative outputs include:
+
+results/qualitative/annotated_images/
+    Eight individual qualitative evidence figures.
+
+results/qualitative/celebamaskhq_qualitative_selection.csv
+    Selection rationale, source image, image-level diagnostics, semantic
+    content information, and generated output path for each selected case.
+
+results/figures/celebamaskhq_qualitative_examples.png
+    Combined 2 x 4 summary figure containing the eight selected PhysioTrack
+    prediction overlays.
+
+The qualitative generator owns and may replace only its own qualitative
+outputs. It does not delete or modify the accepted quantitative CSV files,
+confusion matrix, summary, thesis tables, or per-class performance figure.
+
 Final Reproduced Results
 ------------------------
 Official test split size:
@@ -384,6 +476,9 @@ To reproduce the validation on another machine:
 4. Install the PhysioTrack project and its required dependencies.
 5. Run celebamaskhq_segmentation_eval.py.
 6. Run celebamaskhq_segmentation_plot.py.
-7. Compare the generated files under results with the reported metrics above.
+7. Run celebamaskhq_segmentation_qualitative.py.
+8. Compare the generated quantitative files with the reported metrics above
+   and inspect the generated qualitative evidence under results/qualitative/
+   and results/figures/.
 
 No user-specific absolute path or undocumented manual split is required.
