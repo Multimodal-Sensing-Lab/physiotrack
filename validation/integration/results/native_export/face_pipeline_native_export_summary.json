@@ -1,0 +1,18 @@
+{
+  "video": "C:\\Users\\xx901\\Documents\\PhysioTrack_Thesis\\physiotrack\\media_for_test\\face_blink_pose.mp4",
+  "fps": 25.0,
+  "video_frames": 429,
+  "processed_frames": 429,
+  "detected_faces": 429,
+  "frame_records": 429,
+  "window_records": 429,
+  "gaze_available": 429,
+  "gaze_estimation_available": 429,
+  "blink_available": 429,
+  "blink_events": 2,
+  "mouth_motion_available": 429,
+  "temporal_available": 429,
+  "frame_has_old_gaze": true,
+  "frame_has_gaze_estimation": true,
+  "windows_have_expected_structure": true
+}

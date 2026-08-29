@@ -1,0 +1,11 @@
+role,subset,selection_mode,relative_image,image_width,image_height,total_gt_faces,eligible_gt_count,predictions_shown,tp,fp,fn,ignored_predictions,precision,recall,f1,mean_matched_iou,mean_tp_confidence,visualization_threshold,matching_iou,benchmark_ap
+easy_clear_01,Easy,clear,29--Students_Schoolkids/29_Students_Schoolkids_Students_Schoolkids_29_126.jpg,1024,1054,2,2,2,2,0,0,0,1.000000,1.000000,1.000000,0.887005,0.907559,0.25,0.5,0.958883
+easy_clear_02,Easy,clear,52--Photographers/52_Photographers_photographertakingphoto_52_809.jpg,1024,768,3,3,3,3,0,0,0,1.000000,1.000000,1.000000,0.913652,0.851066,0.25,0.5,0.958883
+medium_scale_01,Medium,scale,12--Group/12_Group_Large_Group_12_Group_Large_Group_12_448.jpg,1024,686,5,5,5,5,0,0,0,1.000000,1.000000,1.000000,0.842845,0.834235,0.25,0.5,0.948828
+medium_scale_02,Medium,scale,20--Family_Group/20_Family_Group_Family_Group_20_447.jpg,1024,846,6,6,6,6,0,0,0,1.000000,1.000000,1.000000,0.870074,0.793059,0.25,0.5,0.948828
+hard_readable_01,Hard,readable,50--Celebration_Or_Party/50_Celebration_Or_Party_houseparty_50_679.jpg,1024,732,4,4,4,4,0,0,0,1.000000,1.000000,1.000000,0.931829,0.891621,0.25,0.5,0.87183
+hard_challenge_01,Hard,challenge,30--Surgeons/30_Surgeons_Surgeons_30_77.jpg,1024,683,4,4,3,3,0,1,0,1.000000,0.750000,0.857143,0.836293,0.733641,0.25,0.5,0.87183
+group_medium_01,Medium,group,26--Soldier_Drilling/26_Soldier_Drilling_Soldiers_Drilling_26_178.jpg,1024,482,10,10,10,10,0,0,0,1.000000,1.000000,1.000000,0.740241,0.807214,0.25,0.5,0.948828
+group_medium_02,Medium,group,20--Family_Group/20_Family_Group_Family_Group_20_1037.jpg,1024,449,8,8,8,8,0,0,0,1.000000,1.000000,1.000000,0.844189,0.818329,0.25,0.5,0.948828
+group_hard_01,Hard,group,18--Concerts/18_Concerts_Concerts_18_1038.jpg,1024,1024,8,8,8,8,0,0,0,1.000000,1.000000,1.000000,0.888975,0.848069,0.25,0.5,0.87183
+group_hard_02,Hard,group,12--Group/12_Group_Group_12_Group_Group_12_84.jpg,1024,596,11,11,11,11,0,0,0,1.000000,1.000000,1.000000,0.875101,0.849039,0.25,0.5,0.87183

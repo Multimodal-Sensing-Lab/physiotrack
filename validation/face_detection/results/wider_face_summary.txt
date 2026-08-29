@@ -1,0 +1,39 @@
+WIDER FACE Face Detection Validation
+
+Dataset:
+WIDER FACE validation split
+
+Validation images:
+3226
+
+Evaluation protocol:
+Official WIDER FACE Easy / Medium / Hard splits
+IoU threshold: 0.5
+Confidence threshold used for inference: 0.001
+max_det: 10000
+Device: CPU
+
+Results:
+Easy AP: 0.958883
+Medium AP: 0.948828
+Hard AP: 0.871830
+
+Evaluated faces:
+Easy: 7211
+Medium: 13319
+Hard: 31958
+
+Inference summary:
+Images processed: 3226
+Failed images: 0
+Prediction files: 3226
+Total detections: 193618
+Maximum detections in one image: 3134
+Image with maximum detections: 0--Parade/0_Parade_Parade_0_275.jpg
+Inference runtime: 10.39 minutes
+
+Generated outputs:
+Prediction directory: results/predictions
+Thesis table CSV: results/wider_face_thesis_table.csv
+Thesis table Markdown: results/wider_face_thesis_table.md
+Precision-recall figure: results/figures/wider_face_precision_recall.png

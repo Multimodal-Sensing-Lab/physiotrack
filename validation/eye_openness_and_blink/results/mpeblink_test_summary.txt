@@ -1,0 +1,52 @@
+MPEBlink 2.0 Eye Openness and Blink Evaluation
+============================================
+
+Split: test
+Face initialization: ground-truth bounding boxes
+Eye descriptor: PhysioTrack EyeOpenness
+Blink method: threshold-based temporal detector
+Blink threshold: 0.4400
+Minimum closed frames: 3
+Event temporal IoU threshold: 0.50
+
+Dataset processing
+------------------
+Videos: 212
+Person sequences: 687
+Annotation frames: 219706
+Video frames read: 219706
+Valid face-box samples: 495858
+Successful eye-openness samples: 389922
+Eye-openness availability: 78.64%
+Missing bounding boxes: 100341
+Invalid bounding boxes: 10
+Landmark failures: 105936
+Video frame mismatches: 0
+Video read failures: 0
+Runtime: 89.30 minutes
+
+Blink event evaluation
+----------------------
+Ground-truth blinks: 7564
+Predicted blinks: 6010
+True positives: 1827
+False positives: 4183
+False negatives: 5737
+Precision: 0.303993
+Recall: 0.241539
+F1: 0.269191
+Mean matched temporal IoU: 0.681126
+Median matched temporal IoU: 0.666667
+Mean onset error: 0.7849 frames
+Mean offset error: 1.9836 frames
+Mean blink-duration error: 0.101787 s
+Blink-count MAE per sequence: 6.119360
+Blink-rate MAE: 10.799823 blinks/min
+
+Eye-openness analysis
+---------------------
+Blink-frame openness mean: 0.352304
+Blink-frame openness median: 0.305653
+Non-blink openness mean: 0.491654
+Non-blink openness median: 0.476032
+Blink-vs-non-blink ROC AUC using negative openness: 0.663061

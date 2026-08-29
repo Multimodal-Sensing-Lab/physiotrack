@@ -1,0 +1,61 @@
+300-W Facial Landmark Validation
+
+Dataset:
+300-W evaluation set (300 Indoor + 300 Outdoor images)
+
+Dataset coverage:
+Indoor images: 300
+Outdoor images: 300
+Total images: 600
+Annotation format: 68-point PTS files
+
+Protocol:
+51-point landmark evaluation
+17 face-border landmarks excluded
+Normalization: inter-ocular distance between outer eye corners
+Prediction: PhysioTrack FaceLandmarks.predict_face()
+Model: MediaPipe Face Landmarker (478 landmarks)
+Evaluation adapter: fixed 51-point MediaPipe-to-300-W anatomical mapping
+Face initialization: GT-derived padded bounding box from the 68-point annotation
+Padding: 20 percent of GT landmark bounding-box width and height
+Purpose: isolate landmark localization from face detection and face selection
+The results are controlled component validation values, not official 300-W competition leaderboard results.
+
+Indoor
+Images: 300
+Successful: 292
+Failed detections: 8
+Detection rate: 97.33%
+Mean NME: 4.6988%
+Median NME: 4.3147%
+Std NME: 2.2056%
+
+Outdoor
+Images: 300
+Successful: 296
+Failed detections: 4
+Detection rate: 98.67%
+Mean NME: 4.6024%
+Median NME: 4.3228%
+Std NME: 1.2912%
+
+OVERALL
+Images: 600
+Successful: 588
+Failed detections: 12
+Detection rate: 98.00%
+Mean NME: 4.6503%
+Median NME: 4.3178%
+Std NME: 1.8048%
+
+Runtime:
+Total runtime: 60.34 seconds
+Processing speed: 9.94 images/s
+
+Generated outputs:
+Detailed results CSV: results/300w_landmark_results.csv
+Validation summary: results/300w_landmark_summary.txt
+CED data: results/300w_landmark_ced.csv
+Thesis table CSV: results/300w_landmark_thesis_table.csv
+Thesis table Markdown: results/300w_landmark_thesis_table.md
+CED figure: results/figures/300w_landmark_ced.png

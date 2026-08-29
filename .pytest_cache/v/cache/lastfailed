@@ -1,0 +1,3 @@
+{
+  "tests/test_gaze_estimation.py::test_predict_faces_returns_unavailable_when_no_faces_detected": true
+}

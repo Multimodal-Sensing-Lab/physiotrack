@@ -1,0 +1,52 @@
+AFLW Head Pose Validation
+
+Dataset:
+Annotated Facial Landmarks in the Wild (AFLW)
+Expected workspace location: datasets/AFLW
+
+Evaluated component:
+PhysioTrack FaceOrientation using 6DRepNet360
+
+Ground truth:
+AFLW FacePose roll, pitch, and yaw annotations
+AFLW angles converted from radians to degrees
+AFLW angle signs inverted to match the PhysioTrack output convention
+
+Evaluation protocol:
+AFLW provides approximate coarse head-pose annotations derived from facial landmarks using POSIT. The annotations are not manually verified for every face.
+The primary evaluation therefore reports controlled coarse-pose accuracy rather than fine-grained ground-truth pose accuracy.
+AFLW ground-truth face rectangles were used to isolate head-pose estimation from face detection.
+Primary pose range: |yaw| <= 90 degrees, |pitch| < 90 degrees, |roll| <= 90 degrees
+The controlled range avoids Euler-angle boundary and extreme-orientation cases where axis-wise angle comparison becomes ambiguous.
+Angular errors use wrapped absolute angular difference in degrees.
+Device: cpu
+
+Dataset accounting:
+FacePose records in database: 24396
+Joined evaluation records: 24384
+Primary-protocol eligible samples: 23408
+image_read_failed: 1
+ok: 23407
+outside_primary_range: 976
+
+Results:
+Successful predictions: 23407
+Failed eligible samples: 1
+Success rate: 99.9957%
+Yaw MAE: 11.1036 degrees
+Pitch MAE: 13.7046 degrees
+Roll MAE: 13.7529 degrees
+Overall MAE: 12.8537 degrees
+
+Median absolute error:
+Yaw: 7.7820 degrees
+Pitch: 7.1886 degrees
+Roll: 4.9559 degrees
+
+Standard deviation of absolute error:
+Yaw: 12.7337 degrees
+Pitch: 25.4115 degrees
+Roll: 27.0779 degrees
+
+Runtime:
+49.95 minutes

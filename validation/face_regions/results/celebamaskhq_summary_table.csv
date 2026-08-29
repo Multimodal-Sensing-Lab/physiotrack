@@ -1,0 +1,6 @@
+Metric,Value (%)
+Pixel Accuracy (%),95.5849
+All-class mIoU (%),81.5328
+Foreground mIoU (%),80.8718
+All-class Mean Dice (%),89.3567
+Foreground Mean Dice (%),88.9541

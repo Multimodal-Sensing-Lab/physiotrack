@@ -1,0 +1,21 @@
+MPIIFaceGaze Cross-Dataset Gaze Estimation Evaluation
+
+Model: eth-xgaze
+Device: cpu
+Participants: 15
+Total annotations: 37667
+Successful predictions: 37629
+Image read failures: 0
+Face detection failures: 38
+Prediction failures: 0
+Invalid annotation rows: 0
+
+Mean angular error: 8.241855 deg
+Median angular error: 7.744508 deg
+Std angular error: 4.579882 deg
+Minimum angular error: 0.084242 deg
+Maximum angular error: 57.029950 deg
+90th percentile angular error: 14.149389 deg
+95th percentile angular error: 16.026888 deg
+
+Runtime: 1870.49 seconds

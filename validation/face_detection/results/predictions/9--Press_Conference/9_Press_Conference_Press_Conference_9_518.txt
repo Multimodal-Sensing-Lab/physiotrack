@@ -1,0 +1,4 @@
+9--Press_Conference/9_Press_Conference_Press_Conference_9_518.jpg
+2
+400.444 310.456 153.095 254.857 0.838947
+761.621 147.690 148.217 272.929 0.803543

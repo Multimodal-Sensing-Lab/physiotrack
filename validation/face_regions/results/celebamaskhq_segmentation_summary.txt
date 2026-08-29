@@ -1,0 +1,46 @@
+CelebAMask-HQ Face Region Segmentation Evaluation
+===============================================
+
+Official test split size: 2824
+Evaluated images: 2824
+Successful images: 2824
+Failed images: 0
+Elapsed time: 13793.32 s
+Throughput: 0.2047 images/s
+
+Evaluation protocol:
+- Dataset: CelebAMask-HQ
+- Split: Official CelebA test partition
+- Input resolution: 512 x 512
+- Ground-truth resolution: 512 x 512
+- Initialization: Full aligned-image box
+- Number of semantic classes: 19
+- Aggregation: Dataset-level confusion matrix
+
+Overall metrics:
+Pixel accuracy: 0.955849
+All-class mIoU: 0.815328
+Foreground mIoU: 0.808718
+All-class mean Dice: 0.893567
+Foreground mean Dice: 0.889541
+
+Per-class metrics:
+ 0 background IoU=0.934299 Dice=0.966034
+ 1 neck       IoU=0.853031 Dice=0.920687
+ 2 skin       IoU=0.935673 Dice=0.966768
+ 3 cloth      IoU=0.814041 Dice=0.897489
+ 4 l_ear      IoU=0.807114 Dice=0.893263
+ 5 r_ear      IoU=0.800332 Dice=0.889094
+ 6 l_brow     IoU=0.773120 Dice=0.872045
+ 7 r_brow     IoU=0.771145 Dice=0.870787
+ 8 l_eye      IoU=0.833551 Dice=0.909220
+ 9 r_eye      IoU=0.835752 Dice=0.910528
+10 nose       IoU=0.890371 Dice=0.942007
+11 mouth      IoU=0.869932 Dice=0.930443
+12 l_lip      IoU=0.844407 Dice=0.915641
+13 u_lip      IoU=0.823516 Dice=0.903218
+14 hair       IoU=0.922298 Dice=0.959579
+15 eye_g      IoU=0.912050 Dice=0.954003
+16 hat        IoU=0.805633 Dice=0.892355
+17 ear_r      IoU=0.601121 Dice=0.750875
+18 neck_l     IoU=0.463841 Dice=0.633731
