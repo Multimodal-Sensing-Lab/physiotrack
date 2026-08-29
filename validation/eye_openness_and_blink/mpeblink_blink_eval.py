@@ -12,13 +12,18 @@ from physiotrack.face.landmarks import FaceLandmarks
 from physiotrack.models import Models
 
 
-DATASET_ROOT = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis"
-    r"\datasets\MPEBlink2\mpeblink2.0"
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPOSITORY_ROOT = SCRIPT_DIR.parents[1]
+WORKSPACE_ROOT = REPOSITORY_ROOT.parent
+DATASET_ROOT = (
+    WORKSPACE_ROOT
+    / "datasets"
+    / "MPEBlink2"
+    / "mpeblink2.0"
 )
 
 RESULTS_DIR = (
-    Path(__file__).resolve().parent
+    SCRIPT_DIR
     / "results"
 )
 
@@ -26,6 +31,38 @@ RESULTS_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
+
+CALIBRATION_CSV = (
+    RESULTS_DIR
+    / "mpeblink_val_calibration.csv"
+)
+
+TEST_SUMMARY_PATH = (
+    RESULTS_DIR
+    / "mpeblink_test_summary.txt"
+)
+
+TEST_SEQUENCE_RESULTS_PATH = (
+    RESULTS_DIR
+    / "mpeblink_test_sequence_results.csv"
+)
+
+TEST_TABLE_CSV_PATH = (
+    RESULTS_DIR
+    / "mpeblink_test_thesis_table.csv"
+)
+
+TEST_TABLE_MD_PATH = (
+    RESULTS_DIR
+    / "mpeblink_test_thesis_table.md"
+)
+
+TEST_FIGURE_PATH = (
+    RESULTS_DIR
+    / "figures"
+    / "mpeblink_eye_blink_metrics.png"
+)
+
 
 SELECTED_THRESHOLD = 0.44
 SELECTED_MIN_CLOSED_FRAMES = 3
@@ -43,6 +80,45 @@ CALIBRATION_MIN_CLOSED_FRAMES = [
     2,
     3,
 ]
+
+EXPECTED_SPLIT_VIDEOS = {
+    "val": 169,
+    "test": 212,
+}
+
+EVALUATION_SPLITS = [
+    "val",
+    "test",
+]
+
+
+def remove_file_if_exists(path):
+    """Remove one generated file if it exists."""
+    if path.is_file():
+        path.unlink()
+
+
+def clean_calibration_outputs():
+    """Remove only outputs owned by validation calibration."""
+    remove_file_if_exists(
+        CALIBRATION_CSV
+    )
+
+
+def clean_test_outputs():
+    """Remove stale final-test and derived quantitative outputs."""
+    paths = [
+        TEST_SUMMARY_PATH,
+        TEST_SEQUENCE_RESULTS_PATH,
+        TEST_TABLE_CSV_PATH,
+        TEST_TABLE_MD_PATH,
+        TEST_FIGURE_PATH,
+    ]
+
+    for path in paths:
+        remove_file_if_exists(
+            path
+        )
 
 
 def temporal_iou(first, second):
@@ -317,17 +393,276 @@ def make_gt_blink_mask(
     return mask
 
 
+def validate_annotation(
+    annotation,
+    annotation_path,
+):
+    """Validate the annotation schema while preserving benchmark semantics.
+
+    Blink events whose boundaries extend beyond the declared video length are
+    recorded as dataset-integrity observations rather than rejected. The
+    event-level evaluation retains the original annotated boundaries, matching
+    the previous benchmark protocol. Frame-level eye-openness labels remain
+    clipped safely by make_gt_blink_mask().
+    """
+    if "length" not in annotation:
+        raise RuntimeError(
+            f"Missing length in annotation: {annotation_path}"
+        )
+
+    expected_frames = int(
+        annotation["length"]
+    )
+
+    if expected_frames <= 0:
+        raise RuntimeError(
+            f"Invalid annotation length in: {annotation_path}"
+        )
+
+    person_keys = sorted(
+        [
+            key
+            for key in annotation
+            if key.startswith(
+                "person"
+            )
+        ]
+    )
+
+    if not person_keys:
+        raise RuntimeError(
+            f"No person annotations found in: {annotation_path}"
+        )
+
+    integrity = {
+        "out_of_range_blink_events": 0,
+    }
+
+    for person_key in person_keys:
+        person = annotation[
+            person_key
+        ]
+
+        if "bbox" not in person:
+            raise RuntimeError(
+                f"Missing bbox for {person_key} in: {annotation_path}"
+            )
+
+        if "blink" not in person:
+            raise RuntimeError(
+                f"Missing blink events for {person_key} in: "
+                f"{annotation_path}"
+            )
+
+        if len(
+            person["bbox"]
+        ) != expected_frames:
+            raise RuntimeError(
+                f"Bounding-box length mismatch for {person_key} in: "
+                f"{annotation_path}"
+            )
+
+        for event in person[
+            "blink"
+        ]:
+            # MPEBlink 2.0 stores each blink annotation as a sequence
+            # whose first two values are the inclusive start and end
+            # frame indices. Additional values are dataset metadata and
+            # are not used by this evaluation protocol.
+            if (
+                not isinstance(
+                    event,
+                    (list, tuple),
+                )
+                or len(event) < 2
+            ):
+                raise RuntimeError(
+                    f"Invalid blink annotation for {person_key} in: "
+                    f"{annotation_path}"
+                )
+
+            try:
+                start = int(
+                    event[0]
+                )
+
+                end = int(
+                    event[1]
+                )
+            except (
+                TypeError,
+                ValueError,
+            ) as error:
+                raise RuntimeError(
+                    f"Non-numeric blink boundary for {person_key} in: "
+                    f"{annotation_path}"
+                ) from error
+
+            if end < start:
+                raise RuntimeError(
+                    f"Blink interval has end before start for "
+                    f"{person_key} in: {annotation_path}"
+                )
+
+            if (
+                start < 0
+                or end >= expected_frames
+            ):
+                integrity[
+                    "out_of_range_blink_events"
+                ] += 1
+
+    return (
+        expected_frames,
+        person_keys,
+        integrity,
+    )
+
+
+def validate_dataset_layout():
+    """Validate only the validation and test splits used by this benchmark."""
+    if not DATASET_ROOT.is_dir():
+        raise FileNotFoundError(
+            "MPEBlink 2.0 dataset root was not found:\n"
+            f"{DATASET_ROOT}\n\n"
+            "Expected workspace layout:\n"
+            "datasets/MPEBlink2/mpeblink2.0/"
+        )
+
+    accounting = {}
+
+    # The benchmark uses validation for parameter selection and test for the
+    # frozen final evaluation. The training split is intentionally excluded
+    # from reproducibility preflight because it is not used by this protocol.
+    for split in EVALUATION_SPLITS:
+        split_root = (
+            DATASET_ROOT
+            / split
+        )
+
+        if not split_root.is_dir():
+            raise FileNotFoundError(
+                f"Dataset split not found: {split_root}"
+            )
+
+        video_dirs = sorted(
+            [
+                path
+                for path in split_root.iterdir()
+                if path.is_dir()
+            ],
+            key=lambda path: int(
+                path.name
+            ),
+        )
+
+        expected_videos = (
+            EXPECTED_SPLIT_VIDEOS[
+                split
+            ]
+        )
+
+        if len(
+            video_dirs
+        ) != expected_videos:
+            raise RuntimeError(
+                f"Unexpected {split} video-directory count: "
+                f"{len(video_dirs)} != {expected_videos}"
+            )
+
+        annotation_frames = 0
+        person_sequences = 0
+        blink_events = 0
+        out_of_range_blink_events = 0
+
+        for video_dir in video_dirs:
+            annotation_path = (
+                video_dir
+                / "annotation_WFLW.json"
+            )
+
+            video_path = (
+                video_dir
+                / "video.mp4"
+            )
+
+            if not annotation_path.is_file():
+                raise FileNotFoundError(
+                    f"Annotation file not found: {annotation_path}"
+                )
+
+            if not video_path.is_file():
+                raise FileNotFoundError(
+                    f"Video file not found: {video_path}"
+                )
+
+            with annotation_path.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                annotation = json.load(
+                    file
+                )
+
+            (
+                expected_frames,
+                person_keys,
+                integrity,
+            ) = validate_annotation(
+                annotation,
+                annotation_path,
+            )
+
+            annotation_frames += (
+                expected_frames
+            )
+
+            person_sequences += len(
+                person_keys
+            )
+
+            out_of_range_blink_events += integrity[
+                "out_of_range_blink_events"
+            ]
+
+            for person_key in person_keys:
+                blink_events += len(
+                    annotation[
+                        person_key
+                    ][
+                        "blink"
+                    ]
+                )
+
+        accounting[
+            split
+        ] = {
+            "videos": len(
+                video_dirs
+            ),
+            "annotation_frames": (
+                annotation_frames
+            ),
+            "person_sequences": (
+                person_sequences
+            ),
+            "blink_events": (
+                blink_events
+            ),
+            "out_of_range_blink_events": (
+                out_of_range_blink_events
+            ),
+        }
+
+    return accounting
+
+
 def extract_split(split):
     """Extract PhysioTrack eye-openness sequences using ground-truth face boxes."""
     split_root = (
         DATASET_ROOT
         / split
     )
-
-    if not split_root.exists():
-        raise FileNotFoundError(
-            f"Dataset split not found: {split_root}"
-        )
 
     model_path = Models.resolve(
         Models.Face.MediaPipe.Landmarks.face_landmarker
@@ -365,6 +700,7 @@ def extract_split(split):
         "landmark_failures": 0,
         "video_frame_mismatches": 0,
         "video_read_failures": 0,
+        "out_of_range_blink_events": 0,
     }
 
     start_time = time.perf_counter()
@@ -384,8 +720,7 @@ def extract_split(split):
                 / "video.mp4"
             )
 
-            with open(
-                annotation_path,
+            with annotation_path.open(
                 "r",
                 encoding="utf-8",
             ) as file:
@@ -393,29 +728,30 @@ def extract_split(split):
                     file
                 )
 
-            expected_frames = int(
-                annotation["length"]
+            (
+                expected_frames,
+                person_keys,
+                integrity,
+            ) = validate_annotation(
+                annotation,
+                annotation_path,
             )
 
             stats[
                 "annotation_frames"
             ] += expected_frames
 
-            person_keys = sorted(
-                [
-                    key
-                    for key in annotation
-                    if key.startswith(
-                        "person"
-                    )
-                ]
-            )
-
             stats[
                 "person_sequences"
             ] += len(
                 person_keys
             )
+
+            stats[
+                "out_of_range_blink_events"
+            ] += integrity[
+                "out_of_range_blink_events"
+            ]
 
             sequences = {
                 person_key: np.full(
@@ -468,19 +804,11 @@ def extract_split(split):
                 )
 
                 for person_key in person_keys:
-                    boxes = annotation[
+                    bbox = annotation[
                         person_key
-                    ]["bbox"]
-
-                    if frame_index >= len(
-                        boxes
-                    ):
-                        stats[
-                            "missing_bbox"
-                        ] += 1
-                        continue
-
-                    bbox = boxes[
+                    ][
+                        "bbox"
+                    ][
                         frame_index
                     ]
 
@@ -597,7 +925,9 @@ def extract_split(split):
 
                     sequences[
                         person_key
-                    ][frame_index] = float(
+                    ][
+                        frame_index
+                    ] = float(
                         openness
                     )
 
@@ -623,7 +953,9 @@ def extract_split(split):
                     for event
                     in annotation[
                         person_key
-                    ]["blink"]
+                    ][
+                        "blink"
+                    ]
                 ]
 
                 records.append(
@@ -662,7 +994,9 @@ def extract_split(split):
         - start_time
     )
 
-    if stats["valid_face_boxes"] > 0:
+    if stats[
+        "valid_face_boxes"
+    ] > 0:
         stats[
             "eye_availability"
         ] = (
@@ -678,14 +1012,17 @@ def extract_split(split):
             "eye_availability"
         ] = 0.0
 
-    return records, stats
+    return (
+        records,
+        stats,
+    )
 
 
 def evaluate_records(
     records,
     threshold,
     min_closed_frames,
-    event_iou_threshold=0.50,
+    event_iou_threshold=EVENT_IOU_THRESHOLD,
 ):
     """Evaluate blink events and eye-openness discrimination."""
     total_tp = 0
@@ -802,7 +1139,9 @@ def evaluate_records(
             )
 
         video_minutes = (
-            record["length"]
+            record[
+                "length"
+            ]
             / fps
             / 60.0
         )
@@ -842,14 +1181,20 @@ def evaluate_records(
         sequence_rows.append(
             {
                 "video_id": (
-                    record["video_id"]
+                    record[
+                        "video_id"
+                    ]
                 ),
                 "person_id": (
-                    record["person_id"]
+                    record[
+                        "person_id"
+                    ]
                 ),
                 "fps": fps,
                 "frames": (
-                    record["length"]
+                    record[
+                        "length"
+                    ]
                 ),
                 "gt_blinks": len(
                     gt_events
@@ -876,7 +1221,9 @@ def evaluate_records(
         )
 
         gt_mask = make_gt_blink_mask(
-            record["length"],
+            record[
+                "length"
+            ],
             gt_events,
         )
 
@@ -884,7 +1231,9 @@ def evaluate_records(
             openness
         )
 
-        if np.any(finite_mask):
+        if np.any(
+            finite_mask
+        ):
             valid_openness = (
                 openness[
                     finite_mask
@@ -995,6 +1344,9 @@ def evaluate_records(
         "ground_truth_blinks": (
             total_ground_truth
         ),
+        "matched_blinks": len(
+            matched_ious
+        ),
         "mean_matched_tiou": (
             float(
                 np.mean(
@@ -1002,7 +1354,9 @@ def evaluate_records(
                 )
             )
             if matched_ious
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "median_matched_tiou": (
             float(
@@ -1011,7 +1365,9 @@ def evaluate_records(
                 )
             )
             if matched_ious
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "mean_onset_error_frames": (
             float(
@@ -1020,7 +1376,9 @@ def evaluate_records(
                 )
             )
             if onset_errors_frames
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "mean_offset_error_frames": (
             float(
@@ -1029,7 +1387,9 @@ def evaluate_records(
                 )
             )
             if offset_errors_frames
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "mean_duration_error_seconds": (
             float(
@@ -1038,7 +1398,9 @@ def evaluate_records(
                 )
             )
             if duration_errors_seconds
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "blink_count_mae_per_sequence": (
             float(
@@ -1047,7 +1409,9 @@ def evaluate_records(
                 )
             )
             if sequence_count_errors
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "blink_rate_mae_per_min": (
             float(
@@ -1056,10 +1420,27 @@ def evaluate_records(
                 )
             )
             if sequence_rate_errors
-            else float("nan")
+            else float(
+                "nan"
+            )
         ),
         "eye_openness_auc": (
             openness_auc
+        ),
+        "eye_openness_samples": int(
+            len(
+                openness_array
+            )
+        ),
+        "blink_eye_samples": int(
+            len(
+                blink_openness
+            )
+        ),
+        "nonblink_eye_samples": int(
+            len(
+                nonblink_openness
+            )
         ),
         "blink_openness_mean": (
             float(
@@ -1067,8 +1448,12 @@ def evaluate_records(
                     blink_openness
                 )
             )
-            if len(blink_openness)
-            else float("nan")
+            if len(
+                blink_openness
+            )
+            else float(
+                "nan"
+            )
         ),
         "blink_openness_median": (
             float(
@@ -1076,8 +1461,12 @@ def evaluate_records(
                     blink_openness
                 )
             )
-            if len(blink_openness)
-            else float("nan")
+            if len(
+                blink_openness
+            )
+            else float(
+                "nan"
+            )
         ),
         "nonblink_openness_mean": (
             float(
@@ -1085,8 +1474,12 @@ def evaluate_records(
                     nonblink_openness
                 )
             )
-            if len(nonblink_openness)
-            else float("nan")
+            if len(
+                nonblink_openness
+            )
+            else float(
+                "nan"
+            )
         ),
         "nonblink_openness_median": (
             float(
@@ -1094,28 +1487,37 @@ def evaluate_records(
                     nonblink_openness
                 )
             )
-            if len(nonblink_openness)
-            else float("nan")
+            if len(
+                nonblink_openness
+            )
+            else float(
+                "nan"
+            )
         ),
     }
 
-    return metrics, sequence_rows
+    return (
+        metrics,
+        sequence_rows,
+    )
 
 
 def save_sequence_results(
     split,
     sequence_rows,
 ):
+    """Save per-person sequence results for independent verification."""
     path = (
         RESULTS_DIR
         / f"mpeblink_{split}_sequence_results.csv"
     )
 
     if not sequence_rows:
-        return path
+        raise RuntimeError(
+            f"No sequence rows were produced for split: {split}"
+        )
 
-    with open(
-        path,
+    with path.open(
         "w",
         newline="",
         encoding="utf-8",
@@ -1123,7 +1525,9 @@ def save_sequence_results(
         writer = csv.DictWriter(
             file,
             fieldnames=list(
-                sequence_rows[0].keys()
+                sequence_rows[
+                    0
+                ].keys()
             ),
         )
 
@@ -1140,13 +1544,13 @@ def save_summary(
     stats,
     metrics,
 ):
+    """Save the evaluator-level quantitative summary."""
     path = (
         RESULTS_DIR
         / f"mpeblink_{split}_summary.txt"
     )
 
-    with open(
-        path,
+    with path.open(
         "w",
         encoding="utf-8",
     ) as file:
@@ -1164,6 +1568,9 @@ def save_summary(
             "Face initialization: ground-truth bounding boxes\n"
         )
         file.write(
+            "Landmarks: PhysioTrack FaceLandmarks using MediaPipe\n"
+        )
+        file.write(
             "Eye descriptor: PhysioTrack EyeOpenness\n"
         )
         file.write(
@@ -1173,10 +1580,12 @@ def save_summary(
             f"Blink threshold: {metrics['threshold']:.4f}\n"
         )
         file.write(
-            f"Minimum closed frames: {metrics['min_closed_frames']}\n"
+            f"Minimum closed frames: "
+            f"{metrics['min_closed_frames']}\n"
         )
         file.write(
-            f"Event temporal IoU threshold: {metrics['event_iou_threshold']:.2f}\n\n"
+            f"Event temporal IoU threshold: "
+            f"{metrics['event_iou_threshold']:.2f}\n\n"
         )
 
         file.write(
@@ -1201,10 +1610,12 @@ def save_summary(
             f"Valid face-box samples: {stats['valid_face_boxes']}\n"
         )
         file.write(
-            f"Successful eye-openness samples: {stats['successful_eye_samples']}\n"
+            f"Successful eye-openness samples: "
+            f"{stats['successful_eye_samples']}\n"
         )
         file.write(
-            f"Eye-openness availability: {stats['eye_availability'] * 100.0:.2f}%\n"
+            f"Eye-openness availability: "
+            f"{stats['eye_availability'] * 100.0:.2f}%\n"
         )
         file.write(
             f"Missing bounding boxes: {stats['missing_bbox']}\n"
@@ -1216,13 +1627,19 @@ def save_summary(
             f"Landmark failures: {stats['landmark_failures']}\n"
         )
         file.write(
-            f"Video frame mismatches: {stats['video_frame_mismatches']}\n"
+            f"Video frame mismatches: "
+            f"{stats['video_frame_mismatches']}\n"
         )
         file.write(
             f"Video read failures: {stats['video_read_failures']}\n"
         )
         file.write(
-            f"Runtime: {stats['runtime_seconds'] / 60.0:.2f} minutes\n\n"
+            f"Out-of-range blink annotations retained: "
+            f"{stats['out_of_range_blink_events']}\n"
+        )
+        file.write(
+            f"Runtime: "
+            f"{stats['runtime_seconds'] / 60.0:.2f} minutes\n\n"
         )
 
         file.write(
@@ -1232,49 +1649,64 @@ def save_summary(
             "----------------------\n"
         )
         file.write(
-            f"Ground-truth blinks: {metrics['ground_truth_blinks']}\n"
+            f"Ground-truth blinks: "
+            f"{metrics['ground_truth_blinks']}\n"
         )
         file.write(
-            f"Predicted blinks: {metrics['predicted_blinks']}\n"
+            f"Predicted blinks: "
+            f"{metrics['predicted_blinks']}\n"
         )
         file.write(
-            f"True positives: {metrics['true_positive']}\n"
+            f"True positives: "
+            f"{metrics['true_positive']}\n"
         )
         file.write(
-            f"False positives: {metrics['false_positive']}\n"
+            f"False positives: "
+            f"{metrics['false_positive']}\n"
         )
         file.write(
-            f"False negatives: {metrics['false_negative']}\n"
+            f"False negatives: "
+            f"{metrics['false_negative']}\n"
         )
         file.write(
-            f"Precision: {metrics['precision']:.6f}\n"
+            f"Precision: "
+            f"{metrics['precision']:.6f}\n"
         )
         file.write(
-            f"Recall: {metrics['recall']:.6f}\n"
+            f"Recall: "
+            f"{metrics['recall']:.6f}\n"
         )
         file.write(
-            f"F1: {metrics['f1']:.6f}\n"
+            f"F1: "
+            f"{metrics['f1']:.6f}\n"
         )
         file.write(
-            f"Mean matched temporal IoU: {metrics['mean_matched_tiou']:.6f}\n"
+            f"Mean matched temporal IoU: "
+            f"{metrics['mean_matched_tiou']:.6f}\n"
         )
         file.write(
-            f"Median matched temporal IoU: {metrics['median_matched_tiou']:.6f}\n"
+            f"Median matched temporal IoU: "
+            f"{metrics['median_matched_tiou']:.6f}\n"
         )
         file.write(
-            f"Mean onset error: {metrics['mean_onset_error_frames']:.4f} frames\n"
+            f"Mean onset error: "
+            f"{metrics['mean_onset_error_frames']:.4f} frames\n"
         )
         file.write(
-            f"Mean offset error: {metrics['mean_offset_error_frames']:.4f} frames\n"
+            f"Mean offset error: "
+            f"{metrics['mean_offset_error_frames']:.4f} frames\n"
         )
         file.write(
-            f"Mean blink-duration error: {metrics['mean_duration_error_seconds']:.6f} s\n"
+            f"Mean blink-duration error: "
+            f"{metrics['mean_duration_error_seconds']:.6f} s\n"
         )
         file.write(
-            f"Blink-count MAE per sequence: {metrics['blink_count_mae_per_sequence']:.6f}\n"
+            f"Blink-count MAE per sequence: "
+            f"{metrics['blink_count_mae_per_sequence']:.6f}\n"
         )
         file.write(
-            f"Blink-rate MAE: {metrics['blink_rate_mae_per_min']:.6f} blinks/min\n\n"
+            f"Blink-rate MAE: "
+            f"{metrics['blink_rate_mae_per_min']:.6f} blinks/min\n\n"
         )
 
         file.write(
@@ -1284,19 +1716,39 @@ def save_summary(
             "---------------------\n"
         )
         file.write(
-            f"Blink-frame openness mean: {metrics['blink_openness_mean']:.6f}\n"
+            "ROC AUC population: finite EyeOpenness samples only\n"
         )
         file.write(
-            f"Blink-frame openness median: {metrics['blink_openness_median']:.6f}\n"
+            f"Eye-openness samples: "
+            f"{metrics['eye_openness_samples']}\n"
         )
         file.write(
-            f"Non-blink openness mean: {metrics['nonblink_openness_mean']:.6f}\n"
+            f"Blink-frame eye samples: "
+            f"{metrics['blink_eye_samples']}\n"
         )
         file.write(
-            f"Non-blink openness median: {metrics['nonblink_openness_median']:.6f}\n"
+            f"Non-blink eye samples: "
+            f"{metrics['nonblink_eye_samples']}\n"
         )
         file.write(
-            f"Blink-vs-non-blink ROC AUC using negative openness: {metrics['eye_openness_auc']:.6f}\n"
+            f"Blink-frame openness mean: "
+            f"{metrics['blink_openness_mean']:.6f}\n"
+        )
+        file.write(
+            f"Blink-frame openness median: "
+            f"{metrics['blink_openness_median']:.6f}\n"
+        )
+        file.write(
+            f"Non-blink openness mean: "
+            f"{metrics['nonblink_openness_mean']:.6f}\n"
+        )
+        file.write(
+            f"Non-blink openness median: "
+            f"{metrics['nonblink_openness_median']:.6f}\n"
+        )
+        file.write(
+            "Blink-vs-non-blink ROC AUC using negative openness: "
+            f"{metrics['eye_openness_auc']:.6f}\n"
         )
 
     return path
@@ -1314,7 +1766,9 @@ def calibrate(records):
         ):
             metrics, _ = evaluate_records(
                 records,
-                float(threshold),
+                float(
+                    threshold
+                ),
                 min_closed_frames,
                 EVENT_IOU_THRESHOLD,
             )
@@ -1333,19 +1787,17 @@ def calibrate(records):
 
     results.sort(
         key=lambda item: (
-            item["f1"],
-            item["mean_matched_tiou"],
+            item[
+                "f1"
+            ],
+            item[
+                "mean_matched_tiou"
+            ],
         ),
         reverse=True,
     )
 
-    path = (
-        RESULTS_DIR
-        / "mpeblink_val_calibration.csv"
-    )
-
-    with open(
-        path,
+    with CALIBRATION_CSV.open(
         "w",
         newline="",
         encoding="utf-8",
@@ -1353,7 +1805,9 @@ def calibrate(records):
         writer = csv.DictWriter(
             file,
             fieldnames=list(
-                results[0].keys()
+                results[
+                    0
+                ].keys()
             ),
         )
 
@@ -1362,39 +1816,53 @@ def calibrate(records):
             results
         )
 
-    return results[0], path
+    return (
+        results[
+            0
+        ],
+        CALIBRATION_CSV,
+    )
 
 
 def run_validation_calibration():
+    """Run validation-only parameter selection."""
+    clean_calibration_outputs()
+
     records, stats = extract_split(
         "val"
     )
 
-    best, calibration_path = (
-        calibrate(
-            records
-        )
+    (
+        best,
+        calibration_path,
+    ) = calibrate(
+        records
     )
 
     print(
         "\n=== Selected Validation Configuration ==="
     )
+
     print(
         f"blink_threshold: "
         f"{best['threshold']:.4f}"
     )
+
     print(
         f"min_closed_frames: "
         f"{best['min_closed_frames']}"
     )
+
     print(
         f"Precision: "
         f"{best['precision']:.4f}"
     )
+
     print(
         f"Recall: "
         f"{best['recall']:.4f}"
     )
+
     print(
         f"F1: "
         f"{best['f1']:.4f}"
@@ -1403,6 +1871,7 @@ def run_validation_calibration():
     print(
         "\nCalibration saved:"
     )
+
     print(
         calibration_path
     )
@@ -1410,22 +1879,29 @@ def run_validation_calibration():
     print(
         "\nExtraction runtime:"
     )
+
     print(
         f"{stats['runtime_seconds'] / 60.0:.2f} minutes"
     )
 
 
 def run_final_test():
+    """Run the final test split with the frozen validation-selected parameters."""
+    clean_test_outputs()
+
     print(
         "Running final MPEBlink 2.0 test evaluation."
     )
+
     print(
         "The parameters below were frozen using the validation split."
     )
+
     print(
         f"blink_threshold = "
         f"{SELECTED_THRESHOLD:.2f}"
     )
+
     print(
         f"min_closed_frames = "
         f"{SELECTED_MIN_CLOSED_FRAMES}"
@@ -1549,15 +2025,18 @@ def run_final_test():
     print(
         "\nSaved:"
     )
+
     print(
         summary_path
     )
+
     print(
         sequence_path
     )
 
 
-def main():
+def parse_args():
+    """Parse evaluator execution mode."""
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate PhysioTrack eye openness "
@@ -1565,21 +2044,70 @@ def main():
         )
     )
 
-    parser.add_argument(
-        "--calibrate",
+    mode = parser.add_mutually_exclusive_group()
+
+    mode.add_argument(
+        "--preflight-only",
         action="store_true",
         help=(
-            "Run parameter calibration on the "
-            "validation split instead of the final test."
+            "Validate the dataset structure and annotations, then exit "
+            "without model inference."
         ),
     )
 
-    args = parser.parse_args()
+    mode.add_argument(
+        "--calibrate",
+        action="store_true",
+        help=(
+            "Re-run the original validation-split calibration for verification."
+        ),
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    accounting = (
+        validate_dataset_layout()
+    )
+
+    print(
+        "MPEBlink 2.0 dataset preflight: PASS"
+    )
+
+    print(
+        "Dataset root:",
+        DATASET_ROOT,
+    )
+
+    for split in EVALUATION_SPLITS:
+        values = accounting[
+            split
+        ]
+
+        print(
+            f"{split}: "
+            f"videos={values['videos']}, "
+            f"annotation_frames={values['annotation_frames']}, "
+            f"person_sequences={values['person_sequences']}, "
+            f"blink_events={values['blink_events']}, "
+            f"out_of_range_blink_events="
+            f"{values['out_of_range_blink_events']}"
+        )
+
+    if args.preflight_only:
+        print(
+            "Preflight-only mode: no model inference was run."
+        )
+        return
 
     if args.calibrate:
         run_validation_calibration()
-    else:
-        run_final_test()
+        return
+
+    run_final_test()
 
 
 if __name__ == "__main__":

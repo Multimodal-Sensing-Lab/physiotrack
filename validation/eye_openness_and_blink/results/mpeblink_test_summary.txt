@@ -3,6 +3,7 @@ MPEBlink 2.0 Eye Openness and Blink Evaluation
 
 Split: test
 Face initialization: ground-truth bounding boxes
+Landmarks: PhysioTrack FaceLandmarks using MediaPipe
 Eye descriptor: PhysioTrack EyeOpenness
 Blink method: threshold-based temporal detector
 Blink threshold: 0.4400
@@ -23,7 +24,8 @@ Invalid bounding boxes: 10
 Landmark failures: 105936
 Video frame mismatches: 0
 Video read failures: 0
-Runtime: 89.30 minutes
+Out-of-range blink annotations retained: 1
+Runtime: 96.48 minutes
 
 Blink event evaluation
 ----------------------
@@ -45,6 +47,10 @@ Blink-rate MAE: 10.799823 blinks/min
 
 Eye-openness analysis
 ---------------------
+ROC AUC population: finite EyeOpenness samples only
+Eye-openness samples: 389922
+Blink-frame eye samples: 48912
+Non-blink eye samples: 341010
 Blink-frame openness mean: 0.352304
 Blink-frame openness median: 0.305653
 Non-blink openness mean: 0.491654
