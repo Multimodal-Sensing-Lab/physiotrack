@@ -206,6 +206,98 @@ results/
 `-- figures/
     `-- aflw_head_pose_error_metrics.png
 
+
+Qualitative benchmark evidence
+------------------------------
+A separate qualitative script is included to visualize the accepted AFLW
+head-pose protocol on selected benchmark faces:
+
+aflw_head_pose_qualitative.py
+
+The qualitative analysis does not replace or modify the accepted quantitative
+evaluation. It uses the same PhysioTrack FaceOrientation component, 6DRepNet360
+backend, CPU inference configuration, AFLW FacePose convention mapping, AFLW
+ground-truth face rectangles, and primary pose-range definition used by the
+accepted evaluator.
+
+The accepted per-face quantitative CSV is used as the authoritative source for
+qualitative selection and verification. Eight interpretable cases are selected:
+
+- strong_frontal
+- representative
+- challenging
+- negative_yaw
+- positive_yaw
+- negative_pitch
+- positive_pitch
+- high_roll
+
+The strong-frontal example is selected from near-frontal faces with low accepted
+per-face angular error. The representative example is selected to have mean
+axis error close to the accepted overall benchmark MAE. The challenging example
+is selected from the high-error portion of the accepted result distribution.
+The directional cases are selected to provide clear negative and positive yaw,
+negative and positive pitch, and substantial roll examples.
+
+Visual prominence is also considered so that the evaluated target face is large
+enough and sufficiently central to be interpretable in the final evidence
+figures.
+
+Before any qualitative figure is written, the selected AFLW faces are rerun
+through FaceOrientation using the same ground-truth face rectangle. The rerun
+ground-truth angles, predictions, and wrapped angular errors are compared
+numerically with the accepted per-face result CSV. Qualitative output is written
+only if this verification passes.
+
+Each qualitative evidence figure contains:
+
+- Original AFLW image.
+- Visible AFLW target-face bounding box.
+- Enlarged target-face crop.
+- Ground-truth yaw, pitch, and roll.
+- PhysioTrack-predicted yaw, pitch, and roll.
+- Wrapped absolute angular error for each axis.
+- Mean axis error for the displayed face.
+- Accepted full-benchmark metrics.
+- Protocol summary.
+
+The visible face rectangle is intentionally included because AFLW images may
+contain more than one face. It identifies the exact ground-truth face rectangle
+supplied to FaceOrientation and therefore makes the evaluated target explicit.
+The rectangle is not an automatically detected face box and should not be
+interpreted as a face-detection result.
+
+The per-image pose values and errors are qualitative diagnostics for the
+displayed benchmark face. The accepted benchmark result remains the aggregate
+evaluation over all 23,407 successful primary-protocol samples.
+
+Run the qualitative analysis after the accepted quantitative CSV and summary are
+present:
+
+python aflw_head_pose_qualitative.py
+
+The qualitative outputs are written under:
+
+results/qualitative/
+
+Expected qualitative outputs include:
+
+results/qualitative/annotated_images/
+    Eight individual qualitative evidence figures.
+
+results/qualitative/aflw_head_pose_qualitative_selection.csv
+    Selected role, face ID, source image, target-face prominence information,
+    verified ground-truth pose, prediction, per-axis errors, mean axis error,
+    and generated output path.
+
+results/figures/aflw_head_pose_qualitative_examples.png
+    Combined 2 x 4 summary figure containing the eight selected target faces and
+    their qualitative role, mean axis error, and ground-truth pose.
+
+The qualitative generator owns and may replace only its own qualitative outputs.
+It does not delete or modify the accepted quantitative result CSV, summary,
+thesis table, or quantitative error figure.
+
 Accepted validation results
 ---------------------------
 Successful predictions: 23,407 / 23,408 eligible samples
@@ -259,7 +351,10 @@ For reproducible execution:
 3. Use the documented project environment and dependencies.
 4. Run the evaluator from validation/head_pose.
 5. Verify the generated CSV and summary.
-6. Generate the table and figure from the accepted CSV.
+6. Generate the table and quantitative figure from the accepted CSV.
+7. Run aflw_head_pose_qualitative.py.
+8. Inspect the individual qualitative figures, selection CSV, and combined
+   qualitative summary figure.
 
 Equivalent dataset, model, dependency, and device settings should produce
 scientifically equivalent results. Runtime may vary between systems.
