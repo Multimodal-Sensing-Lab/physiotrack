@@ -79,11 +79,11 @@ python 300w_landmark_eval.py
 python 300w_landmark_table.py
 python 300w_landmark_plot.py
 
-Expected Results
+Quantitative Results
 ----------------
-A successful reproduction should evaluate 600 images.
+The evaluation covers 600 images.
 
-Expected overall results:
+Overall results:
 
 - Successful predictions: 588
 - Failed predictions: 12
@@ -92,7 +92,7 @@ Expected overall results:
 - Median NME: 4.3178%
 - NME standard deviation: 1.8048%
 
-Expected overall CED values:
+Overall CED values:
 
 - NME <= 5%: 72.6667%
 - NME <= 6%: 88.3333%
@@ -105,7 +105,7 @@ Generated files are stored under:
 
 validation/face_landmarks/results/
 
-Expected outputs:
+Generated outputs:
 
 results/
 ├── 300w_landmark_results.csv

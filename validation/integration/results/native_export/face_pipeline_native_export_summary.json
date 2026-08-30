@@ -1,5 +1,5 @@
 {
-  "video": "C:\\Users\\xx901\\Documents\\PhysioTrack_Thesis\\physiotrack\\media_for_test\\face_blink_pose.mp4",
+  "video": "test_data/face_blink_pose.mp4",
   "fps": 25.0,
   "video_frames": 429,
   "processed_frames": 429,
@@ -12,7 +12,19 @@
   "blink_events": 2,
   "mouth_motion_available": 429,
   "temporal_available": 429,
-  "frame_has_old_gaze": true,
-  "frame_has_gaze_estimation": true,
-  "windows_have_expected_structure": true
+  "integration_checks": {
+    "processed_frames_positive": true,
+    "frame_count_matches_video": true,
+    "detected_faces_positive": true,
+    "frame_records_nonempty": true,
+    "window_records_nonempty": true,
+    "export_record_counts_match": true,
+    "frame_feature_dicts_valid": true,
+    "frame_has_old_gaze_key": true,
+    "frame_has_gaze_estimation_key": true,
+    "old_gaze_observed": true,
+    "gaze_estimation_observed": true,
+    "windows_have_expected_structure": true
+  },
+  "overall_status": "PASS"
 }

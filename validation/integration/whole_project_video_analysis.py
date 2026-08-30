@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -9,25 +10,42 @@ from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 from physiotrack.face.export import FaceResultExporter
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
 
 VIDEO_PATH = (
-    PROJECT_ROOT
-    / "media_for_test"
+    TEST_DATA_DIR
     / "istockphoto-1370809321-640_adpp_is.mp4"
 )
 
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
+
 OUTPUT_DIR = (
-    Path(__file__).resolve().parent
-    / "whole_project_video_analysis_results"
+    SCRIPT_DIR
+    / "results"
+    / "whole_project_video_analysis"
 )
 
+
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
 def main() -> None:
     if not VIDEO_PATH.exists():
         raise FileNotFoundError(
             f"Video not found: {VIDEO_PATH}"
         )
+
+    clean_output_directory()
 
     capture = cv2.VideoCapture(
         str(VIDEO_PATH)
@@ -176,6 +194,38 @@ def main() -> None:
         capture.release()
         pipeline.close()
 
+    frame_count_matches = (
+        total_video_frames <= 0
+        or processed_frames == total_video_frames
+    )
+
+    export_counts_match = (
+        len(frame_records) == detected_faces
+        and len(window_records) == detected_faces
+    )
+
+    if processed_frames <= 0:
+        raise RuntimeError(
+            "No video frames were processed."
+        )
+
+    if not frame_count_matches:
+        raise RuntimeError(
+            "Processed frame count does not match "
+            "the video-reported frame count."
+        )
+
+    if detected_faces <= 0:
+        raise RuntimeError(
+            "No face records were produced."
+        )
+
+    if not export_counts_match:
+        raise RuntimeError(
+            "Export record counts do not match "
+            "the detected face-record count."
+        )
+
     OUTPUT_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -230,7 +280,7 @@ def main() -> None:
         "test_type":
             "whole_project_video_analysis",
         "video":
-            str(VIDEO_PATH),
+            VIDEO_LABEL,
         "resolution": {
             "width":
                 width,
@@ -249,6 +299,12 @@ def main() -> None:
             len(frame_records),
         "window_records":
             len(window_records),
+        "frame_count_matches_video":
+            frame_count_matches,
+        "export_counts_match":
+            export_counts_match,
+        "analysis_status":
+            "PASS",
         "all_components_enabled": {
             "tracking": True,
             "head_pose": True,
@@ -280,7 +336,7 @@ def main() -> None:
     print("=" * 82)
     print(
         "Whole-Project Video Analysis "
-        "Completed"
+        "Completed: PASS"
     )
     print("=" * 82)
 

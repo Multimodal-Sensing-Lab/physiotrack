@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -7,9 +9,19 @@ import cv2
 from physiotrack.face import FaceAnalysis, FaceAnalysisConfig, GazeEstimator
 
 
-VIDEO_PATH = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis\physiotrack"
-    r"\media_for_test\face_blink_pose.mp4"
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
+
+VIDEO_PATH = TEST_DATA_DIR / "face_blink_pose.mp4"
+
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
+
+OUTPUT_DIR = (
+    SCRIPT_DIR
+    / "results"
+    / "runtime_smoke"
 )
 
 
@@ -17,7 +29,7 @@ def run_case(
     name: str,
     gaze_enabled: bool,
     gaze_estimation_enabled: bool,
-) -> None:
+) -> dict[str, int | str | bool]:
     capture = cv2.VideoCapture(str(VIDEO_PATH))
 
     if not capture.isOpened():
@@ -27,6 +39,10 @@ def run_case(
 
     fps = float(
         capture.get(cv2.CAP_PROP_FPS)
+    )
+
+    reported_frame_count = int(
+        capture.get(cv2.CAP_PROP_FRAME_COUNT)
     )
 
     if fps <= 0:
@@ -115,9 +131,24 @@ def run_case(
         capture.release()
         pipeline.close()
 
+    expected_smoke_frames = (
+        min(5, reported_frame_count)
+        if reported_frame_count > 0
+        else processed_frames
+    )
+
     if processed_frames == 0:
         raise RuntimeError(
             f"{name}: no frames processed"
+        )
+
+    if (
+        reported_frame_count > 0
+        and processed_frames
+        != expected_smoke_frames
+    ):
+        raise RuntimeError(
+            f"{name}: incomplete smoke-test frame read"
         )
 
     if faces_seen == 0:
@@ -155,8 +186,36 @@ def run_case(
         f"gaze_estimation_available={new_gaze_available}"
     )
 
+    return {
+        "case": name,
+        "gaze_enabled": gaze_enabled,
+        "gaze_estimation_enabled": gaze_estimation_enabled,
+        "processed_frames": processed_frames,
+        "faces_seen": faces_seen,
+        "old_gaze_available": old_gaze_available,
+        "gaze_estimation_available": new_gaze_available,
+        "status": "PASS",
+    }
+
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
 
 def main() -> None:
+    if not VIDEO_PATH.exists():
+        raise FileNotFoundError(
+            f"Video not found: {VIDEO_PATH}"
+        )
+
+    clean_output_directory()
+
     print(
         "Import GazeEstimator: PASS"
     )
@@ -184,22 +243,47 @@ def main() -> None:
         ),
     ]
 
+    case_results = []
+
     for (
         name,
         gaze_enabled,
         gaze_estimation_enabled,
     ) in cases:
-        run_case(
-            name=name,
-            gaze_enabled=gaze_enabled,
-            gaze_estimation_enabled=
-                gaze_estimation_enabled,
+        case_results.append(
+            run_case(
+                name=name,
+                gaze_enabled=gaze_enabled,
+                gaze_estimation_enabled=
+                    gaze_estimation_enabled,
+            )
+        )
+
+    summary_path = (
+        OUTPUT_DIR
+        / "runtime_smoke_summary.json"
+    )
+
+    with summary_path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            {
+                "test_type": "runtime_smoke",
+                "video": VIDEO_LABEL,
+                "cases": case_results,
+                "overall_status": "PASS",
+            },
+            file,
+            indent=2,
         )
 
     print()
     print(
         "Runtime smoke test: PASS"
     )
+    print(f"Saved: {summary_path}")
 
 
 if __name__ == "__main__":

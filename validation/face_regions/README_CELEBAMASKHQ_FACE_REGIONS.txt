@@ -270,7 +270,7 @@ results/figures/celebamaskhq_per_class_metrics.png
 
 Qualitative Benchmark Evidence
 ------------------------------
-A separate qualitative script is included to visualize the accepted
+A separate qualitative script is included to visualize the documented
 CelebAMask-HQ segmentation protocol on selected benchmark images:
 
 celebamaskhq_segmentation_qualitative.py
@@ -278,8 +278,7 @@ celebamaskhq_segmentation_qualitative.py
 The qualitative analysis does not replace or modify the full quantitative
 evaluation. It uses the same PhysioTrack FaceRegions component, SegFace
 backend, 512 x 512 input size, 19-class label definition, CPU inference
-configuration, and full aligned-image initialization used by the accepted
-quantitative evaluator.
+configuration, and full aligned-image initialization used by the quantitative evaluator.
 
 The script first profiles the official 2,824-image test split using only the
 ground-truth semantic masks. It then builds a deterministic candidate pool and
@@ -317,23 +316,23 @@ Each qualitative figure contains:
 - Ground-truth semantic overlay
 - PhysioTrack prediction overlay
 - Image-level qualitative diagnostics
-- Accepted full-benchmark metrics
+- Full-benchmark metrics
 - Evaluation protocol summary
 - Complete semantic-class color legend
 
 The image-level Pixel Accuracy, mIoU, and Dice values shown in the side panel
 are diagnostic values for the displayed image only. They are not substituted
-for the accepted benchmark metrics. The official reported results remain the
+for the reported benchmark metrics. The official reported results remain the
 metrics calculated from the single dataset-level confusion matrix over all
 2,824 test images.
 
 No face-detection rectangle is drawn in the qualitative figures because the
-accepted protocol initializes FaceRegions with a bounding box covering the
+documented protocol initializes FaceRegions with a bounding box covering the
 entire aligned 512 x 512 image. Adding a visible face box would therefore not
 provide additional localization information and could incorrectly suggest that
 face detection is being evaluated.
 
-Run the qualitative analysis after the accepted quantitative result files are
+Run the qualitative analysis after the quantitative result files are
 present:
 
 python celebamaskhq_segmentation_qualitative.py
@@ -356,10 +355,10 @@ results/figures/celebamaskhq_qualitative_examples.png
     prediction overlays.
 
 The qualitative generator owns and may replace only its own qualitative
-outputs. It does not delete or modify the accepted quantitative CSV files,
+outputs. It does not delete or modify the quantitative CSV files,
 confusion matrix, summary, thesis tables, or per-class performance figure.
 
-Final Reproduced Results
+Quantitative Results
 ------------------------
 Official test split size:
 2,824 images
@@ -411,7 +410,7 @@ hat              80.56        89.24
 ear_r            60.11        75.09
 neck_l           46.38        63.37
 
-Reported Reproduction Run
+Reported Runtime
 -------------------------
 Elapsed time:
 13,793.32 seconds
@@ -422,9 +421,9 @@ Throughput:
 Execution time is hardware- and environment-dependent and is not expected to
 match across machines. The segmentation metrics are the reproducibility target.
 
-Result Verification
+Internal Consistency Verification
 -------------------
-The reproduced evaluation was independently checked for internal consistency.
+The evaluation outputs were checked for internal consistency.
 
 The validation completed all 2,824 test images without inference failures.
 
@@ -434,14 +433,6 @@ The accumulated confusion matrix contains exactly:
 
 The overall and per-class metrics recomputed directly from the confusion matrix
 match the generated class-metrics CSV, text summary, thesis tables, and figure.
-
-The reproduced segmentation metrics also match the previous validated baseline:
-
-Pixel Accuracy:          95.5849%
-All-class mIoU:          81.5328%
-Foreground mIoU:         80.8718%
-All-class Mean Dice:     89.3567%
-Foreground Mean Dice:    88.9541%
 
 Interpretation
 --------------

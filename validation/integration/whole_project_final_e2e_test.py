@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -11,17 +12,22 @@ import numpy as np
 from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
 
 VIDEO_PATH = (
-    PROJECT_ROOT
-    / "media_for_test"
+    TEST_DATA_DIR
     / "istockphoto-1370809321-640_adpp_is.mp4"
 )
 
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
+
 OUTPUT_DIR = (
-    Path(__file__).resolve().parent
-    / "final_whole_project_results"
+    SCRIPT_DIR
+    / "results"
+    / "whole_project_e2e"
 )
 
 MODULES = [
@@ -41,6 +47,16 @@ MODULES = [
     "temporal",
 ]
 
+
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
 def to_jsonable(value: Any) -> Any:
     if value is None:
@@ -203,10 +219,7 @@ def main() -> None:
             f"Video not found: {VIDEO_PATH}"
         )
 
-    OUTPUT_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    clean_output_directory()
 
     capture = cv2.VideoCapture(
         str(VIDEO_PATH)
@@ -527,9 +540,26 @@ def main() -> None:
         for module in MODULES
     )
 
+    frame_count_matches = (
+        reported_video_frames <= 0
+        or processed_frames == reported_video_frames
+    )
+
+    tracking_observed = (
+        len(track_ids) > 0
+        and success_counts["tracking"] > 0
+    )
+
+    record_count_matches = (
+        len(records) == total_faces
+    )
+
     overall_pass = (
         processed_frames > 0
+        and frame_count_matches
         and total_faces > 0
+        and tracking_observed
+        and record_count_matches
         and all_modules_observed
     )
 
@@ -548,7 +578,7 @@ def main() -> None:
         "test_type":
             "final_whole_project_end_to_end",
         "video":
-            str(VIDEO_PATH),
+            VIDEO_LABEL,
         "resolution": {
             "width":
                 width,
@@ -575,6 +605,12 @@ def main() -> None:
             normalized_track_ids,
         "modules":
             module_summary,
+        "frame_count_matches_video":
+            frame_count_matches,
+        "tracking_observed":
+            tracking_observed,
+        "record_count_matches":
+            record_count_matches,
         "all_modules_observed":
             all_modules_observed,
         "overall_status":
@@ -829,6 +865,44 @@ def main() -> None:
     print(
         modules_csv_path
     )
+
+    if not overall_pass:
+        failed_checks = []
+
+        if processed_frames <= 0:
+            failed_checks.append(
+                "no_frames_processed"
+            )
+
+        if not frame_count_matches:
+            failed_checks.append(
+                "frame_count_mismatch"
+            )
+
+        if total_faces <= 0:
+            failed_checks.append(
+                "no_faces"
+            )
+
+        if not tracking_observed:
+            failed_checks.append(
+                "tracking_not_observed"
+            )
+
+        if not record_count_matches:
+            failed_checks.append(
+                "record_count_mismatch"
+            )
+
+        if not all_modules_observed:
+            failed_checks.append(
+                "one_or_more_modules_unobserved"
+            )
+
+        raise RuntimeError(
+            "Whole-project end-to-end test failed: "
+            + ", ".join(failed_checks)
+        )
 
 
 if __name__ == "__main__":

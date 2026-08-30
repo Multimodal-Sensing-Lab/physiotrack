@@ -1,0 +1,15 @@
+module,disabled_status,enabled_status,disabled_successful_face_samples,enabled_successful_face_samples
+detection,PASS,PASS,429,429
+tracking,PASS,PASS,429,429
+landmarks,PASS,PASS,429,429
+quality,PASS,PASS,429,429
+head_pose,PASS,PASS,429,429
+eyes,PASS,PASS,429,429
+blink,PASS,PASS,429,429
+gaze,PASS,PASS,429,429
+gaze_estimation,ABSENT,PASS,0,429
+mouth,PASS,PASS,429,429
+mouth_motion,PASS,PASS,429,429
+emotion,PASS,PASS,429,429
+regions,PASS,PASS,429,429
+temporal,PASS,PASS,429,429

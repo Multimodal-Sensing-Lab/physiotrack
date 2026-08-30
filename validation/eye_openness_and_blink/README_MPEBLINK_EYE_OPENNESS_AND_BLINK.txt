@@ -14,7 +14,7 @@ The validation measures two related aspects:
    events and estimates blink count, rate, and duration.
 
 The validation package also generates quantitative thesis artifacts and
-qualitative benchmark videos and images using the same accepted evaluation
+qualitative benchmark videos and images using the same evaluation
 protocol.
 
 Dataset
@@ -90,8 +90,8 @@ Required scripts:
 
    Generates deterministic qualitative benchmark evidence from selected
    MPEBlink 2.0 test person sequences. It re-runs the selected sequences using
-   the same accepted benchmark protocol, verifies the resulting event counts
-   against the accepted quantitative sequence-results CSV, and then creates
+   the same benchmark protocol, verifies the resulting event counts
+   against the quantitative sequence-results CSV, and then creates
    annotated MP4 videos, representative PNG images, a selection CSV, and a
    combined qualitative figure.
 
@@ -308,13 +308,13 @@ quantitative figure:
 
 python mpeblink_blink_plot.py
 
-After the accepted quantitative outputs are present, generate the qualitative
+After the quantitative outputs are present, generate the qualitative
 benchmark evidence:
 
 python mpeblink_blink_qualitative.py
 
 The qualitative script removes and regenerates only the qualitative files that
-it owns. It does not delete or modify the accepted quantitative result files or
+it owns. It does not delete or modify the quantitative result files or
 the MPEBlink dataset.
 
 Generated Quantitative Results
@@ -502,10 +502,10 @@ The qualitative stage complements the complete quantitative test evaluation. It
 does not replace, modify, or redefine the full-test metrics.
 
 The qualitative generator selects eight deterministic test person sequences
-from the accepted sequence-results CSV and re-runs those sequences using the
+from the sequence-results CSV and re-runs those sequences using the
 same benchmark protocol. Before generating any final qualitative artifact, it
 verifies that the re-run ground-truth event count, predicted event count, TP,
-FP, and FN values match the accepted quantitative sequence results.
+FP, and FN values match the quantitative sequence results.
 
 The eight qualitative roles are:
 
@@ -518,7 +518,7 @@ The eight qualitative roles are:
 - high_blink_activity
 - low_blink_activity
 
-The accepted qualitative cases are:
+The qualitative cases are:
 
 strong_detection
     test video 24, person1
@@ -588,13 +588,13 @@ results/qualitative/annotated_images/
 
 results/qualitative/mpeblink_qualitative_selection.csv
     Deterministic case roles, source video/person identifiers, diagnostic-event
-    information, accepted event counts, and generated output paths.
+    information, event counts, and generated output paths.
 
 results/figures/mpeblink_qualitative_examples.png
     Combined figure containing the eight selected qualitative benchmark cases.
 
 The qualitative generator owns and may replace only these qualitative outputs.
-It does not delete or modify the accepted quantitative summary, sequence CSV,
+It does not delete or modify the quantitative summary, sequence CSV,
 thesis table, quantitative figure, or dataset.
 
 Interpretation

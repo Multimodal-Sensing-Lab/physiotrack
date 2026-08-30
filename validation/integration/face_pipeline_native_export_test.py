@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -9,23 +10,39 @@ from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 from physiotrack.face.export import FaceResultExporter
 
 
-VIDEO_PATH = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis\physiotrack"
-    r"\media_for_test\face_blink_pose.mp4"
-)
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
+
+VIDEO_PATH = TEST_DATA_DIR / "face_blink_pose.mp4"
+
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
 
 OUTPUT_DIR = (
-    Path(__file__).resolve().parent
+    SCRIPT_DIR
     / "results"
     / "native_export"
 )
 
+
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
 def main() -> None:
     if not VIDEO_PATH.exists():
         raise FileNotFoundError(
             f"Video not found: {VIDEO_PATH}"
         )
+
+    clean_output_directory()
 
     capture = cv2.VideoCapture(str(VIDEO_PATH))
 
@@ -227,30 +244,30 @@ def main() -> None:
         window_csv_path,
     )
 
-    frame_has_old_gaze = all(
-        record.get(
-            "face_features",
-            {},
-        ).get(
-            "gaze",
-            {},
-        ).get(
-            "available",
-            False,
+    frame_feature_dicts_valid = all(
+        isinstance(
+            record.get(
+                "face_features"
+            ),
+            dict,
         )
         for record in frame_records
     )
 
-    frame_has_gaze_estimation = all(
-        record.get(
+    frame_has_old_gaze_key = all(
+        "gaze"
+        in record.get(
             "face_features",
             {},
-        ).get(
-            "gaze_estimation",
+        )
+        for record in frame_records
+    )
+
+    frame_has_gaze_estimation_key = all(
+        "gaze_estimation"
+        in record.get(
+            "face_features",
             {},
-        ).get(
-            "available",
-            False,
         )
         for record in frame_records
     )
@@ -271,8 +288,49 @@ def main() -> None:
         for record in window_records
     )
 
+    frame_count_matches = (
+        total_video_frames <= 0
+        or processed_frames == total_video_frames
+    )
+
+    export_record_counts_match = (
+        len(frame_records) == detected_faces
+        and len(window_records) == detected_faces
+    )
+
+    integration_checks = {
+        "processed_frames_positive":
+            processed_frames > 0,
+        "frame_count_matches_video":
+            frame_count_matches,
+        "detected_faces_positive":
+            detected_faces > 0,
+        "frame_records_nonempty":
+            len(frame_records) > 0,
+        "window_records_nonempty":
+            len(window_records) > 0,
+        "export_record_counts_match":
+            export_record_counts_match,
+        "frame_feature_dicts_valid":
+            frame_feature_dicts_valid,
+        "frame_has_old_gaze_key":
+            frame_has_old_gaze_key,
+        "frame_has_gaze_estimation_key":
+            frame_has_gaze_estimation_key,
+        "old_gaze_observed":
+            gaze_available > 0,
+        "gaze_estimation_observed":
+            gaze_estimation_available > 0,
+        "windows_have_expected_structure":
+            windows_have_expected_structure,
+    }
+
+    overall_pass = all(
+        integration_checks.values()
+    )
+
     summary = {
-        "video": str(VIDEO_PATH),
+        "video": VIDEO_LABEL,
         "fps": fps,
         "video_frames": total_video_frames,
         "processed_frames": processed_frames,
@@ -288,12 +346,10 @@ def main() -> None:
             mouth_motion_available,
         "temporal_available":
             temporal_available,
-        "frame_has_old_gaze":
-            frame_has_old_gaze,
-        "frame_has_gaze_estimation":
-            frame_has_gaze_estimation,
-        "windows_have_expected_structure":
-            windows_have_expected_structure,
+        "integration_checks":
+            integration_checks,
+        "overall_status":
+            "PASS" if overall_pass else "FAIL",
     }
 
     with summary_path.open(
@@ -351,16 +407,20 @@ def main() -> None:
         temporal_available,
     )
     print(
-        "Frame records contain old gaze:",
-        frame_has_old_gaze,
+        "Frame records contain old gaze key:",
+        frame_has_old_gaze_key,
     )
     print(
-        "Frame records contain gaze estimation:",
-        frame_has_gaze_estimation,
+        "Frame records contain gaze estimation key:",
+        frame_has_gaze_estimation_key,
     )
     print(
         "Window records have expected structure:",
         windows_have_expected_structure,
+    )
+    print(
+        "Export record counts match detected faces:",
+        export_record_counts_match,
     )
     print("=" * 72)
 
@@ -371,6 +431,24 @@ def main() -> None:
     print(window_json_path)
     print(window_csv_path)
     print(summary_path)
+
+    if not overall_pass:
+        failed_checks = [
+            name
+            for name, passed
+            in integration_checks.items()
+            if not passed
+        ]
+
+        raise RuntimeError(
+            "Native export integration test failed: "
+            + ", ".join(failed_checks)
+        )
+
+    print()
+    print(
+        "Native export integration test: PASS"
+    )
 
 
 if __name__ == "__main__":

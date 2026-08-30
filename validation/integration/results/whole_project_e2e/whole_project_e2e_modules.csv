@@ -1,0 +1,15 @@
+module,status,successful_face_samples,total_face_samples,coverage_percent
+detection,PASS,1127,1127,100.0
+tracking,PASS,1127,1127,100.0
+landmarks,PASS,1127,1127,100.0
+quality,PASS,1127,1127,100.0
+head_pose,PASS,1127,1127,100.0
+eyes,PASS,1127,1127,100.0
+blink,PASS,1127,1127,100.0
+gaze,PASS,1127,1127,100.0
+gaze_estimation,PASS,1127,1127,100.0
+mouth,PASS,1127,1127,100.0
+mouth_motion,PASS,1127,1127,100.0
+emotion,PASS,1127,1127,100.0
+regions,PASS,1127,1127,100.0
+temporal,PASS,1127,1127,100.0

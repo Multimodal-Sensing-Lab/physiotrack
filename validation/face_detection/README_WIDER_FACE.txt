@@ -1,7 +1,7 @@
 WIDER FACE Face Detection Validation
 ====================================
 
-This directory contains the scripts used to evaluate the PhysioTrack face detector on the WIDER FACE validation split and to generate reproducible qualitative benchmark examples from the accepted quantitative predictions.
+This directory contains the scripts used to evaluate the PhysioTrack face detector on the WIDER FACE validation split and to generate reproducible qualitative benchmark examples from the saved quantitative predictions.
 
 Dataset
 -------
@@ -47,10 +47,10 @@ wider_face_eval.py
     Evaluates the generated predictions using the official WIDER FACE Easy, Medium, and Hard validation ground truth.
 
 wider_face_plot.py
-    Generates the final precision-recall figure, thesis result tables, and validation summary.
+    Generates the precision-recall figure, quantitative result tables, and validation summary.
 
 wider_face_qualitative.py
-    Generates reproducible qualitative benchmark examples from the real saved WIDER FACE predictions and the official WIDER FACE ground truth. It does not rerun the detector and does not modify the accepted quantitative predictions or AP results.
+    Generates reproducible qualitative benchmark examples from the saved WIDER FACE predictions and the official WIDER FACE ground truth. It does not rerun the detector and does not modify the quantitative predictions or AP results.
 
 Validation protocol
 -------------------
@@ -95,7 +95,7 @@ python wider_face_eval.py
 
 python wider_face_plot.py
 
-After the quantitative validation has completed successfully, generate the qualitative benchmark outputs:
+After the quantitative evaluation is complete, generate the qualitative benchmark outputs:
 
 python wider_face_qualitative.py
 
@@ -103,15 +103,15 @@ The inference stage processes the complete WIDER FACE validation split and store
 
 validation/face_detection/results/predictions
 
-The evaluator then computes Average Precision for the Easy, Medium, and Hard subsets.
+The evaluator computes Average Precision for the Easy, Medium, and Hard subsets.
 
-The plotting script creates the final quantitative validation artifacts and removes the temporary inference metadata file after it has been used to build the final summary.
+The plotting script creates the quantitative validation artifacts and removes the temporary inference metadata file after it has been used to build the final summary.
 
-The qualitative script reads the existing prediction files, official WIDER FACE ground truth, and the final quantitative result table. It verifies that the expected validation image count, prediction file count, and accepted AP values are present before generating qualitative outputs.
+The qualitative script reads the existing prediction files, official WIDER FACE ground truth, and the quantitative result table. It verifies the expected validation image count, prediction file count, and reported AP values before generating qualitative outputs.
 
-Expected quantitative results
------------------------------
-The validated configuration produces:
+Quantitative results
+--------------------
+The evaluation configuration produced:
 
 Easy AP:
 0.958883
@@ -145,11 +145,11 @@ Prediction files:
 Maximum detections in one image:
 3134
 
-Minor differences in runtime are expected between machines. The scientific results should remain unchanged when the same code, model, dataset, and evaluation protocol are used.
+Runtime may vary between machines. The reported metrics should remain reproducible when the same code, model, dataset, and evaluation protocol are used.
 
 Qualitative benchmark outputs
 -----------------------------
-The qualitative stage produces ten deterministic WIDER FACE examples that cover clear detections, scale variation, a readable Hard example, a readable failure case, and larger group scenes.
+The qualitative stage produces ten deterministic WIDER FACE examples covering clear detections, scale variation, a readable Hard example, a readable failure case, and larger group scenes.
 
 The ten output roles are:
 
@@ -204,7 +204,7 @@ The full benchmark AP displayed in each qualitative panel is read from:
 
 validation/face_detection/results/wider_face_thesis_table.csv
 
-The qualitative script verifies these values against the accepted results before producing the figures.
+The qualitative script verifies these values against the reported quantitative results before producing the figures.
 
 Per-image precision, recall, F1, matched IoU, and confidence values shown in the qualitative panels are display-level measurements for the selected example at the raw display threshold. They must not be interpreted as replacements for the official full-dataset WIDER FACE AP metrics.
 
@@ -224,7 +224,7 @@ results/predictions
 
 or any other quantitative validation artifact.
 
-This separation ensures that repeated qualitative runs do not leave obsolete images while preserving the accepted quantitative predictions required for reproducibility.
+This separation prevents obsolete qualitative outputs from being retained across repeated runs while preserving the quantitative prediction files required for reproducibility.
 
 Generated results
 -----------------
@@ -257,10 +257,10 @@ results/
     └── wider_face_qualitative_examples.png
 
 wider_face_summary.txt
-    Detailed record of the quantitative validation setup, inference statistics, and final benchmark results.
+    Detailed record of the quantitative validation setup, inference statistics, and benchmark results.
 
 wider_face_thesis_table.csv
-    CSV version of the final Easy, Medium, and Hard quantitative results.
+    CSV version of the Easy, Medium, and Hard quantitative results.
 
 wider_face_thesis_table.md
     Markdown version of the same quantitative results table.
@@ -289,10 +289,10 @@ A complete reproduction consists of:
 3. Running wider_face_inference.py.
 4. Running wider_face_eval.py.
 5. Running wider_face_plot.py.
-6. Confirming that the reported AP values and evaluated-face counts match the expected quantitative results above.
+6. Confirming that the reported AP values and evaluated-face counts match the quantitative results above.
 7. Running wider_face_qualitative.py.
 8. Confirming that ten annotated qualitative images, the qualitative selection CSV, and the combined qualitative figure are generated.
 
-If the reported quantitative metrics differ materially from the expected values, verify the dataset structure, model version, environment, and validation configuration before using the results.
+If the reported quantitative metrics differ materially from the values documented above, verify the dataset structure, model version, environment, and validation configuration before interpreting the results.
 
-If the qualitative script fails its preflight checks, verify that the quantitative validation has been completed successfully and that results/predictions and results/wider_face_thesis_table.csv contain the accepted outputs.
+If the qualitative script fails its preflight checks, verify that the quantitative evaluation has completed and that results/predictions and results/wider_face_thesis_table.csv contain the required quantitative outputs.

@@ -1,0 +1,47 @@
+{
+  "test_type": "runtime_smoke",
+  "video": "test_data/face_blink_pose.mp4",
+  "cases": [
+    {
+      "case": "both_disabled",
+      "gaze_enabled": false,
+      "gaze_estimation_enabled": false,
+      "processed_frames": 5,
+      "faces_seen": 5,
+      "old_gaze_available": 0,
+      "gaze_estimation_available": 0,
+      "status": "PASS"
+    },
+    {
+      "case": "old_gaze_only",
+      "gaze_enabled": true,
+      "gaze_estimation_enabled": false,
+      "processed_frames": 5,
+      "faces_seen": 5,
+      "old_gaze_available": 5,
+      "gaze_estimation_available": 0,
+      "status": "PASS"
+    },
+    {
+      "case": "gaze_estimation_only",
+      "gaze_enabled": false,
+      "gaze_estimation_enabled": true,
+      "processed_frames": 5,
+      "faces_seen": 5,
+      "old_gaze_available": 0,
+      "gaze_estimation_available": 5,
+      "status": "PASS"
+    },
+    {
+      "case": "both_enabled",
+      "gaze_enabled": true,
+      "gaze_estimation_enabled": true,
+      "processed_frames": 5,
+      "faces_seen": 5,
+      "old_gaze_available": 5,
+      "gaze_estimation_available": 5,
+      "status": "PASS"
+    }
+  ],
+  "overall_status": "PASS"
+}

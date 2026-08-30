@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -11,12 +12,20 @@ import numpy as np
 from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 
 
-VIDEO_PATH = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis\physiotrack"
-    r"\media_for_test\face_blink_pose.mp4"
-)
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
 
-OUTPUT_DIR = Path(__file__).resolve().parent / "results"
+VIDEO_PATH = TEST_DATA_DIR / "face_blink_pose.mp4"
+
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
+
+OUTPUT_DIR = (
+    SCRIPT_DIR
+    / "results"
+    / "face_pipeline_e2e"
+)
 
 MODULES = [
     "detection",
@@ -35,6 +44,16 @@ MODULES = [
     "temporal",
 ]
 
+
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
 def to_jsonable(value: Any) -> Any:
     if value is None:
@@ -373,7 +392,7 @@ def run_pipeline(
         "run": run_name,
         "gaze_estimation_enabled":
             gaze_estimation_enabled,
-        "video": str(VIDEO_PATH),
+        "video": VIDEO_LABEL,
         "fps": fps,
         "video_frames": frame_count,
         "processed_frames": processed_frames,
@@ -634,12 +653,86 @@ def print_summary(
     print("=" * 82)
 
 
+
+def validate_integration_summaries(
+    disabled: dict[str, Any],
+    enabled: dict[str, Any],
+) -> None:
+    for summary in (disabled, enabled):
+        if summary["processed_frames"] <= 0:
+            raise RuntimeError(
+                f"{summary['run']}: no video frames were processed."
+            )
+
+        if (
+            summary["video_frames"] > 0
+            and summary["processed_frames"]
+            != summary["video_frames"]
+        ):
+            raise RuntimeError(
+                f"{summary['run']}: processed frame count does not "
+                "match the video-reported frame count."
+            )
+
+        if summary["total_faces"] <= 0:
+            raise RuntimeError(
+                f"{summary['run']}: no faces were detected."
+            )
+
+    if (
+        disabled["modules"]["gaze_estimation"]["status"]
+        != "ABSENT"
+    ):
+        raise RuntimeError(
+            "Gaze estimation produced output while disabled."
+        )
+
+    if (
+        disabled["modules"]["gaze_estimation"][
+            "successful_face_samples"
+        ]
+        != 0
+    ):
+        raise RuntimeError(
+            "Gaze estimation produced successful samples while disabled."
+        )
+
+    if (
+        enabled["modules"]["gaze_estimation"]["status"]
+        != "PASS"
+        or enabled["modules"]["gaze_estimation"][
+            "successful_face_samples"
+        ]
+        <= 0
+    ):
+        raise RuntimeError(
+            "Gaze estimation was enabled but no successful output "
+            "was observed."
+        )
+
+    for module in MODULES:
+        if module == "gaze_estimation":
+            continue
+
+        if disabled["modules"][module]["status"] != "PASS":
+            raise RuntimeError(
+                f"{module} was unavailable in the gaze-disabled run."
+            )
+
+        if enabled["modules"][module]["status"] != "PASS":
+            raise RuntimeError(
+                f"{module} was unavailable in the gaze-enabled run."
+            )
+
+
 def main() -> None:
     if not VIDEO_PATH.exists():
         raise FileNotFoundError(
             f"Video not found: "
             f"{VIDEO_PATH}"
         )
+
+    clean_output_directory()
 
     print(
         "Running baseline pipeline "
@@ -676,6 +769,11 @@ def main() -> None:
         enabled_summary,
     ]
 
+    validate_integration_summaries(
+        disabled_summary,
+        enabled_summary,
+    )
+
     save_results(
         records,
         summaries,
@@ -683,6 +781,11 @@ def main() -> None:
 
     print_summary(
         summaries
+    )
+
+    print()
+    print(
+        "Face pipeline end-to-end integration test: PASS"
     )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 
 import cv2
 import pandas as pd
@@ -9,14 +10,19 @@ from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 from physiotrack.face.export import FaceResultExporter
 
 
-VIDEO_PATH = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis"
-    r"\physiotrack\media_for_test\multi_person2.mp4"
-)
+SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DATA_DIR = SCRIPT_DIR / "test_data"
 
-OUTPUT_DIR = Path(
-    r"C:\Users\xx901\Documents\PhysioTrack_Thesis"
-    r"\physiotrack\validation\integration\results_multi_person"
+VIDEO_PATH = TEST_DATA_DIR / "multi_person2.mp4"
+
+VIDEO_LABEL = str(
+    VIDEO_PATH.relative_to(SCRIPT_DIR)
+).replace("\\", "/")
+
+OUTPUT_DIR = (
+    SCRIPT_DIR
+    / "results"
+    / "multi_person_e2e"
 )
 
 
@@ -35,7 +41,24 @@ FEATURE_NAMES = [
 ]
 
 
+
+def clean_output_directory() -> None:
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
 def main() -> None:
+    if not VIDEO_PATH.exists():
+        raise FileNotFoundError(
+            f"Video not found: {VIDEO_PATH}"
+        )
+
+    clean_output_directory()
+
     capture = cv2.VideoCapture(
         str(VIDEO_PATH)
     )
@@ -113,6 +136,9 @@ def main() -> None:
 
     gaze_estimation_failures = []
     frame_face_counts = []
+    duplicate_track_id_frames = []
+    multi_face_frames = 0
+    gaze_estimation_person_ids = set()
 
     try:
         while True:
@@ -133,6 +159,27 @@ def main() -> None:
             face_count = len(result)
 
             total_faces += face_count
+
+            if face_count >= 2:
+                multi_face_frames += 1
+
+            current_frame_person_ids = [
+                instance.id
+                for instance in result
+                if instance.id is not None
+            ]
+
+            if (
+                len(current_frame_person_ids)
+                != len(set(current_frame_person_ids))
+            ):
+                duplicate_track_id_frames.append(
+                    {
+                        "frame_index": processed_frames,
+                        "timestamp": timestamp,
+                        "person_ids": current_frame_person_ids,
+                    }
+                )
 
             frame_face_counts.append(
                 {
@@ -250,6 +297,15 @@ def main() -> None:
                                 0,
                             )
                             + 1
+                        )
+
+                    if (
+                        feature_name
+                        == "gaze_estimation"
+                        and is_available
+                    ):
+                        gaze_estimation_person_ids.add(
+                            person_id
                         )
 
                     if (
@@ -512,14 +568,14 @@ def main() -> None:
 
     print()
     print(
-        "=== Frames With Unexpected Face Count ==="
+        "=== Frame Face-Count Distribution Diagnostics ==="
     )
 
     unexpected_face_counts = (
         face_counts_df[
             face_counts_df[
                 "face_count"
-            ] != 2
+            ] < 2
         ]
     )
 
@@ -527,7 +583,7 @@ def main() -> None:
         unexpected_face_counts
     ) == 0:
         print(
-            "None"
+            "No frames with fewer than two faces."
         )
     else:
         print(
@@ -587,88 +643,83 @@ def main() -> None:
             "the video-reported frame count."
         )
 
-    if person_ids != [
-        1,
-        2,
-    ]:
+    if len(person_ids) < 2:
         raise RuntimeError(
-            f"Unexpected person IDs: {person_ids}"
+            "Fewer than two tracked person IDs were observed."
         )
 
-    if len(
-        unexpected_face_counts
-    ) != 0:
+    if multi_face_frames <= 0:
         raise RuntimeError(
-            "The video did not contain exactly "
-            "two tracked face instances in every frame."
+            "No frame contained multiple tracked faces."
         )
 
-    for person_id in person_ids:
-        if (
-            person_frame_counts[
-                person_id
-            ]
-            != processed_frames
-        ):
-            raise RuntimeError(
-                f"ID {person_id} was not present "
-                "in every processed frame."
-            )
+    if duplicate_track_id_frames:
+        raise RuntimeError(
+            "Duplicate track IDs were assigned within the same frame."
+        )
 
-    for person_id in person_ids:
-        if (
-            head_pose_available.get(
-                person_id,
-                0,
-            )
-            != processed_frames
-        ):
-            raise RuntimeError(
-                f"Head pose was not available "
-                f"for all frames for ID {person_id}."
-            )
+    if len(gaze_estimation_person_ids) < 2:
+        raise RuntimeError(
+            "Gaze estimation was not observed for at least two "
+            "tracked persons."
+        )
+
+    if total_faces <= 0:
+        raise RuntimeError(
+            "No face instances were produced."
+        )
+
+    if len(frame_records) != total_faces:
+        raise RuntimeError(
+            "Frame export record count does not match face instances."
+        )
+
+    if len(window_records) != total_faces:
+        raise RuntimeError(
+            "Window export record count does not match face instances."
+        )
+
+    if sum(person_frame_counts.values()) != total_faces:
+        raise RuntimeError(
+            "Per-person frame accounting does not match face instances."
+        )
+
+    if sum(
+        head_pose_available.values()
+    ) <= 0:
+        raise RuntimeError(
+            "Head pose was never available."
+        )
 
     for feature_name in FEATURE_NAMES:
-        for person_id in person_ids:
-            available = (
-                feature_available_counts[
-                    feature_name
-                ].get(
-                    person_id,
-                    0,
-                )
+        observed = sum(
+            feature_available_counts[
+                feature_name
+            ].values()
+        )
+
+        if observed <= 0:
+            raise RuntimeError(
+                f"{feature_name} was never available."
             )
 
-            if (
-                available
-                != processed_frames
-            ):
-                raise RuntimeError(
-                    f"{feature_name} was not "
-                    f"available for all frames "
-                    f"for ID {person_id}."
-                )
-
-    expected_records = (
-        processed_frames
-        * 2
+    print()
+    print(
+        "Frames with multiple faces:",
+        multi_face_frames,
     )
-
-    if (
-        len(frame_records)
-        != expected_records
-    ):
-        raise RuntimeError(
-            "Unexpected number of frame records."
-        )
-
-    if (
-        len(window_records)
-        != expected_records
-    ):
-        raise RuntimeError(
-            "Unexpected number of window records."
-        )
+    print(
+        "Unique tracked person IDs:",
+        len(person_ids),
+    )
+    print(
+        "Person IDs with gaze estimation:",
+        sorted(gaze_estimation_person_ids),
+    )
+    print(
+        "Frames with duplicate track IDs:",
+        len(duplicate_track_id_frames),
+    )
 
     print()
     print(

@@ -1,7 +1,17 @@
 MPIIFaceGaze Cross-Dataset Gaze Estimation Evaluation
 
-Model: eth-xgaze
+Validation target: PhysioTrack GazeEstimator
+PhysioTrack source: src/physiotrack/face/gaze_estimation.py
+Dataset: datasets/MPIIFaceGaze/Data
+Dataset expected annotations: 37667
+Dataset integrity after evaluation: PASS
+Model mode: eth-xgaze
 Device: cpu
+ptgaze version: 0.3.0
+OpenCV version: 5.0.0
+NumPy version: 2.4.4
+Checkpoint file: model.safetensors
+Checkpoint SHA256: d1c91b2aa6a0c73856c16890d337afdecdb05563ed52182dfdb77742f1c856bc
 Participants: 15
 Total annotations: 37667
 Successful predictions: 37629
@@ -9,6 +19,7 @@ Image read failures: 0
 Face detection failures: 38
 Prediction failures: 0
 Invalid annotation rows: 0
+Accounted annotations: 37667
 
 Mean angular error: 8.241855 deg
 Median angular error: 7.744508 deg
@@ -18,4 +29,4 @@ Maximum angular error: 57.029950 deg
 90th percentile angular error: 14.149389 deg
 95th percentile angular error: 16.026888 deg
 
-Runtime: 1870.49 seconds
+Runtime: 2560.09 seconds
