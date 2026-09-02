@@ -30,9 +30,10 @@ Prediction files: 3226
 Total detections: 193618
 Maximum detections in one image: 3134
 Image with maximum detections: 0--Parade/0_Parade_Parade_0_275.jpg
-Inference runtime: 10.39 minutes
+Inference runtime: 12.83 minutes
 
 Generated outputs:
+Benchmark results: results/wider_face_results.csv
 Prediction directory: results/predictions
 Thesis table CSV: results/wider_face_thesis_table.csv
 Thesis table Markdown: results/wider_face_thesis_table.md

@@ -1,0 +1,76 @@
+FELT/RAVDESS Mouth Openness Evaluation
+
+Validation target: PhysioTrack FaceLandmarks + MouthOpenness
+FaceLandmarks source: src/physiotrack/face/landmarks.py
+MouthOpenness source: src/physiotrack/face/mouth.py
+FELT dataset: datasets/FELT/raw_motion_speech
+RAVDESS dataset: datasets/RAVDESS/Video_Speech
+Dataset scope: speech subset only
+FELT dataset integrity after evaluation: PASS
+RAVDESS dataset integrity after evaluation: PASS
+Face initialization: FELT FaceRect
+FELT FaceRect conversion: [x, y, x + width, y + height]
+Frame synchronization: exact FELT frame index, zero temporal lag
+Trailing RAVDESS frames without FELT annotation: ignored
+Duplicate-frame rule: largest FaceRect area, FaceScore tie-breaker
+Primary reference: d(62,66) / d(48,54)
+Secondary reference: mean[d(61,67), d(62,66), d(63,65)] / d(48,54)
+Face-box sensitivity reference: d(62,66) / FaceRectHeight
+Face-box sensitivity prediction: PhysioTrack mouth height in pixels / FaceRectHeight
+Quality exclusions: none based on FaceScore, mouth width, openness, or head pose
+Device: cpu
+OpenCV version: 5.0.0
+NumPy version: 2.4.4
+pandas version: 2.3.3
+MediaPipe version: 1.0.0
+Face landmarker model: face_landmarker.task
+Face landmarker SHA256: 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff
+Actors: 24
+Paired speech trials: 1440
+Total annotated frames: 158286
+Duplicate annotation rows resolved: 2
+Successful predictions: 158286
+Video read failures: 0
+Landmark failures: 0
+Invalid references: 0
+Prediction failures: 0
+Accounted annotated frames: 158286
+Availability: 1.000000
+
+Primary Reference Metrics
+MAE: 0.032706
+RMSE: 0.046186
+Median absolute error: 0.024819
+Std absolute error: 0.032611
+90th percentile absolute error: 0.069262
+95th percentile absolute error: 0.087438
+Mean signed error (prediction - reference): -0.001269
+Pearson r: 0.932273
+Spearman rho: 0.937550
+Lin CCC: 0.931997
+
+Secondary Three-Pair Reference Metrics
+MAE: 0.032722
+RMSE: 0.046108
+Median absolute error: 0.025041
+Std absolute error: 0.032485
+90th percentile absolute error: 0.068434
+95th percentile absolute error: 0.086617
+Mean signed error (prediction - reference): -0.001222
+Pearson r: 0.931966
+Spearman rho: 0.936923
+Lin CCC: 0.931328
+
+Face-Box-Normalized Sensitivity Metrics
+MAE: 0.008651
+RMSE: 0.011674
+Median absolute error: 0.006740
+Std absolute error: 0.007838
+90th percentile absolute error: 0.018508
+95th percentile absolute error: 0.023070
+Mean signed error (prediction - reference): -0.000475
+Pearson r: 0.936960
+Spearman rho: 0.939203
+Lin CCC: 0.936821
+
+Runtime: 1908.49 seconds

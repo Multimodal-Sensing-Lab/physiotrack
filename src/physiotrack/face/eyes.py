@@ -8,20 +8,31 @@ class EyeOpenness:
     RIGHT_EYE = (33, 160, 158, 133, 153, 144)
 
     @staticmethod
-    def _distance(p1, p2):
+    def _distance(p1, p2, image_size):
+        width, height = image_size
+
+        dx = (p1.x - p2.x) * width
+        dy = (p1.y - p2.y) * height
+
         return math.sqrt(
-            (p1.x - p2.x) ** 2 +
-            (p1.y - p2.y) ** 2
+            dx * dx +
+            dy * dy
         )
 
-    def _eye_ratio(self, landmarks, indices):
+    def _eye_ratio(self, landmarks, indices, image_size):
         p1, p2, p3, p4, p5, p6 = [
             landmarks[i] for i in indices
         ]
 
-        vertical_1 = self._distance(p2, p6)
-        vertical_2 = self._distance(p3, p5)
-        horizontal = self._distance(p1, p4)
+        vertical_1 = self._distance(
+            p2, p6, image_size
+        )
+        vertical_2 = self._distance(
+            p3, p5, image_size
+        )
+        horizontal = self._distance(
+            p1, p4, image_size
+        )
 
         if horizontal == 0:
             return None
@@ -30,16 +41,18 @@ class EyeOpenness:
             vertical_1 + vertical_2
         ) / (2.0 * horizontal)
 
-    def predict(self, landmarks):
+    def predict(self, landmarks, image_size):
         """Calculate openness for the left and right eyes."""
         left = self._eye_ratio(
             landmarks,
             self.LEFT_EYE,
+            image_size,
         )
 
         right = self._eye_ratio(
             landmarks,
             self.RIGHT_EYE,
+            image_size,
         )
 
         if left is None or right is None:

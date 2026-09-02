@@ -3,37 +3,10 @@ import json
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.io import loadmat
-
-from wider_face_eval import (
-    load_predictions,
-    normalize_scores,
-    evaluate_setting,
-)
 
 
 def main():
     project_dir = Path(__file__).resolve().parent
-    project_root = project_dir.parents[2]
-
-    wider_root = (
-        project_root
-        / "datasets"
-        / "WIDER_FACE"
-    )
-
-    pred_dir = (
-        project_dir
-        / "results"
-        / "predictions"
-    )
-
-    gt_dir = (
-        wider_root
-        / "eval_tools"
-        / "eval_tools"
-        / "ground_truth"
-    )
 
     results_dir = (
         project_dir
@@ -50,9 +23,29 @@ def main():
         / "wider_face_inference_summary.json"
     )
 
+    benchmark_results_path = (
+        results_dir
+        / "wider_face_results.csv"
+    )
+
     summary_path = (
         results_dir
         / "wider_face_summary.txt"
+    )
+
+    table_csv_path = (
+        results_dir
+        / "wider_face_thesis_table.csv"
+    )
+
+    table_md_path = (
+        results_dir
+        / "wider_face_thesis_table.md"
+    )
+
+    figure_path = (
+        figures_dir
+        / "wider_face_precision_recall.png"
     )
 
     results_dir.mkdir(
@@ -65,12 +58,28 @@ def main():
         exist_ok=True,
     )
 
-    if not inference_summary_path.is_file():
-        raise FileNotFoundError(
-            "Inference summary was not found. "
-            "Run wider_face_inference.py first: "
-            f"{inference_summary_path}"
-        )
+    required_paths = [
+        inference_summary_path,
+        benchmark_results_path,
+    ]
+
+    for path in required_paths:
+        if not path.is_file():
+            raise FileNotFoundError(
+                "Required quantitative input was not found. "
+                "Run wider_face_inference.py and "
+                "wider_face_eval.py first: "
+                f"{path}"
+            )
+
+    for path in [
+        summary_path,
+        table_csv_path,
+        table_md_path,
+        figure_path,
+    ]:
+        if path.exists():
+            path.unlink()
 
     with open(
         inference_summary_path,
@@ -81,73 +90,104 @@ def main():
             file
         )
 
-    val_data = loadmat(
-        gt_dir
-        / "wider_face_val.mat"
+    benchmark = pd.read_csv(
+        benchmark_results_path
     )
 
-    event_list = (
-        val_data["event_list"]
-    )
-
-    file_list = (
-        val_data["file_list"]
-    )
-
-    face_bbx_list = (
-        val_data["face_bbx_list"]
-    )
-
-    print("Reading predictions...")
-
-    predictions = load_predictions(
-        pred_dir,
-        event_list,
-        file_list,
-    )
-
-    predictions = normalize_scores(
-        predictions
-    )
-
-    settings = {
-        "Easy": "wider_easy_val.mat",
-        "Medium": "wider_medium_val.mat",
-        "Hard": "wider_hard_val.mat",
+    required_columns = {
+        "Difficulty",
+        "Threshold Index",
+        "Score Threshold",
+        "Precision",
+        "Recall",
+        "Average Precision",
+        "Evaluated Faces",
     }
+
+    if not required_columns.issubset(
+        benchmark.columns
+    ):
+        raise RuntimeError(
+            "Unexpected columns in benchmark results: "
+            f"{benchmark.columns.tolist()}"
+        )
+
+    settings = [
+        "Easy",
+        "Medium",
+        "Hard",
+    ]
 
     results = {}
 
-    for name, filename in settings.items():
-        setting_data = loadmat(
-            gt_dir
-            / filename
+    for name in settings:
+        subset = (
+            benchmark[
+                benchmark["Difficulty"]
+                == name
+            ]
+            .sort_values(
+                "Threshold Index"
+            )
+            .reset_index(
+                drop=True
+            )
         )
 
-        (
-            ap,
-            precision,
-            recall,
-            total_faces,
-        ) = evaluate_setting(
-            predictions,
-            face_bbx_list,
-            setting_data["gt_list"],
+        if len(subset) != 1000:
+            raise RuntimeError(
+                f"Unexpected number of "
+                f"{name} threshold rows: "
+                f"{len(subset)}"
+            )
+
+        ap_values = (
+            subset[
+                "Average Precision"
+            ]
+            .dropna()
+            .unique()
         )
+
+        face_values = (
+            subset[
+                "Evaluated Faces"
+            ]
+            .dropna()
+            .unique()
+        )
+
+        if len(ap_values) != 1:
+            raise RuntimeError(
+                f"Inconsistent AP values "
+                f"for {name}."
+            )
+
+        if len(face_values) != 1:
+            raise RuntimeError(
+                f"Inconsistent evaluated-face "
+                f"counts for {name}."
+            )
 
         results[name] = {
-            "ap": float(ap),
-            "precision": precision,
-            "recall": recall,
+            "ap": float(
+                ap_values[0]
+            ),
+            "precision": subset[
+                "Precision"
+            ].to_numpy(),
+            "recall": subset[
+                "Recall"
+            ].to_numpy(),
             "total_faces": int(
-                total_faces
+                face_values[0]
             ),
         }
 
         print(
             f"{name}: "
-            f"AP={ap:.6f}, "
-            f"faces={total_faces}"
+            f"AP={results[name]['ap']:.6f}, "
+            f"faces={results[name]['total_faces']}"
         )
 
     plt.figure(
@@ -183,11 +223,6 @@ def main():
     plt.legend()
     plt.tight_layout()
 
-    figure_path = (
-        figures_dir
-        / "wider_face_precision_recall.png"
-    )
-
     plt.savefig(
         figure_path,
         dpi=300,
@@ -214,16 +249,6 @@ def main():
 
     table = pd.DataFrame(
         table_rows
-    )
-
-    table_csv_path = (
-        results_dir
-        / "wider_face_thesis_table.csv"
-    )
-
-    table_md_path = (
-        results_dir
-        / "wider_face_thesis_table.md"
     )
 
     table.to_csv(
@@ -329,6 +354,10 @@ def main():
         "",
         "Generated outputs:",
         (
+            "Benchmark results: "
+            "results/wider_face_results.csv"
+        ),
+        (
             "Prediction directory: "
             "results/predictions"
         ),
@@ -381,14 +410,6 @@ def main():
     print(
         f"Saved table Markdown: {table_md_path}"
     )
-
-    if inference_summary_path.exists():
-        inference_summary_path.unlink()
-
-        print(
-            "Removed temporary inference summary:",
-            inference_summary_path,
-        )
 
 
 if __name__ == "__main__":

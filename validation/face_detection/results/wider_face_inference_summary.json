@@ -1,0 +1,15 @@
+{
+  "dataset": "WIDER FACE validation split",
+  "validation_images": 3226,
+  "images_processed": 3226,
+  "failed_images": 0,
+  "prediction_files": 3226,
+  "total_detections": 193618,
+  "maximum_detections_in_one_image": 3134,
+  "image_with_maximum_detections": "0--Parade/0_Parade_Parade_0_275.jpg",
+  "confidence_threshold": 0.001,
+  "max_det": 10000,
+  "device": "CPU",
+  "runtime_seconds": 769.6111426000001,
+  "runtime_minutes": 12.826852376666668
+}

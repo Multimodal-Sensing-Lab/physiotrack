@@ -7,6 +7,7 @@ import time
 import cv2
 import numpy as np
 
+from physiotrack.face.blink import BlinkDetector
 from physiotrack.face.eyes import EyeOpenness
 from physiotrack.face.landmarks import FaceLandmarks
 from physiotrack.models import Models
@@ -64,21 +65,22 @@ TEST_FIGURE_PATH = (
 )
 
 
-SELECTED_THRESHOLD = 0.44
+SELECTED_THRESHOLD = 0.22
 SELECTED_MIN_CLOSED_FRAMES = 3
 
 EVENT_IOU_THRESHOLD = 0.50
 
 CALIBRATION_THRESHOLDS = np.arange(
-    0.20,
-    0.81,
-    0.02,
+    0.10,
+    0.51,
+    0.01,
 )
 
 CALIBRATION_MIN_CLOSED_FRAMES = [
     1,
     2,
     3,
+    4,
 ]
 
 EXPECTED_SPLIT_VIDEOS = {
@@ -155,50 +157,60 @@ def build_events(
     openness,
     threshold,
     min_closed_frames,
+    fps,
 ):
-    """Convert an eye-openness sequence into blink intervals."""
+    """Convert EyeOpenness values into events using PhysioTrack BlinkDetector."""
+    detector = BlinkDetector(
+        threshold=threshold,
+        fps=fps,
+        min_closed_frames=min_closed_frames,
+    )
+
     events = []
 
-    closed_start = None
-    closed_count = 0
-
     for frame_index, value in enumerate(openness):
-        if not np.isfinite(value):
-            closed_start = None
-            closed_count = 0
+        detector_value = (
+            float(value)
+            if np.isfinite(value)
+            else None
+        )
+
+        result = detector.update(
+            detector_value,
+            person_id=0,
+        )
+
+        if not result["blink"]:
             continue
 
-        if value < threshold:
-            if closed_start is None:
-                closed_start = frame_index
+        duration_seconds = result[
+            "blink_duration"
+        ]
 
-            closed_count += 1
+        if duration_seconds is None:
             continue
 
-        if (
-            closed_start is not None
-            and closed_count
-            >= min_closed_frames
-        ):
-            events.append(
-                (
-                    closed_start,
-                    frame_index - 1,
-                )
+        closed_frames = int(
+            round(
+                duration_seconds
+                * fps
             )
+        )
 
-        closed_start = None
-        closed_count = 0
+        if closed_frames < 1:
+            continue
 
-    if (
-        closed_start is not None
-        and closed_count
-        >= min_closed_frames
-    ):
+        end_frame = frame_index - 1
+        start_frame = (
+            end_frame
+            - closed_frames
+            + 1
+        )
+
         events.append(
             (
-                closed_start,
-                len(openness) - 1,
+                start_frame,
+                end_frame,
             )
         )
 
@@ -905,7 +917,11 @@ def extract_split(split):
 
                     eye_result = (
                         eye_model.predict(
-                            landmarks
+                            landmarks,
+                            image_size=(
+                                image_width,
+                                image_height,
+                            ),
                         )
                     )
 
@@ -1063,6 +1079,7 @@ def evaluate_records(
             openness,
             threshold,
             min_closed_frames,
+            fps,
         )
 
         (
@@ -1577,6 +1594,9 @@ def save_summary(
             "Blink method: threshold-based temporal detector\n"
         )
         file.write(
+            "Parameter selection: validation split only\n"
+        )
+        file.write(
             f"Blink threshold: {metrics['threshold']:.4f}\n"
         )
         file.write(
@@ -1885,6 +1905,13 @@ def run_validation_calibration():
     )
 
 
+def generate_final_tables_and_figure():
+    """Regenerate the thesis tables and quantitative figure from final results."""
+    from mpeblink_blink_plot import main as plot_main
+
+    plot_main()
+
+
 def run_final_test():
     """Run the final test split with the frozen validation-selected parameters."""
     clean_test_outputs()
@@ -2033,6 +2060,12 @@ def run_final_test():
     print(
         sequence_path
     )
+
+    print(
+        "\nGenerating thesis tables and quantitative figure..."
+    )
+
+    generate_final_tables_and_figure()
 
 
 def parse_args():

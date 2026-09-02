@@ -21,8 +21,8 @@ class FaceAnalysisConfig:
 
     tracker_type: str = "ocsort"
 
-    blink_threshold: float = 0.20
-    min_closed_frames: int = 2
+    blink_threshold: float = 0.22
+    min_closed_frames: int = 3
 
     gaze_estimation_mode: str = "eth-xgaze"
     gaze_estimation_min_iou: float = 0.10

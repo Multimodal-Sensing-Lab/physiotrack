@@ -6,7 +6,8 @@ Face initialization: ground-truth bounding boxes
 Landmarks: PhysioTrack FaceLandmarks using MediaPipe
 Eye descriptor: PhysioTrack EyeOpenness
 Blink method: threshold-based temporal detector
-Blink threshold: 0.4400
+Parameter selection: validation split only
+Blink threshold: 0.2200
 Minimum closed frames: 3
 Event temporal IoU threshold: 0.50
 
@@ -25,25 +26,25 @@ Landmark failures: 105936
 Video frame mismatches: 0
 Video read failures: 0
 Out-of-range blink annotations retained: 1
-Runtime: 96.48 minutes
+Runtime: 80.56 minutes
 
 Blink event evaluation
 ----------------------
 Ground-truth blinks: 7564
-Predicted blinks: 6010
-True positives: 1827
-False positives: 4183
-False negatives: 5737
-Precision: 0.303993
-Recall: 0.241539
-F1: 0.269191
-Mean matched temporal IoU: 0.681126
+Predicted blinks: 5987
+True positives: 1941
+False positives: 4046
+False negatives: 5623
+Precision: 0.324202
+Recall: 0.256610
+F1: 0.286473
+Mean matched temporal IoU: 0.671718
 Median matched temporal IoU: 0.666667
-Mean onset error: 0.7849 frames
-Mean offset error: 1.9836 frames
-Mean blink-duration error: 0.101787 s
-Blink-count MAE per sequence: 6.119360
-Blink-rate MAE: 10.799823 blinks/min
+Mean onset error: 0.7264 frames
+Mean offset error: 2.0031 frames
+Mean blink-duration error: 0.102538 s
+Blink-count MAE per sequence: 5.631732
+Blink-rate MAE: 10.346784 blinks/min
 
 Eye-openness analysis
 ---------------------
@@ -51,8 +52,8 @@ ROC AUC population: finite EyeOpenness samples only
 Eye-openness samples: 389922
 Blink-frame eye samples: 48912
 Non-blink eye samples: 341010
-Blink-frame openness mean: 0.352304
-Blink-frame openness median: 0.305653
-Non-blink openness mean: 0.491654
-Non-blink openness median: 0.476032
-Blink-vs-non-blink ROC AUC using negative openness: 0.663061
+Blink-frame openness mean: 0.208928
+Blink-frame openness median: 0.180405
+Non-blink openness mean: 0.283185
+Non-blink openness median: 0.272876
+Blink-vs-non-blink ROC AUC using negative openness: 0.660808

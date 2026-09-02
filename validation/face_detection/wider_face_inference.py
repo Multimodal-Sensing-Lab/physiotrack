@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import shutil
 import time
 
 import cv2
@@ -27,6 +28,14 @@ def main():
         parents=True,
         exist_ok=True,
     )
+
+    if output_dir.exists():
+        shutil.rmtree(
+            output_dir
+        )
+
+    if inference_summary_path.exists():
+        inference_summary_path.unlink()
 
     output_dir.mkdir(
         parents=True,

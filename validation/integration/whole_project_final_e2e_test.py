@@ -136,6 +136,23 @@ def module_available(value: Any) -> bool:
     return True
 
 
+def finite_numeric(value: Any) -> bool:
+    if value is None:
+        return False
+
+    try:
+        return bool(
+            np.isfinite(
+                float(value)
+            )
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        return False
+
+
 def get_faces(prediction: Any) -> list[Any]:
     if prediction is None:
         return []
@@ -263,6 +280,11 @@ def main() -> None:
 
     config = make_config()
 
+    blink_configuration_valid = (
+        config.blink_threshold == 0.22
+        and config.min_closed_frames == 3
+    )
+
     print("=" * 86)
     print(
         "PhysioTrack Final Whole-Project "
@@ -303,6 +325,9 @@ def main() -> None:
     total_faces = 0
 
     track_ids: set[Any] = set()
+
+    valid_eye_openness_samples = 0
+    valid_mouth_openness_samples = 0
 
     try:
         while True:
@@ -436,6 +461,48 @@ def main() -> None:
                             module
                         ] += 1
 
+                eyes_value = values[
+                    "eyes"
+                ]
+
+                if (
+                    isinstance(
+                        eyes_value,
+                        dict,
+                    )
+                    and eyes_value.get(
+                        "available",
+                        False,
+                    )
+                    and finite_numeric(
+                        eyes_value.get(
+                            "mean_openness"
+                        )
+                    )
+                ):
+                    valid_eye_openness_samples += 1
+
+                mouth_value = values[
+                    "mouth"
+                ]
+
+                if (
+                    isinstance(
+                        mouth_value,
+                        dict,
+                    )
+                    and mouth_value.get(
+                        "available",
+                        False,
+                    )
+                    and finite_numeric(
+                        mouth_value.get(
+                            "mouth_openness"
+                        )
+                    )
+                ):
+                    valid_mouth_openness_samples += 1
+
                 records.append(
                     {
                         "frame_index":
@@ -554,6 +621,18 @@ def main() -> None:
         len(records) == total_faces
     )
 
+    eye_openness_values_valid = (
+        valid_eye_openness_samples > 0
+        and valid_eye_openness_samples
+        == success_counts["eyes"]
+    )
+
+    mouth_openness_values_valid = (
+        valid_mouth_openness_samples > 0
+        and valid_mouth_openness_samples
+        == success_counts["mouth"]
+    )
+
     overall_pass = (
         processed_frames > 0
         and frame_count_matches
@@ -561,6 +640,9 @@ def main() -> None:
         and tracking_observed
         and record_count_matches
         and all_modules_observed
+        and blink_configuration_valid
+        and eye_openness_values_valid
+        and mouth_openness_values_valid
     )
 
     normalized_track_ids = sorted(
@@ -613,6 +695,26 @@ def main() -> None:
             record_count_matches,
         "all_modules_observed":
             all_modules_observed,
+        "blink_configuration": {
+            "threshold":
+                config.blink_threshold,
+            "min_closed_frames":
+                config.min_closed_frames,
+            "matches_validated_configuration":
+                blink_configuration_valid,
+        },
+        "eye_openness": {
+            "finite_samples":
+                valid_eye_openness_samples,
+            "matches_available_eye_samples":
+                eye_openness_values_valid,
+        },
+        "mouth_openness": {
+            "finite_samples":
+                valid_mouth_openness_samples,
+            "matches_available_mouth_samples":
+                mouth_openness_values_valid,
+        },
         "overall_status":
             (
                 "PASS"
@@ -843,6 +945,39 @@ def main() -> None:
     )
 
     print(
+        "Blink configuration:",
+        (
+            f"threshold={config.blink_threshold}, "
+            f"min_closed_frames={config.min_closed_frames}"
+        ),
+    )
+
+    print(
+        "Blink configuration valid:",
+        blink_configuration_valid,
+    )
+
+    print(
+        "Finite eye-openness samples:",
+        valid_eye_openness_samples,
+    )
+
+    print(
+        "Eye-openness values valid:",
+        eye_openness_values_valid,
+    )
+
+    print(
+        "Finite mouth-openness samples:",
+        valid_mouth_openness_samples,
+    )
+
+    print(
+        "Mouth-openness values valid:",
+        mouth_openness_values_valid,
+    )
+
+    print(
         "FINAL WHOLE-PROJECT E2E TEST:",
         (
             "PASS"
@@ -897,6 +1032,21 @@ def main() -> None:
         if not all_modules_observed:
             failed_checks.append(
                 "one_or_more_modules_unobserved"
+            )
+
+        if not blink_configuration_valid:
+            failed_checks.append(
+                "blink_configuration_mismatch"
+            )
+
+        if not eye_openness_values_valid:
+            failed_checks.append(
+                "eye_openness_values_invalid"
+            )
+
+        if not mouth_openness_values_valid:
+            failed_checks.append(
+                "mouth_openness_values_invalid"
             )
 
         raise RuntimeError(

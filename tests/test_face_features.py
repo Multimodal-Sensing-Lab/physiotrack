@@ -65,7 +65,10 @@ def test_eye_openness_returns_expected_ratio():
     landmarks[373].x = 0.75
     landmarks[373].y = 0.55
 
-    result = EyeOpenness().predict(landmarks)
+    result = EyeOpenness().predict(
+        landmarks,
+        image_size=(100, 100),
+    )
 
     assert np.isclose(result["right_openness"], 0.5)
     assert np.isclose(result["left_openness"], 0.5)
@@ -176,7 +179,8 @@ def test_mouth_openness_ratio():
     landmarks[14].y = 0.55
 
     result = MouthOpenness().predict(
-        landmarks
+        landmarks,
+        image_size=(100, 100),
     )
 
     assert np.isclose(
@@ -272,7 +276,8 @@ def test_gaze_descriptor_uses_both_irises():
     landmarks[473].y = 0.5
 
     result = GazeDescriptor().predict(
-        landmarks
+        landmarks,
+        image_size=(100, 100),
     )
 
     assert result["mean_iris_x"] is not None
@@ -281,6 +286,116 @@ def test_gaze_descriptor_uses_both_irises():
     assert np.isclose(
         result["mean_iris_x"],
         0.5,
+    )
+
+
+def test_eye_openness_is_invariant_to_frame_aspect_ratio():
+    landmarks_square = make_landmarks()
+    landmarks_wide = make_landmarks()
+
+    points = {
+        33: (20.0, 50.0),
+        133: (40.0, 50.0),
+        160: (25.0, 45.0),
+        144: (25.0, 55.0),
+        158: (35.0, 45.0),
+        153: (35.0, 55.0),
+        362: (60.0, 50.0),
+        263: (80.0, 50.0),
+        385: (65.0, 45.0),
+        380: (65.0, 55.0),
+        387: (75.0, 45.0),
+        373: (75.0, 55.0),
+    }
+
+    for index, (x, y) in points.items():
+        landmarks_square[index].x = x / 100.0
+        landmarks_square[index].y = y / 100.0
+        landmarks_wide[index].x = x / 200.0
+        landmarks_wide[index].y = y / 100.0
+
+    square = EyeOpenness().predict(
+        landmarks_square,
+        image_size=(100, 100),
+    )
+    wide = EyeOpenness().predict(
+        landmarks_wide,
+        image_size=(200, 100),
+    )
+
+    assert np.isclose(
+        square["mean_openness"],
+        wide["mean_openness"],
+    )
+
+
+def test_mouth_openness_is_invariant_to_frame_aspect_ratio():
+    landmarks_square = make_landmarks()
+    landmarks_wide = make_landmarks()
+
+    points = {
+        61: (30.0, 50.0),
+        291: (70.0, 50.0),
+        13: (50.0, 45.0),
+        14: (50.0, 55.0),
+    }
+
+    for index, (x, y) in points.items():
+        landmarks_square[index].x = x / 100.0
+        landmarks_square[index].y = y / 100.0
+        landmarks_wide[index].x = x / 200.0
+        landmarks_wide[index].y = y / 100.0
+
+    square = MouthOpenness().predict(
+        landmarks_square,
+        image_size=(100, 100),
+    )
+    wide = MouthOpenness().predict(
+        landmarks_wide,
+        image_size=(200, 100),
+    )
+
+    assert np.isclose(
+        square["mouth_openness"],
+        wide["mouth_openness"],
+    )
+
+
+def test_gaze_descriptor_is_invariant_to_frame_aspect_ratio():
+    landmarks_square = make_landmarks()
+    landmarks_wide = make_landmarks()
+
+    points = {
+        33: (20.0, 50.0),
+        133: (40.0, 50.0),
+        468: (30.0, 45.0),
+        362: (60.0, 50.0),
+        263: (80.0, 50.0),
+        473: (70.0, 45.0),
+    }
+
+    for index, (x, y) in points.items():
+        landmarks_square[index].x = x / 100.0
+        landmarks_square[index].y = y / 100.0
+        landmarks_wide[index].x = x / 200.0
+        landmarks_wide[index].y = y / 100.0
+
+    square = GazeDescriptor().predict(
+        landmarks_square,
+        image_size=(100, 100),
+    )
+    wide = GazeDescriptor().predict(
+        landmarks_wide,
+        image_size=(200, 100),
+    )
+
+    assert np.isclose(
+        square["mean_iris_x"],
+        wide["mean_iris_x"],
+    )
+    assert np.isclose(
+        square["mean_iris_y"],
+        wide["mean_iris_y"],
     )
 
 
@@ -332,6 +447,13 @@ def test_face_analysis_config_defaults_are_valid():
     config = FaceAnalysisConfig()
 
     config.validate()
+
+    assert np.isclose(
+        config.blink_threshold,
+        0.22,
+    )
+
+    assert config.min_closed_frames == 3
 
 
 def test_face_analysis_config_rejects_invalid_values():

@@ -43,8 +43,8 @@ class FaceAnalysis(PredictorMixin):
         config: Optional[FaceAnalysisConfig] = None,
         fps: Optional[float] = None,
         temporal_window_sec: float = 5.0,
-        blink_threshold: float = 0.20,
-        min_closed_frames: int = 2,
+        blink_threshold: float = 0.22,
+        min_closed_frames: int = 3,
         landmark_model_path: Optional[Union[str, Path]] = None,
         gaze_estimation_camera_path: Optional[
             Union[str, Path]
@@ -227,6 +227,8 @@ class FaceAnalysis(PredictorMixin):
         self.emotion = emotion
         self.regions = regions
         self.temporal = temporal
+
+        self._active_temporal_person_ids = set()
 
     @staticmethod
     def _resolve_gaze_device(
@@ -491,6 +493,44 @@ class FaceAnalysis(PredictorMixin):
 
         return matches
 
+    def _handle_missing_temporal_person_ids(
+        self,
+        face_result,
+    ):
+        """Break temporal continuity for tracked IDs missing from this frame."""
+        current_person_ids = {
+            face.id
+            for face in face_result
+            if face.id is not None
+        }
+
+        missing_person_ids = (
+            self._active_temporal_person_ids
+            - current_person_ids
+        )
+
+        for person_id in missing_person_ids:
+            if self.blink is not None:
+                self.blink.update(
+                    None,
+                    person_id=person_id,
+                )
+
+            if self.mouth_motion is not None:
+                self.mouth_motion.update(
+                    None,
+                    person_id=person_id,
+                )
+
+            if self.temporal is not None:
+                self.temporal.reset(
+                    person_id=person_id
+                )
+
+        self._active_temporal_person_ids = (
+            current_person_ids
+        )
+
     def _predict_frame(
         self,
         frame,
@@ -507,6 +547,10 @@ class FaceAnalysis(PredictorMixin):
             )
         else:
             face_result = detection_result
+
+        self._handle_missing_temporal_person_ids(
+            face_result
+        )
 
         if len(face_result) == 0:
             return Result(
@@ -646,6 +690,10 @@ class FaceAnalysis(PredictorMixin):
                 eye_result = (
                     self.eyes.predict(
                         face_landmarks,
+                        image_size=(
+                            frame.shape[1],
+                            frame.shape[0],
+                        ),
                     )
                 )
 
@@ -696,6 +744,10 @@ class FaceAnalysis(PredictorMixin):
                 gaze_result = (
                     self.gaze.predict(
                         face_landmarks,
+                        image_size=(
+                            frame.shape[1],
+                            frame.shape[0],
+                        ),
                     )
                 )
 
@@ -732,6 +784,10 @@ class FaceAnalysis(PredictorMixin):
                 mouth_result = (
                     self.mouth.predict(
                         face_landmarks,
+                        image_size=(
+                            frame.shape[1],
+                            frame.shape[0],
+                        ),
                     )
                 )
 
@@ -1036,6 +1092,8 @@ class FaceAnalysis(PredictorMixin):
 
     def reset_temporal_state(self):
         """Reset temporal face-analysis state."""
+        self._active_temporal_person_ids.clear()
+
         if (
             self.blink is not None
             and hasattr(

@@ -11,47 +11,62 @@ class GazeDescriptor:
     LEFT_CORNERS = (362, 263)
 
     @staticmethod
-    def _eye_coordinates(landmarks, iris_index, corner_indices):
+    def _eye_coordinates(
+        landmarks,
+        iris_index,
+        corner_indices,
+        image_size,
+    ):
+        width_px, height_px = image_size
+
         iris = landmarks[iris_index]
         p1 = landmarks[corner_indices[0]]
         p2 = landmarks[corner_indices[1]]
 
-        vx = p2.x - p1.x
-        vy = p2.y - p1.y
+        vx = (p2.x - p1.x) * width_px
+        vy = (p2.y - p1.y) * height_px
 
-        width = math.sqrt(vx * vx + vy * vy)
+        eye_width = math.sqrt(
+            vx * vx + vy * vy
+        )
 
-        if width == 0:
+        if eye_width == 0:
             return None, None
 
-        ux = vx / width
-        uy = vy / width
+        ux = vx / eye_width
+        uy = vy / eye_width
 
         # Perpendicular direction in image coordinates.
         nx = -uy
         ny = ux
 
-        dx = iris.x - p1.x
-        dy = iris.y - p1.y
+        dx = (iris.x - p1.x) * width_px
+        dy = (iris.y - p1.y) * height_px
 
-        horizontal = (dx * ux + dy * uy) / width
-        vertical = (dx * nx + dy * ny) / width
+        horizontal = (
+            dx * ux + dy * uy
+        ) / eye_width
+        vertical = (
+            dx * nx + dy * ny
+        ) / eye_width
 
         return horizontal, vertical
 
-    def predict(self, landmarks):
+    def predict(self, landmarks, image_size):
         """Return normalized iris coordinates for both eyes."""
 
         right_x, right_y = self._eye_coordinates(
             landmarks,
             self.RIGHT_IRIS,
             self.RIGHT_CORNERS,
+            image_size,
         )
 
         left_x, left_y = self._eye_coordinates(
             landmarks,
             self.LEFT_IRIS,
             self.LEFT_CORNERS,
+            image_size,
         )
 
         mean_x = (

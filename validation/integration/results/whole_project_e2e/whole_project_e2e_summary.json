@@ -106,5 +106,18 @@
   "tracking_observed": true,
   "record_count_matches": true,
   "all_modules_observed": true,
+  "blink_configuration": {
+    "threshold": 0.22,
+    "min_closed_frames": 3,
+    "matches_validated_configuration": true
+  },
+  "eye_openness": {
+    "finite_samples": 1127,
+    "matches_available_eye_samples": true
+  },
+  "mouth_openness": {
+    "finite_samples": 1127,
+    "matches_available_mouth_samples": true
+  },
   "overall_status": "PASS"
 }

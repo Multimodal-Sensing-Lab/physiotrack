@@ -11,13 +11,20 @@ class MouthOpenness:
     LOWER_LIP = 14
 
     @staticmethod
-    def _distance(p1, p2):
-        return math.sqrt(
-            (p1.x - p2.x) ** 2 +
-            (p1.y - p2.y) ** 2
+    def _distance(p1, p2, image_size):
+        width, height = image_size
+
+        dx = (p1.x - p2.x) * width
+        dy = (p1.y - p2.y) * height
+
+        distance_px = math.sqrt(
+            dx * dx +
+            dy * dy
         )
 
-    def predict(self, landmarks):
+        return distance_px / width
+
+    def predict(self, landmarks, image_size):
         """Calculate normalized mouth openness."""
         left = landmarks[self.LEFT_CORNER]
         right = landmarks[self.RIGHT_CORNER]
@@ -25,8 +32,12 @@ class MouthOpenness:
         upper = landmarks[self.UPPER_LIP]
         lower = landmarks[self.LOWER_LIP]
 
-        mouth_width = self._distance(left, right)
-        mouth_height = self._distance(upper, lower)
+        mouth_width = self._distance(
+            left, right, image_size
+        )
+        mouth_height = self._distance(
+            upper, lower, image_size
+        )
 
         if mouth_width == 0:
             return {

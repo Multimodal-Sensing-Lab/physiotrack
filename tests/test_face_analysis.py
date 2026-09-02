@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from physiotrack.face.analysis import FaceAnalysis
+from physiotrack.face.blink import BlinkDetector
 from physiotrack.face.config import FaceAnalysisConfig
+from physiotrack.face.mouth_motion import MouthMovement
 from physiotrack.results import Instance, Result
 
 
@@ -97,7 +99,7 @@ class DummyQuality:
 
 
 class DummyEyes:
-    def predict(self, landmarks):
+    def predict(self, landmarks, image_size):
         return {
             "left_openness": 0.3,
             "right_openness": 0.3,
@@ -120,7 +122,7 @@ class DummyBlink:
 
 
 class DummyGaze:
-    def predict(self, landmarks):
+    def predict(self, landmarks, image_size):
         return {
             "right_iris_x": 0.5,
             "right_iris_y": 0.0,
@@ -174,7 +176,7 @@ class DummyGazeEstimator:
 
 
 class DummyMouth:
-    def predict(self, landmarks):
+    def predict(self, landmarks, image_size):
         return {
             "mouth_openness": 0.2,
             "mouth_width": 0.4,
@@ -790,3 +792,184 @@ def test_analysis_rejects_invalid_config_type():
             config={},
             fps=25,
         )
+
+def test_analysis_default_blink_parameters_match_config():
+    pipeline = FaceAnalysis(
+        detector=DummyDetector(),
+        tracker=DummyTracker(),
+        orientation=DummyOrientation(),
+        landmarks=DummyLandmarks(),
+        quality=DummyQuality(),
+        eyes=DummyEyes(),
+        blink=None,
+        gaze=DummyGaze(),
+        mouth=DummyMouth(),
+        mouth_motion=DummyMouthMotion(),
+        emotion=DummyEmotion(),
+        regions=DummyRegions(),
+        temporal=DummyTemporal(),
+        fps=25,
+        device="cpu",
+    )
+
+    assert pipeline.config.blink_threshold == pytest.approx(
+        0.22
+    )
+    assert pipeline.config.min_closed_frames == 3
+
+    assert pipeline.blink.threshold == pytest.approx(
+        0.22
+    )
+    assert pipeline.blink.min_closed_frames == 3
+
+def test_missing_tracked_frame_breaks_temporal_continuity():
+    class GapTracker:
+        def __init__(self):
+            self.calls = 0
+
+        def track(self, frame, detection_result):
+            self.calls += 1
+
+            if self.calls == 2:
+                return Result(
+                    orig_img=frame,
+                    instances=[],
+                    task="face",
+                )
+
+            return Result(
+                orig_img=frame,
+                instances=[
+                    Instance(
+                        id=1,
+                        box=np.array(
+                            [10, 10, 50, 50],
+                            dtype=float,
+                        ),
+                        confidence=0.9,
+                        cls=0,
+                        cls_name="face",
+                    )
+                ],
+                task="face",
+            )
+
+    class SequenceMouth(DummyMouth):
+        def __init__(self):
+            self.values = iter(
+                [
+                    0.1,
+                    0.4,
+                ]
+            )
+
+        def predict(self, landmarks, image_size=None):
+            openness = next(
+                self.values
+            )
+
+            return {
+                "mouth_openness": openness,
+                "mouth_width": 0.4,
+                "mouth_height": (
+                    openness * 0.4
+                ),
+            }
+
+    class RecordingTemporal(DummyTemporal):
+        def __init__(self):
+            self.reset_person_ids = []
+
+        def reset(self, person_id=None):
+            self.reset_person_ids.append(
+                person_id
+            )
+
+    blink = BlinkDetector(
+        threshold=0.22,
+        fps=25,
+        min_closed_frames=1,
+    )
+
+    # Establish one completed blink before the tracked-frame gap.
+    blink.update(
+        0.1,
+        person_id=1,
+    )
+    completed = blink.update(
+        0.3,
+        person_id=1,
+    )
+
+    assert completed["blink_count"] == 1
+
+    mouth_motion = MouthMovement(
+        fps=25
+    )
+
+    temporal = RecordingTemporal()
+
+    pipeline = make_pipeline()
+
+    pipeline.tracker = GapTracker()
+    pipeline.blink = blink
+    pipeline.mouth = SequenceMouth()
+    pipeline.mouth_motion = mouth_motion
+    pipeline.temporal = temporal
+
+    frame = np.zeros(
+        (100, 100, 3),
+        dtype=np.uint8,
+    )
+
+    first = pipeline.predict(
+        frame
+    )
+
+    missing = pipeline.predict(
+        frame
+    )
+
+    returned = pipeline.predict(
+        frame
+    )
+
+    assert len(first) == 1
+    assert len(missing) == 0
+    assert len(returned) == 1
+
+    returned_features = (
+        returned[0].face_features
+    )
+
+    # The gap must not create a blink or erase the prior cumulative count.
+    assert returned_features[
+        "blink"
+    ][
+        "blink"
+    ] is False
+
+    assert returned_features[
+        "blink"
+    ][
+        "blink_count"
+    ] == 1
+
+    # Mouth movement after the gap must start a new contiguous segment.
+    assert returned_features[
+        "mouth_motion"
+    ][
+        "mouth_movement"
+    ] == 0.0
+
+    assert returned_features[
+        "mouth_motion"
+    ][
+        "mouth_velocity"
+    ] == 0.0
+
+    # Temporal aggregation must not bridge the unobserved frame.
+    assert temporal.reset_person_ids == [
+        1
+    ]
+

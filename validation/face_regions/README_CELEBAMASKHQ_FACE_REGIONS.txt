@@ -61,8 +61,6 @@ datasets/
     ├── CelebAMask-HQ-mask-anno/
     └── CelebA-HQ-to-CelebA-mapping.txt
 
-No machine-specific dataset path is required.
-
 Validation Files
 ----------------
 The validation package is located in:
@@ -93,14 +91,12 @@ CelebAMask-HQ directory can remain unchanged.
 
 Path Handling
 -------------
-The evaluation scripts do not contain a user-specific absolute path.
-
 The project location is determined automatically from the location of the
 validation script, and the evaluator expects the dataset at:
 
 datasets/CelebAMask-HQ
 
-Therefore, the evaluation can be reproduced on another machine without editing
+Therefore, the evaluation can be generated on another machine without editing
 dataset paths as long as the documented project structure is preserved.
 
 Evaluated Component
@@ -472,4 +468,3 @@ To reproduce the validation on another machine:
    and inspect the generated qualitative evidence under results/qualitative/
    and results/figures/.
 
-No user-specific absolute path or undocumented manual split is required.

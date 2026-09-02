@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -35,6 +36,43 @@ def clean_output_directory() -> None:
         parents=True,
         exist_ok=True,
     )
+
+def finite_numeric(value) -> bool:
+    if value is None:
+        return False
+
+    try:
+        return math.isfinite(
+            float(value)
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        return False
+
+
+def numeric_summary_valid(
+    summary,
+) -> bool:
+    if not isinstance(
+        summary,
+        dict,
+    ):
+        return False
+
+    return all(
+        finite_numeric(
+            summary.get(key)
+        )
+        for key in (
+            "mean",
+            "std",
+            "min",
+            "max",
+        )
+    )
+
 
 def main() -> None:
     if not VIDEO_PATH.exists():
@@ -272,6 +310,70 @@ def main() -> None:
         for record in frame_records
     )
 
+    frame_eye_openness_valid = all(
+        (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "eyes"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "eyes"
+            ].get(
+                "available",
+                False,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "eyes"
+                ].get(
+                    "mean_openness"
+                )
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_mouth_openness_valid = all(
+        (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "mouth"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "mouth"
+            ].get(
+                "available",
+                False,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth"
+                ].get(
+                    "mouth_openness"
+                )
+            )
+        )
+        for record in frame_records
+    )
+
     windows_have_expected_structure = all(
         all(
             key in record
@@ -286,6 +388,49 @@ def main() -> None:
             )
         )
         for record in window_records
+    )
+
+    window_eye_openness_valid = all(
+        (
+            isinstance(
+                record.get(
+                    "eyes"
+                ),
+                dict,
+            )
+            and numeric_summary_valid(
+                record[
+                    "eyes"
+                ].get(
+                    "mean_openness"
+                )
+            )
+        )
+        for record in window_records
+    )
+
+    window_mouth_openness_valid = all(
+        (
+            isinstance(
+                record.get(
+                    "mouth"
+                ),
+                dict,
+            )
+            and numeric_summary_valid(
+                record[
+                    "mouth"
+                ].get(
+                    "openness"
+                )
+            )
+        )
+        for record in window_records
+    )
+
+    blink_configuration_valid = (
+        config.blink_threshold == 0.22
+        and config.min_closed_frames == 3
     )
 
     frame_count_matches = (
@@ -317,12 +462,22 @@ def main() -> None:
             frame_has_old_gaze_key,
         "frame_has_gaze_estimation_key":
             frame_has_gaze_estimation_key,
+        "frame_eye_openness_valid":
+            frame_eye_openness_valid,
+        "frame_mouth_openness_valid":
+            frame_mouth_openness_valid,
         "old_gaze_observed":
             gaze_available > 0,
         "gaze_estimation_observed":
             gaze_estimation_available > 0,
         "windows_have_expected_structure":
             windows_have_expected_structure,
+        "window_eye_openness_valid":
+            window_eye_openness_valid,
+        "window_mouth_openness_valid":
+            window_mouth_openness_valid,
+        "blink_configuration_valid":
+            blink_configuration_valid,
     }
 
     overall_pass = all(
@@ -346,6 +501,12 @@ def main() -> None:
             mouth_motion_available,
         "temporal_available":
             temporal_available,
+        "blink_configuration": {
+            "threshold":
+                config.blink_threshold,
+            "min_closed_frames":
+                config.min_closed_frames,
+        },
         "integration_checks":
             integration_checks,
         "overall_status":
@@ -415,8 +576,28 @@ def main() -> None:
         frame_has_gaze_estimation_key,
     )
     print(
+        "Frame eye-openness export valid:",
+        frame_eye_openness_valid,
+    )
+    print(
+        "Frame mouth-openness export valid:",
+        frame_mouth_openness_valid,
+    )
+    print(
         "Window records have expected structure:",
         windows_have_expected_structure,
+    )
+    print(
+        "Window eye-openness summary valid:",
+        window_eye_openness_valid,
+    )
+    print(
+        "Window mouth-openness summary valid:",
+        window_mouth_openness_valid,
+    )
+    print(
+        "Blink configuration valid:",
+        blink_configuration_valid,
     )
     print(
         "Export record counts match detected faces:",

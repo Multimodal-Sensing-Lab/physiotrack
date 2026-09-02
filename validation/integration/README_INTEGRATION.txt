@@ -97,7 +97,7 @@ videos relative to:
 
 validation/integration/test_data/
 
-The scripts therefore do not require a user-specific test-video input path.
+Test videos are resolved from this repository-relative location.
 
 All generated integration results are organized under:
 
@@ -195,6 +195,10 @@ failure can be localized and interpreted correctly.
    - Presence of the existing gaze key
    - Presence of the learned gaze_estimation key
    - Observation of both gaze mechanisms
+   - Finite Eye Openness values in available eye records
+   - Finite Mouth Openness values in available mouth records
+   - Finite eye and mouth temporal/window summaries
+   - Use of the validated blink configuration
    - Expected temporal/window structure
    - Agreement between detected-face counts and exported record counts
 
@@ -249,6 +253,9 @@ failure can be localized and interpreted correctly.
    - Tracking observation
    - Record-count consistency
    - Observation of every configured module
+   - Use of the validated blink configuration
+   - Finite Eye Openness values for all available eye samples
+   - Finite Mouth Openness values for all available mouth samples
    - Overall integration PASS/FAIL status
 
    This is the highest-level system test in the integration package. It
@@ -389,9 +396,9 @@ The remaining configured modules passed in both runs.
 Overall status:
 PASS
 
-The rerun reproduced the previous integration baseline for the corresponding
-single-person summary, with no observed regression after the integration test
-reorganization.
+The single-person end-to-end test completed successfully in both
+configurations, with the expected absence or presence of learned gaze estimation
+and no loss of the remaining configured module outputs.
 
 Native export integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -437,6 +444,22 @@ True
 
 Frame records contain the learned gaze_estimation key:
 True
+
+Frame Eye Openness values are finite:
+True
+
+Frame Mouth Openness values are finite:
+True
+
+Window Eye Openness summaries are finite:
+True
+
+Window Mouth Openness summaries are finite:
+True
+
+Validated blink configuration:
+threshold = 0.22
+min_closed_frames = 3
 
 Window records have the expected structure:
 True
@@ -488,8 +511,8 @@ modules were available for 344/344 person-frames for each identity in this
 fixture. Learned gaze estimation was therefore available for 688/688 evaluated
 face instances.
 
-No frame contained fewer than two faces in the accepted run, and no
-gaze-estimation failure was recorded.
+No frame contained fewer than two faces, and no gaze-estimation failure
+was recorded.
 
 Overall status:
 PASS
@@ -595,12 +618,23 @@ True
 All configured modules observed:
 True
 
+Validated blink configuration:
+threshold = 0.22
+min_closed_frames = 3
+Configuration match: True
+
+Finite Eye Openness samples:
+1127/1127 available eye samples
+
+Finite Mouth Openness samples:
+1127/1127 available mouth samples
+
 Overall status:
 PASS
 
 Result Organization
 -------------------
-All final integration outputs are stored under:
+All integration outputs are stored under:
 
 physiotrack/validation/integration/results/
 
@@ -646,18 +680,21 @@ Interpretation
 The integration suite demonstrates that the configured PhysioTrack face-analysis
 components can operate together on the selected integration fixtures.
 
-The accepted results establish the following system-level properties:
+The results establish the following system-level properties:
 
 - The original landmark-based gaze descriptor and learned GazeEstimator remain
   independently configurable.
 - Both gaze mechanisms can operate simultaneously.
 - Enabling learned gaze estimation does not remove the other configured
   single-person analysis outputs.
-- Per-frame and temporal exports preserve the expected analysis structure.
+- Per-frame and temporal exports preserve the expected analysis structure,
+  including finite Eye Openness and Mouth Openness values and summaries.
 - Learned gaze estimation is available for both tracked identities in the
   multi-person fixture without recorded association failure.
 - The complete configured pipeline processes the full whole-project fixture
   with consistent frame, face, tracking, module, and export accounting.
+- The validated blink configuration (threshold 0.22, minimum 3 closed frames)
+  is used by the complete integration pipeline.
 
 These conclusions concern software integration and execution behavior. They do
 not imply that every module has 100% predictive accuracy. Predictive accuracy
@@ -707,24 +744,23 @@ behavior, module observation, and PASS/FAIL invariants.
 
 Regression Use
 --------------
-The integration suite is also intended for final regression checking after the
-remaining project validation work is complete.
+The integration suite can also be used for regression checking after
+changes to the face-analysis pipeline.
 
-The component-level benchmark validations do not need to be repeated merely
-because integration tests are rerun. Instead, the finalized integration suite
-can be rerun once as a final regression and integration pass to verify that
-subsequent project changes have not broken the established system-level
-contracts.
+Component-level benchmark validations are separate from integration regression
+testing. The integration suite can be rerun to verify that later source-code
+changes preserve the established system-level contracts for configuration,
+tracking, temporal processing, module availability, and export consistency.
 
 Repository Preservation
 -----------------------
-The final repository should preserve:
+The repository should preserve:
 
 - The six integration scripts
 - The integration README
 - Redistributable integration test fixtures
-- The final result summaries and audit-relevant exports required to demonstrate
-  the accepted runs
+- The result summaries and audit-relevant exports required to demonstrate
+  the documented runs
 
 Obsolete result-directory layouts, temporary diagnostic outputs, caches, and
 superseded intermediate files should not be retained in the final integration

@@ -148,6 +148,7 @@ def select_one(
     role,
     used_sequences,
     used_videos,
+    global_f1,
 ):
     """Select one deterministic accepted sequence for one qualitative role."""
     candidates = table.copy()
@@ -206,7 +207,7 @@ def select_one(
             candidates[
                 "sequence_f1"
             ]
-            - 0.269191
+            - global_f1
         )
 
         candidates = candidates.sort_values(
@@ -451,6 +452,26 @@ def select_cases(table):
     """Select eight deterministic qualitative benchmark sequences."""
     selected = []
 
+    total_tp = int(table["true_positive"].sum())
+    total_fp = int(table["false_positive"].sum())
+    total_fn = int(table["false_negative"].sum())
+
+    global_denominator = (
+        2 * total_tp
+        + total_fp
+        + total_fn
+    )
+
+    global_f1 = (
+        0.0
+        if global_denominator == 0
+        else (
+            2.0
+            * total_tp
+            / global_denominator
+        )
+    )
+
     used_sequences = set()
     used_videos = set()
 
@@ -460,6 +481,7 @@ def select_cases(table):
             role,
             used_sequences,
             used_videos,
+            global_f1,
         )
 
         video_id = int(
@@ -685,12 +707,23 @@ def process_sequence(
                         landmark_points[
                             frame_index
                         ] = np.asarray(
-                            landmarks
-                        ).copy()
+                            [
+                                [
+                                    float(landmark.x) * image_width,
+                                    float(landmark.y) * image_height,
+                                ]
+                                for landmark in landmarks
+                            ],
+                            dtype=np.float32,
+                        )
 
                         eye_result = (
                             eye_model.predict(
-                                landmarks
+                                landmarks,
+                                image_size=(
+                                    image_width,
+                                    image_height,
+                                ),
                             )
                         )
 
@@ -744,6 +777,7 @@ def process_sequence(
         openness,
         BLINK_THRESHOLD,
         MIN_CLOSED_FRAMES,
+        fps,
     )
 
     (
@@ -1092,7 +1126,7 @@ def draw_landmarks(
     offset_x,
     offset_y,
 ):
-    """Draw available facial landmark points as supporting visual evidence."""
+    """Draw only the eye landmarks used by EyeOpenness."""
     if landmarks is None:
         return
 
@@ -1108,7 +1142,28 @@ def draw_landmarks(
     ):
         return
 
-    for point in points:
+    eye_indices = sorted(
+        set(
+            EyeOpenness.LEFT_EYE
+        )
+        | set(
+            EyeOpenness.RIGHT_EYE
+        )
+    )
+
+    for index in eye_indices:
+        if (
+            index < 0
+            or index >= len(
+                points
+            )
+        ):
+            continue
+
+        point = points[
+            index
+        ]
+
         x = float(
             point[
                 0
@@ -1995,7 +2050,7 @@ def render_frame(
     text_line(
         panel,
         (
-            f"Face landmarks: {landmark_status}"
+            f"Eye landmarks: {landmark_status}"
         ),
         492,
         scale=0.54,
@@ -2091,7 +2146,7 @@ def write_case_outputs(
     accepted_row,
     result,
 ):
-    """Write one dynamic annotated MP4 and three supporting PNG frames."""
+    """Write one dynamic annotated MP4 and one representative PNG frame."""
     (
         event_type,
         event,
@@ -2403,6 +2458,33 @@ def save_combined_image(rows):
     )
 
 
+def verify_summary_configuration():
+    """Verify that qualitative constants match the accepted test summary."""
+    summary_text = SUMMARY_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    expected_threshold = (
+        f"Blink threshold: {BLINK_THRESHOLD:.4f}"
+    )
+
+    expected_min_frames = (
+        f"Minimum closed frames: {MIN_CLOSED_FRAMES}"
+    )
+
+    if expected_threshold not in summary_text:
+        raise RuntimeError(
+            "Accepted quantitative summary does not match "
+            f"qualitative blink threshold: {BLINK_THRESHOLD:.4f}"
+        )
+
+    if expected_min_frames not in summary_text:
+        raise RuntimeError(
+            "Accepted quantitative summary does not match "
+            f"qualitative min_closed_frames: {MIN_CLOSED_FRAMES}"
+        )
+
+
 def main():
     """Generate verified professional video and image benchmark evidence."""
     if not DATASET_ROOT.is_dir():
@@ -2421,6 +2503,8 @@ def main():
             "Accepted quantitative summary is required: "
             f"{SUMMARY_PATH}"
         )
+
+    verify_summary_configuration()
 
     table = pd.read_csv(
         SEQUENCE_RESULTS_PATH

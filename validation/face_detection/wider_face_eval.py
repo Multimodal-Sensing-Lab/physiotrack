@@ -1,4 +1,5 @@
 from pathlib import Path
+import csv
 
 import numpy as np
 from scipy.io import loadmat
@@ -432,10 +433,19 @@ def main():
         / "WIDER_FACE"
     )
 
-    pred_dir = (
+    results_dir = (
         validation_dir
         / "results"
+    )
+
+    pred_dir = (
+        results_dir
         / "predictions"
+    )
+
+    results_path = (
+        results_dir
+        / "wider_face_results.csv"
     )
 
     gt_dir = (
@@ -444,6 +454,14 @@ def main():
         / "eval_tools"
         / "ground_truth"
     )
+
+    results_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    if results_path.exists():
+        results_path.unlink()
 
     val_data = loadmat(
         gt_dir / "wider_face_val.mat"
@@ -470,6 +488,8 @@ def main():
         "Medium": "wider_medium_val.mat",
         "Hard": "wider_hard_val.mat",
     }
+
+    rows = []
 
     print(
         "\nWIDER FACE validation results"
@@ -500,6 +520,69 @@ def main():
             "AP:",
             round(float(ap), 6),
         )
+
+        for threshold_index in range(
+            NUM_THRESHOLDS
+        ):
+            rows.append(
+                {
+                    "Difficulty": name,
+                    "Threshold Index": (
+                        threshold_index
+                    ),
+                    "Score Threshold": (
+                        1
+                        - (
+                            (threshold_index + 1)
+                            / NUM_THRESHOLDS
+                        )
+                    ),
+                    "Precision": float(
+                        precision[
+                            threshold_index
+                        ]
+                    ),
+                    "Recall": float(
+                        recall[
+                            threshold_index
+                        ]
+                    ),
+                    "Average Precision": float(
+                        ap
+                    ),
+                    "Evaluated Faces": int(
+                        total_faces
+                    ),
+                }
+            )
+
+    with open(
+        results_path,
+        "w",
+        encoding="utf-8",
+        newline="",
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=[
+                "Difficulty",
+                "Threshold Index",
+                "Score Threshold",
+                "Precision",
+                "Recall",
+                "Average Precision",
+                "Evaluated Faces",
+            ],
+        )
+
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print()
+    print(
+        "Saved benchmark results:",
+        results_path,
+    )
 
 
 if __name__ == "__main__":

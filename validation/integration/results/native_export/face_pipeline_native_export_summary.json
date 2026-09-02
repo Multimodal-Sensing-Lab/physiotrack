@@ -12,6 +12,10 @@
   "blink_events": 2,
   "mouth_motion_available": 429,
   "temporal_available": 429,
+  "blink_configuration": {
+    "threshold": 0.22,
+    "min_closed_frames": 3
+  },
   "integration_checks": {
     "processed_frames_positive": true,
     "frame_count_matches_video": true,
@@ -22,9 +26,14 @@
     "frame_feature_dicts_valid": true,
     "frame_has_old_gaze_key": true,
     "frame_has_gaze_estimation_key": true,
+    "frame_eye_openness_valid": true,
+    "frame_mouth_openness_valid": true,
     "old_gaze_observed": true,
     "gaze_estimation_observed": true,
-    "windows_have_expected_structure": true
+    "windows_have_expected_structure": true,
+    "window_eye_openness_valid": true,
+    "window_mouth_openness_valid": true,
+    "blink_configuration_valid": true
   },
   "overall_status": "PASS"
 }

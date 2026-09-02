@@ -102,7 +102,7 @@ datasets/
             `-- aflw-befit.pdf
 
 The evaluator resolves this location relative to the project workspace. No
-user-specific absolute dataset path is required.
+dataset location is resolved from the documented project structure.
 
 Ground truth and coordinate convention
 --------------------------------------
@@ -336,7 +336,7 @@ face-detection plus head-pose pipeline.
 Reproducibility
 ---------------
 The final evaluator uses project-relative paths and does not require any
-user-specific absolute path.
+documented project-relative path.
 
 For reproducible execution:
 
