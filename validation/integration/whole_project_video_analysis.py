@@ -11,16 +11,20 @@ from physiotrack.face.export import FaceResultExporter
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = SCRIPT_DIR / "test_data"
-
-VIDEO_PATH = (
-    TEST_DATA_DIR
-    / "istockphoto-1370809321-640_adpp_is.mp4"
+TEST_DATA_DIR = (
+    SCRIPT_DIR
+    / "test_data"
+    / "whole_project"
 )
 
-VIDEO_LABEL = str(
-    VIDEO_PATH.relative_to(SCRIPT_DIR)
-).replace("\\", "/")
+VIDEO_EXTENSIONS = {
+    ".avi",
+    ".m4v",
+    ".mkv",
+    ".mov",
+    ".mp4",
+    ".webm",
+}
 
 OUTPUT_DIR = (
     SCRIPT_DIR
@@ -28,6 +32,36 @@ OUTPUT_DIR = (
     / "whole_project_video_analysis"
 )
 
+
+def get_video_paths() -> list[Path]:
+    if not TEST_DATA_DIR.exists():
+        raise FileNotFoundError(
+            f"Test-data directory not found: {TEST_DATA_DIR}"
+        )
+
+    video_paths = sorted(
+        path
+        for path in TEST_DATA_DIR.iterdir()
+        if (
+            path.is_file()
+            and path.suffix.lower() in VIDEO_EXTENSIONS
+        )
+    )
+
+    if not video_paths:
+        raise FileNotFoundError(
+            f"No supported video files found in: {TEST_DATA_DIR}"
+        )
+
+    return video_paths
+
+
+def video_label(
+    video_path: Path,
+) -> str:
+    return str(
+        video_path.relative_to(SCRIPT_DIR)
+    ).replace("\\", "/")
 
 
 def clean_output_directory() -> None:
@@ -39,25 +73,115 @@ def clean_output_directory() -> None:
         exist_ok=True,
     )
 
-def main() -> None:
-    if not VIDEO_PATH.exists():
-        raise FileNotFoundError(
-            f"Video not found: {VIDEO_PATH}"
-        )
 
-    clean_output_directory()
+def make_config() -> FaceAnalysisConfig:
+    config = FaceAnalysisConfig(
+        tracking=True,
+        head_pose=True,
+        landmarks=True,
+        quality=True,
+        eyes=True,
+        blink=True,
+        gaze=True,
+        gaze_estimation=True,
+        mouth=True,
+        mouth_motion=True,
+        emotion=True,
+        regions=True,
+        temporal=True,
+        gaze_estimation_mode="eth-xgaze",
+        gaze_estimation_min_iou=0.10,
+    )
 
+    config.validate()
+
+    return config
+
+
+def failed_video_summary(
+    video_path: Path,
+    reason: str,
+) -> dict:
+    return {
+        "test_type":
+            "whole_project_video_analysis",
+        "video":
+            video_label(
+                video_path
+            ),
+        "resolution":
+            None,
+        "fps":
+            None,
+        "video_frames":
+            None,
+        "processed_frames":
+            0,
+        "detected_faces":
+            0,
+        "frame_records":
+            0,
+        "window_records":
+            0,
+        "frame_count_matches_video":
+            False,
+        "export_counts_match":
+            False,
+        "analysis_status":
+            "FAIL",
+        "failure_reason":
+            reason,
+        "all_components_enabled": {
+            "tracking":
+                True,
+            "head_pose":
+                True,
+            "landmarks":
+                True,
+            "quality":
+                True,
+            "eyes":
+                True,
+            "blink":
+                True,
+            "gaze":
+                True,
+            "gaze_estimation":
+                True,
+            "mouth":
+                True,
+            "mouth_motion":
+                True,
+            "emotion":
+                True,
+            "regions":
+                True,
+            "temporal":
+                True,
+        },
+    }
+
+
+def run_video(
+    video_path: Path,
+) -> tuple[
+    list[dict],
+    list[dict],
+    dict,
+]:
     capture = cv2.VideoCapture(
-        str(VIDEO_PATH)
+        str(video_path)
     )
 
     if not capture.isOpened():
         raise RuntimeError(
-            f"Could not open video: {VIDEO_PATH}"
+            f"Could not open video: {video_path}"
         )
 
     fps = float(
-        capture.get(cv2.CAP_PROP_FPS)
+        capture.get(
+            cv2.CAP_PROP_FPS
+        )
     )
 
     total_video_frames = int(
@@ -85,25 +209,7 @@ def main() -> None:
             f"Invalid video FPS: {fps}"
         )
 
-    config = FaceAnalysisConfig(
-        tracking=True,
-        head_pose=True,
-        landmarks=True,
-        quality=True,
-        eyes=True,
-        blink=True,
-        gaze=True,
-        gaze_estimation=True,
-        mouth=True,
-        mouth_motion=True,
-        emotion=True,
-        regions=True,
-        temporal=True,
-        gaze_estimation_mode="eth-xgaze",
-        gaze_estimation_min_iou=0.10,
-    )
-
-    config.validate()
+    config = make_config()
 
     print("=" * 82)
     print(
@@ -111,15 +217,21 @@ def main() -> None:
         "Video Analysis"
     )
     print("=" * 82)
-    print(f"Video: {VIDEO_PATH}")
+
+    print(f"Video: {video_path}")
+
     print(
         f"Resolution: {width} x {height}"
     )
+
     print(f"FPS: {fps}")
+
     print(
         f"Video frames: {total_video_frames}"
     )
+
     print()
+
     print(
         "Running all enabled face-analysis "
         "components..."
@@ -136,6 +248,8 @@ def main() -> None:
     processed_frames = 0
     detected_faces = 0
 
+    processing_error = None
+
     try:
         while True:
             ok, frame = capture.read()
@@ -144,28 +258,52 @@ def main() -> None:
                 break
 
             timestamp = (
-                processed_frames / fps
+                processed_frames
+                / fps
             )
 
-            result = pipeline.predict(
-                frame
-            )
-
-            current_frame_records = (
-                FaceResultExporter.frame_records(
-                    result,
-                    frame_index=processed_frames,
-                    timestamp=timestamp,
+            try:
+                result = pipeline.predict(
+                    frame
                 )
-            )
 
-            current_window_records = (
-                FaceResultExporter.window_records(
-                    result,
-                    frame_index=processed_frames,
-                    timestamp=timestamp,
+                current_frame_records = (
+                    FaceResultExporter.frame_records(
+                        result,
+                        frame_index=processed_frames,
+                        timestamp=timestamp,
+                    )
                 )
-            )
+
+                current_window_records = (
+                    FaceResultExporter.window_records(
+                        result,
+                        frame_index=processed_frames,
+                        timestamp=timestamp,
+                    )
+                )
+
+            except Exception as exc:
+                processing_error = (
+                    "processing_error_at_frame_"
+                    f"{processed_frames}: {exc}"
+                )
+
+                break
+
+            for record in current_frame_records:
+                record[
+                    "video"
+                ] = video_label(
+                    video_path
+                )
+
+            for record in current_window_records:
+                record[
+                    "video"
+                ] = video_label(
+                    video_path
+                )
 
             frame_records.extend(
                 current_frame_records
@@ -186,8 +324,8 @@ def main() -> None:
                 == 0
             ):
                 print(
-                    "Processed frames:",
-                    processed_frames,
+                    f"{video_path.name}: "
+                    f"processed {processed_frames} frames"
                 )
 
     finally:
@@ -195,36 +333,220 @@ def main() -> None:
         pipeline.close()
 
     frame_count_matches = (
-        total_video_frames <= 0
-        or processed_frames == total_video_frames
+        processing_error is None
+        and (
+            total_video_frames <= 0
+            or processed_frames
+            == total_video_frames
+        )
     )
 
     export_counts_match = (
-        len(frame_records) == detected_faces
-        and len(window_records) == detected_faces
+        len(frame_records)
+        == detected_faces
+        and len(window_records)
+        == detected_faces
     )
 
+    failed_checks = []
+
+    if processing_error is not None:
+        failed_checks.append(
+            processing_error
+        )
+
     if processed_frames <= 0:
-        raise RuntimeError(
-            "No video frames were processed."
+        failed_checks.append(
+            "no_video_frames_processed"
         )
 
     if not frame_count_matches:
-        raise RuntimeError(
-            "Processed frame count does not match "
-            "the video-reported frame count."
+        failed_checks.append(
+            "frame_count_mismatch"
         )
 
     if detected_faces <= 0:
-        raise RuntimeError(
-            "No face records were produced."
+        failed_checks.append(
+            "no_face_records_produced"
         )
 
     if not export_counts_match:
-        raise RuntimeError(
-            "Export record counts do not match "
-            "the detected face-record count."
+        failed_checks.append(
+            "export_record_count_mismatch"
         )
+
+    analysis_status = (
+        "PASS"
+        if not failed_checks
+        else "FAIL"
+    )
+
+    summary = {
+        "test_type":
+            "whole_project_video_analysis",
+        "video":
+            video_label(
+                video_path
+            ),
+        "resolution": {
+            "width":
+                width,
+            "height":
+                height,
+        },
+        "fps":
+            fps,
+        "video_frames":
+            total_video_frames,
+        "processed_frames":
+            processed_frames,
+        "detected_faces":
+            detected_faces,
+        "frame_records":
+            len(frame_records),
+        "window_records":
+            len(window_records),
+        "frame_count_matches_video":
+            frame_count_matches,
+        "export_counts_match":
+            export_counts_match,
+        "analysis_status":
+            analysis_status,
+        "all_components_enabled": {
+            "tracking":
+                True,
+            "head_pose":
+                True,
+            "landmarks":
+                True,
+            "quality":
+                True,
+            "eyes":
+                True,
+            "blink":
+                True,
+            "gaze":
+                True,
+            "gaze_estimation":
+                True,
+            "mouth":
+                True,
+            "mouth_motion":
+                True,
+            "emotion":
+                True,
+            "regions":
+                True,
+            "temporal":
+                True,
+        },
+    }
+
+    if failed_checks:
+        summary[
+            "failure_reason"
+        ] = ", ".join(
+            failed_checks
+        )
+
+    return (
+        frame_records,
+        window_records,
+        summary,
+    )
+
+
+def main() -> None:
+    video_paths = get_video_paths()
+
+    clean_output_directory()
+
+    all_frame_records = []
+    all_window_records = []
+    video_summaries = []
+
+    for video_path in video_paths:
+        print()
+        print("=" * 82)
+        print(f"Testing video: {video_path}")
+        print("=" * 82)
+
+        try:
+            (
+                frame_records,
+                window_records,
+                summary,
+            ) = run_video(
+                video_path
+            )
+
+        except Exception as exc:
+            frame_records = []
+            window_records = []
+
+            summary = failed_video_summary(
+                video_path,
+                str(exc),
+            )
+
+        all_frame_records.extend(
+            frame_records
+        )
+
+        all_window_records.extend(
+            window_records
+        )
+
+        video_summaries.append(
+            summary
+        )
+
+        print()
+
+        print(
+            "Processed frames:",
+            summary[
+                "processed_frames"
+            ],
+        )
+
+        print(
+            "Detected face records:",
+            summary[
+                "detected_faces"
+            ],
+        )
+
+        print(
+            "Frame records:",
+            summary[
+                "frame_records"
+            ],
+        )
+
+        print(
+            "Window records:",
+            summary[
+                "window_records"
+            ],
+        )
+
+        print(
+            "Status:",
+            summary[
+                "analysis_status"
+            ],
+        )
+
+        if summary.get(
+            "failure_reason"
+        ):
+            print(
+                "Reason:",
+                summary[
+                    "failure_reason"
+                ],
+            )
 
     OUTPUT_DIR.mkdir(
         parents=True,
@@ -257,69 +579,84 @@ def main() -> None:
     )
 
     FaceResultExporter.save_json(
-        frame_records,
+        all_frame_records,
         frame_json_path,
     )
 
     FaceResultExporter.save_csv(
-        frame_records,
+        all_frame_records,
         frame_csv_path,
     )
 
     FaceResultExporter.save_json(
-        window_records,
+        all_window_records,
         window_json_path,
     )
 
     FaceResultExporter.save_csv(
-        window_records,
+        all_window_records,
         window_csv_path,
     )
 
-    summary = {
+    overall_pass = all(
+        summary[
+            "analysis_status"
+        ]
+        == "PASS"
+        for summary in video_summaries
+    )
+
+    combined_summary = {
         "test_type":
             "whole_project_video_analysis",
-        "video":
-            VIDEO_LABEL,
-        "resolution": {
-            "width":
-                width,
-            "height":
-                height,
-        },
-        "fps":
-            fps,
-        "video_frames":
-            total_video_frames,
-        "processed_frames":
-            processed_frames,
-        "detected_faces":
-            detected_faces,
-        "frame_records":
-            len(frame_records),
-        "window_records":
-            len(window_records),
-        "frame_count_matches_video":
-            frame_count_matches,
-        "export_counts_match":
-            export_counts_match,
+        "videos":
+            video_summaries,
+        "video_count":
+            len(video_summaries),
+        "passed_videos":
+            sum(
+                summary[
+                    "analysis_status"
+                ]
+                == "PASS"
+                for summary in video_summaries
+            ),
+        "failed_videos":
+            sum(
+                summary[
+                    "analysis_status"
+                ]
+                != "PASS"
+                for summary in video_summaries
+            ),
+        "total_processed_frames":
+            sum(
+                summary[
+                    "processed_frames"
+                ]
+                for summary in video_summaries
+            ),
+        "total_detected_faces":
+            sum(
+                summary[
+                    "detected_faces"
+                ]
+                for summary in video_summaries
+            ),
+        "total_frame_records":
+            len(
+                all_frame_records
+            ),
+        "total_window_records":
+            len(
+                all_window_records
+            ),
         "analysis_status":
-            "PASS",
-        "all_components_enabled": {
-            "tracking": True,
-            "head_pose": True,
-            "landmarks": True,
-            "quality": True,
-            "eyes": True,
-            "blink": True,
-            "gaze": True,
-            "gaze_estimation": True,
-            "mouth": True,
-            "mouth_motion": True,
-            "emotion": True,
-            "regions": True,
-            "temporal": True,
-        },
+            (
+                "PASS"
+                if overall_pass
+                else "FAIL"
+            ),
     }
 
     with summary_path.open(
@@ -327,37 +664,73 @@ def main() -> None:
         encoding="utf-8",
     ) as file:
         json.dump(
-            summary,
+            combined_summary,
             file,
             indent=2,
         )
 
     print()
     print("=" * 82)
+
     print(
         "Whole-Project Video Analysis "
-        "Completed: PASS"
+        "Completed"
     )
+
     print("=" * 82)
 
     print(
-        "Processed frames:",
-        processed_frames,
+        "Videos tested:",
+        len(video_summaries),
     )
 
     print(
-        "Detected face records:",
-        detected_faces,
+        "Passed videos:",
+        combined_summary[
+            "passed_videos"
+        ],
     )
 
     print(
-        "Frame records:",
-        len(frame_records),
+        "Failed videos:",
+        combined_summary[
+            "failed_videos"
+        ],
     )
 
     print(
-        "Window records:",
-        len(window_records),
+        "Total processed frames:",
+        combined_summary[
+            "total_processed_frames"
+        ],
+    )
+
+    print(
+        "Total detected face records:",
+        combined_summary[
+            "total_detected_faces"
+        ],
+    )
+
+    print(
+        "Total frame records:",
+        len(
+            all_frame_records
+        ),
+    )
+
+    print(
+        "Total window records:",
+        len(
+            all_window_records
+        ),
+    )
+
+    print(
+        "Overall status:",
+        combined_summary[
+            "analysis_status"
+        ],
     )
 
     print()
@@ -376,6 +749,12 @@ def main() -> None:
     print(window_json_path)
     print(window_csv_path)
     print(summary_path)
+
+    if not overall_pass:
+        raise RuntimeError(
+            "Whole-project video analysis "
+            "completed with one or more failed videos."
+        )
 
 
 if __name__ == "__main__":

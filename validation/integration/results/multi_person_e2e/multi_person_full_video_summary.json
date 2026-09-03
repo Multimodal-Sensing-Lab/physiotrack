@@ -1,0 +1,32 @@
+{
+  "test_type": "multi_person_end_to_end_integration",
+  "videos": [
+    {
+      "video": "test_data/multi_person/multi_person2.mp4",
+      "fps": 25.0,
+      "reported_frame_count": 344,
+      "processed_frames": 344,
+      "total_faces": 688,
+      "person_ids": [
+        1,
+        2
+      ],
+      "person_frame_counts": {
+        "2": 344,
+        "1": 344
+      },
+      "multi_face_frames": 344,
+      "gaze_estimation_person_ids": [
+        1,
+        2
+      ],
+      "status": "PASS"
+    }
+  ],
+  "video_count": 1,
+  "passed_videos": 1,
+  "failed_videos": 0,
+  "total_processed_frames": 344,
+  "total_face_instances": 688,
+  "overall_status": "PASS"
+}

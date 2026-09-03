@@ -10,7 +10,8 @@ The component-level benchmark validations evaluate individual modules under
 task-specific protocols. Integration validation has a different purpose: it
 verifies that the validated components can operate together inside the
 PhysioTrack FaceAnalysis pipeline without breaking feature configuration,
-per-face association, temporal processing, tracking, or native result export.
+per-face association, temporal processing, tracking, static-image processing,
+or native result export.
 
 The integration validation therefore addresses system-level questions that
 cannot be established from isolated benchmark results alone:
@@ -24,10 +25,15 @@ cannot be established from isolated benchmark results alone:
 4. Whether gaze-estimation results remain associated with the correct tracked
    face in multi-person video.
 5. Whether the framework's native frame and window exports preserve the
-   expected analysis structure.
+   expected analysis structure and numerical measurements.
 6. Whether the complete configured pipeline can process an entire test video
    without dropped frames, missing face records, broken tracking, or missing
    enabled modules.
+7. Whether static images can be processed without fabricating outputs that
+   require a temporal sequence.
+8. Whether batch-oriented integration scripts continue processing remaining
+   media after an individual media failure and preserve media-level failure
+   accounting in the generated results.
 
 This validation is a system-integration and regression test. It is not an
 additional accuracy benchmark for the individual modules. Accuracy of the
@@ -43,61 +49,100 @@ physiotrack/validation/integration/
 The final directory structure is:
 
 validation/integration/
-|-- face_pipeline_e2e_test.py
-|-- face_pipeline_multi_person_e2e_test.py
-|-- face_pipeline_native_export_test.py
 |-- face_pipeline_runtime_smoke_test.py
-|-- whole_project_final_e2e_test.py
+|-- face_pipeline_e2e_test.py
+|-- face_pipeline_native_export_test.py
+|-- face_pipeline_multi_person_e2e_test.py
 |-- whole_project_video_analysis.py
+|-- whole_project_final_e2e_test.py
+|-- face_pipeline_image_e2e_test.py
+|-- README_INTEGRATION.txt
 |-- test_data/
-|   |-- face_blink_pose.mp4
-|   |-- multi_person2.mp4
-|   `-- istockphoto-1370809321-640_adpp_is.mp4
+|   |-- single_person/
+|   |   `-- face_blink_pose.mp4
+|   |-- multi_person/
+|   |   `-- multi_person2.mp4
+|   |-- whole_project/
+|   |   `-- istockphoto-1370809321-640_adpp_is.mp4
+|   `-- images/
+|       `-- <integration image fixtures>
 `-- results/
-    |-- face_pipeline_e2e/
-    |-- multi_person_e2e/
-    |-- native_export/
     |-- runtime_smoke/
+    |-- face_pipeline_e2e/
+    |-- native_export/
+    |-- multi_person_e2e/
+    |-- whole_project_video_analysis/
     |-- whole_project_e2e/
-    `-- whole_project_video_analysis/
+    `-- image_e2e/
 
 Test Data
 ---------
-Integration testing uses fixed video fixtures stored under:
+Integration fixtures are stored under:
 
 physiotrack/validation/integration/test_data/
 
-The current fixtures are:
+The current video fixtures are:
 
-face_blink_pose.mp4
-    Single-person video used for the runtime configuration checks, the
+single_person/face_blink_pose.mp4
+    Single-person video used for runtime configuration checks, the
     single-person end-to-end comparison, and native export validation.
 
-multi_person2.mp4
+multi_person/multi_person2.mp4
     Multi-person video used to verify simultaneous face tracking, per-person
     feature generation, and gaze-estimation association.
 
-istockphoto-1370809321-640_adpp_is.mp4
+whole_project/istockphoto-1370809321-640_adpp_is.mp4
     Full-pipeline video used for whole-project analysis and the final complete
     end-to-end integration test.
 
-These videos are integration fixtures rather than benchmark datasets. They are
-not used to estimate model accuracy and do not replace the external benchmark
-datasets used by the individual validation components.
+The images/ directory contains static-image fixtures covering frontal faces,
+eye states, mouth configurations, gaze directions, facial expressions,
+multi-face scenes, and pose variation.
 
-Any test video distributed with the repository must have redistribution terms
-that permit inclusion in the repository. If a fixture cannot legally be
+These media files are integration fixtures rather than benchmark datasets.
+They are not used to estimate model accuracy and do not replace the external
+benchmark datasets used by the individual validation components.
+
+Any media distributed with the repository must have redistribution terms that
+permit inclusion in the repository. If a fixture cannot legally be
 redistributed, it must be replaced by an equivalent redistributable fixture
 before public release.
+
+Supported Media Discovery
+-------------------------
+The integration scripts discover supported media from their corresponding
+repository-relative test-data directories rather than depending on one
+hard-coded media filename.
+
+Supported video extensions are:
+
+.avi
+.m4v
+.mkv
+.mov
+.mp4
+.webm
+
+Supported image extensions are:
+
+.bmp
+.jpeg
+.jpg
+.png
+.tif
+.tiff
+.webp
+
+This design allows integration fixtures to be replaced, renamed, or extended
+without changing the script source code, provided the files remain in the
+expected test-data directory and use a supported extension.
 
 Path Handling
 -------------
 The integration scripts resolve their location from __file__ and locate test
-videos relative to:
+media relative to:
 
 validation/integration/test_data/
-
-Test videos are resolved from this repository-relative location.
 
 All generated integration results are organized under:
 
@@ -105,8 +150,8 @@ validation/integration/results/
 
 Each script owns a dedicated result subdirectory and may clean only that
 subdirectory before regenerating its outputs. A script must not delete another
-integration test's results, modify the test videos, or modify project source
-code.
+integration test's results, modify the test media, modify benchmark datasets,
+or modify project source code.
 
 Integration Scope
 -----------------
@@ -129,16 +174,20 @@ pipeline and its connected outputs, including:
 - Temporal summaries
 - Per-frame native export
 - Per-window native export
+- Static-image analysis
+- Multi-person association
+- Batch media processing and failure accounting
 
 The suite verifies presence, configuration behavior, association, accounting,
-and export consistency. It does not reinterpret integration availability as a
-new quantitative accuracy score for these modules.
+numerical export, failure handling, and export consistency. It does not
+reinterpret integration availability as a new quantitative accuracy score for
+these modules.
 
 Why Multiple Integration Tests Are Required
 -------------------------------------------
-A single end-to-end video run is insufficient to validate all integration
-contracts. The suite separates distinct system-level properties so that a
-failure can be localized and interpreted correctly.
+A single end-to-end run is insufficient to validate all integration contracts.
+The suite separates distinct system-level properties so that a failure can be
+localized and interpreted correctly.
 
 1. face_pipeline_runtime_smoke_test.py
 
@@ -153,10 +202,10 @@ failure can be localized and interpreted correctly.
    - gaze_estimation_only
    - both_enabled
 
-   This specifically establishes that the existing landmark-based gaze
-   descriptor and the learned GazeEstimator are independent optional features.
-   Enabling one must not implicitly enable the other, and both must be able to
-   operate simultaneously.
+   This establishes that the existing landmark-based gaze descriptor and the
+   learned GazeEstimator are independent optional features. Enabling one must
+   not implicitly enable the other, and both must be able to operate
+   simultaneously.
 
    The smoke test uses five frames per configuration. It is deliberately short
    because the objective is configuration-contract verification rather than
@@ -169,13 +218,14 @@ failure can be localized and interpreted correctly.
    the learned GazeEstimator changes the availability of unrelated pipeline
    components.
 
-   The same video is processed in two conditions:
+   Each discovered video is processed in two conditions:
 
    - gaze estimation disabled
    - gaze estimation enabled
 
    The test checks complete frame processing, detected-face accounting, module
-   availability, and the expected absence/presence of gaze_estimation.
+   availability, numerical frame export, and the expected absence/presence of
+   gaze_estimation.
 
    This provides a direct regression check showing that addition of the learned
    gaze-estimation module does not disable or remove the other configured
@@ -201,6 +251,7 @@ failure can be localized and interpreted correctly.
    - Use of the validated blink configuration
    - Expected temporal/window structure
    - Agreement between detected-face counts and exported record counts
+   - Preservation of numerical frame- and window-level analysis values
 
    This test is necessary because successful in-memory inference alone does not
    demonstrate that downstream users can retrieve the same information through
@@ -220,6 +271,8 @@ failure can be localized and interpreted correctly.
    - Consistency between face instances and frame/window exports
    - Availability of the configured analysis components
    - Explicit recording of gaze-estimation failures
+   - Persistent per-video PASS/FAIL summaries, including media that fail before
+     frame-level records can be produced
 
    This test is particularly important for gaze estimation because a valid gaze
    vector is not sufficient if it is assigned to the wrong person. The
@@ -229,8 +282,8 @@ failure can be localized and interpreted correctly.
 5. whole_project_video_analysis.py
 
    Purpose:
-   Generates a detailed complete-pipeline analysis and export over a full test
-   video.
+   Generates a detailed complete-pipeline analysis and export over each
+   discovered full-project test video.
 
    This script is an analysis/export integrity run rather than an independent
    benchmark. It checks full frame processing, face-record accounting, and
@@ -256,11 +309,35 @@ failure can be localized and interpreted correctly.
    - Use of the validated blink configuration
    - Finite Eye Openness values for all available eye samples
    - Finite Mouth Openness values for all available mouth samples
-   - Overall integration PASS/FAIL status
+   - Numerical preservation of the integrated measurements and descriptors
+   - Overall per-video and aggregate integration PASS/FAIL status
 
-   This is the highest-level system test in the integration package. It
+   This is the highest-level video system test in the integration package. It
    complements, rather than replaces, the more focused runtime, export, and
    multi-person tests.
+
+7. face_pipeline_image_e2e_test.py
+
+   Purpose:
+   Verifies complete static-image integration across all discovered supported
+   image fixtures.
+
+   The test checks:
+
+   - Image loading and face detection
+   - Multi-face image handling
+   - Static-module availability
+   - Finite Eye Openness and Mouth Openness values
+   - Numerical export of static facial measurements and descriptors
+   - Explicit NOT_APPLICABLE handling for tracking, blink, mouth motion, and
+     temporal aggregation
+   - Absence of fabricated temporal outputs
+   - Per-image PASS/FAIL accounting while continuing after individual image
+     failures
+
+   This test establishes that static-image processing uses the same integrated
+   facial-analysis components where scientifically applicable while preserving
+   the distinction between static and temporal analysis.
 
 Test Design Principles
 ----------------------
@@ -287,8 +364,23 @@ The integration tests follow the following principles:
    association rather than assuming that a valid output is automatically
    attached to the correct person.
 
-8. Generated outputs are isolated by test so that rerunning one integration
+8. Static-image validation does not synthesize tracking, blink, mouth-motion,
+   or temporal outputs when a temporal sequence is unavailable.
+
+9. Generated outputs are isolated by test so that rerunning one integration
    test does not delete evidence from another test.
+
+10. Batch-oriented scripts attempt all discovered supported media. Failure of
+    one media item is recorded and does not prevent subsequent media from being
+    attempted. Aggregate status may therefore be FAIL even when some media
+    complete successfully.
+
+11. Media-level summaries preserve failures even when no frame-level records
+    can be generated for the failed media item.
+
+12. Integration exports preserve real numerical measurements, descriptors, and
+    temporal summaries where available. Boolean availability fields are
+    auxiliary status indicators rather than substitutes for numerical output.
 
 Running the Integration Validation
 ----------------------------------
@@ -322,9 +414,13 @@ python face_pipeline_multi_person_e2e_test.py
 
 python whole_project_video_analysis.py
 
-6. Final complete end-to-end integration test
+6. Final complete video end-to-end integration test
 
 python whole_project_final_e2e_test.py
+
+7. Static-image end-to-end integration test
+
+python face_pipeline_image_e2e_test.py
 
 Each script cleans only the result directory that it owns before creating new
 outputs.
@@ -397,8 +493,8 @@ Overall status:
 PASS
 
 The single-person end-to-end test completed successfully in both
-configurations, with the expected absence or presence of learned gaze estimation
-and no loss of the remaining configured module outputs.
+configurations, with the expected absence or presence of learned gaze
+estimation and no loss of the remaining configured module outputs.
 
 Native export integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -497,6 +593,9 @@ Person 1 frame count:
 Person 2 frame count:
 344
 
+Frames containing multiple faces:
+344
+
 Frame records:
 688
 
@@ -506,13 +605,10 @@ Window records:
 Gaze-estimation failures:
 0
 
-Both tracked persons were present throughout the evaluated video. The configured
-modules were available for 344/344 person-frames for each identity in this
-fixture. Learned gaze estimation was therefore available for 688/688 evaluated
-face instances.
-
-No frame contained fewer than two faces, and no gaze-estimation failure
-was recorded.
+Both tracked persons were present throughout the evaluated video. The
+configured modules were available for 344/344 person-frames for each identity
+in this fixture. Learned gaze estimation was therefore available for 688/688
+evaluated face instances.
 
 Overall status:
 PASS
@@ -522,6 +618,12 @@ Whole-project video analysis
 
 Test video:
 istockphoto-1370809321-640_adpp_is.mp4
+
+Resolution:
+768 x 432
+
+FPS:
+59.94005994005994
 
 Reported video frames:
 1127
@@ -547,8 +649,8 @@ PASS
 Export-count consistency:
 PASS
 
-The complete configured pipeline produced the expected frame-level and temporal
-records across the entire video.
+The complete configured pipeline produced the expected frame-level and
+temporal records across the entire video.
 
 Overall analysis status:
 PASS
@@ -632,6 +734,51 @@ Finite Mouth Openness samples:
 Overall status:
 PASS
 
+Static-image end-to-end integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Input images:
+19
+
+Passed images:
+19
+
+Failed images:
+0
+
+Detected faces:
+23
+
+Exported face records:
+23
+
+Static modules evaluated:
+
+- detection
+- landmarks
+- quality
+- head_pose
+- eyes
+- gaze
+- gaze_estimation
+- mouth
+- emotion
+- regions
+
+The following modules are explicitly NOT_APPLICABLE for independent static
+images because they require temporal sequence input:
+
+- tracking
+- blink
+- mouth_motion
+- temporal
+
+All 23 detected face records contained the expected static numerical outputs.
+Temporal summaries were absent as required.
+
+Overall status:
+PASS
+
 Result Organization
 -------------------
 All integration outputs are stored under:
@@ -659,6 +806,8 @@ multi_person_e2e/
     multi_person_full_frame_face_counts.csv
     multi_person_full_gaze_estimation_failures.csv
     multi_person_full_summary.csv
+    multi_person_full_video_summary.csv
+    multi_person_full_video_summary.json
     multi_person_full_windows.csv
     multi_person_full_windows.json
 
@@ -675,10 +824,17 @@ whole_project_e2e/
     whole_project_e2e_results.json
     whole_project_e2e_summary.json
 
+image_e2e/
+    image_e2e_frames.csv
+    image_e2e_modules.csv
+    image_e2e_results.json
+    image_e2e_summary.json
+
 Interpretation
 --------------
-The integration suite demonstrates that the configured PhysioTrack face-analysis
-components can operate together on the selected integration fixtures.
+The integration suite demonstrates that the configured PhysioTrack
+face-analysis components can operate together on the selected integration
+fixtures.
 
 The results establish the following system-level properties:
 
@@ -687,14 +843,19 @@ The results establish the following system-level properties:
 - Both gaze mechanisms can operate simultaneously.
 - Enabling learned gaze estimation does not remove the other configured
   single-person analysis outputs.
-- Per-frame and temporal exports preserve the expected analysis structure,
-  including finite Eye Openness and Mouth Openness values and summaries.
+- Per-frame and temporal exports preserve the expected analysis structure and
+  numerical facial measurements.
 - Learned gaze estimation is available for both tracked identities in the
-  multi-person fixture without recorded association failure.
+  multi-person fixture without recorded gaze-estimation failure.
 - The complete configured pipeline processes the full whole-project fixture
   with consistent frame, face, tracking, module, and export accounting.
+- Static-image analysis preserves applicable numerical facial outputs while
+  correctly omitting temporal-only outputs.
 - The validated blink configuration (threshold 0.22, minimum 3 closed frames)
-  is used by the complete integration pipeline.
+  is used by the complete video integration pipeline.
+- Batch processing preserves media-level PASS/FAIL accounting and is designed
+  to continue with subsequent supported media after an individual media
+  failure.
 
 These conclusions concern software integration and execution behavior. They do
 not imply that every module has 100% predictive accuracy. Predictive accuracy
@@ -705,11 +866,12 @@ Evaluation Scope and Limitations
 This integration package is not an external benchmark and does not provide
 ground-truth accuracy metrics for the complete pipeline.
 
-The integration videos are controlled regression fixtures. Their purpose is to
-exercise the software interfaces and combined processing path.
+The integration media are controlled regression fixtures. Their purpose is to
+exercise software interfaces, configuration behavior, association, failure
+handling, and the combined processing path.
 
-A 100% module-availability result on a fixture means that the module generated a
-valid output for each evaluated face sample in that fixture. It must not be
+A 100% module-availability result on a fixture means that the module generated
+a valid output for each evaluated face sample in that fixture. It must not be
 reported as 100% task accuracy.
 
 The single-person whole-project fixture cannot validate multi-person
@@ -719,8 +881,28 @@ multi_person2.mp4.
 Similarly, the short runtime smoke test does not replace a full-video test. It
 exists only to verify feature configuration and coexistence.
 
+Static-image integration cannot validate temporal event detection or tracking.
+Those modules are therefore reported as NOT_APPLICABLE rather than being
+assigned synthetic static outputs.
+
 The component benchmark validations remain the authoritative evidence for
 scientific performance of individual modules.
+
+Failure Handling
+----------------
+Batch-oriented integration scripts process all discovered supported media in
+their target directory. If one media item cannot be opened or fails during
+processing, the failure is recorded with a reason and subsequent media items
+are still attempted.
+
+Where a failed media item produces no frame-level records, its status is
+preserved in an appropriate media-level summary. Aggregate status becomes FAIL
+when one or more media items fail, even if other media complete successfully.
+Result files are written before the final test-level exception is raised so
+that failure evidence remains auditable.
+
+Intentional diagnostic failure fixtures are not part of the final integration
+package and must not be retained in release-quality result directories.
 
 Reproducibility
 ---------------
@@ -728,44 +910,48 @@ To reproduce the integration validation on another machine:
 
 1. Install the PhysioTrack project and required dependencies.
 2. Activate the PhysioTrack thesis environment.
-3. Ensure the documented integration test videos are available under
-   validation/integration/test_data/.
+3. Ensure the documented integration fixtures are available under
+   validation/integration/test_data/ in the appropriate subdirectories.
 4. Change to validation/integration/.
-5. Run the six scripts in the documented order.
-6. Confirm that each test completes without an exception.
+5. Run the seven scripts in the documented order.
+6. Confirm that each clean fixture run completes without an exception.
 7. Verify the generated result counts and PASS conditions against the values in
    this README.
-8. Preserve the result directories as integration evidence.
+8. Verify that numerical measurements are present in the frame/window exports
+   where the corresponding module is applicable.
+9. Preserve the final result directories as integration evidence.
 
 Runtime can vary across machines and is not a scientific reproducibility
-target. The principal reproducibility targets are the processed-frame counts,
-face and export accounting, feature-configuration behavior, tracked-identity
-behavior, module observation, and PASS/FAIL invariants.
+target. The principal reproducibility targets are processed-frame counts, face
+and export accounting, feature-configuration behavior, tracked-identity
+behavior, static-versus-temporal behavior, module observation, numerical export
+structure, and PASS/FAIL invariants.
 
 Regression Use
 --------------
-The integration suite can also be used for regression checking after
-changes to the face-analysis pipeline.
+The integration suite can also be used for regression checking after changes to
+the face-analysis pipeline.
 
 Component-level benchmark validations are separate from integration regression
 testing. The integration suite can be rerun to verify that later source-code
 changes preserve the established system-level contracts for configuration,
-tracking, temporal processing, module availability, and export consistency.
+tracking, temporal processing, static-image handling, module availability,
+association, failure accounting, and export consistency.
 
 Repository Preservation
 -----------------------
 The repository should preserve:
 
-- The six integration scripts
-- The integration README
+- The seven integration scripts
+- README_INTEGRATION.txt
 - Redistributable integration test fixtures
-- The result summaries and audit-relevant exports required to demonstrate
-  the documented runs
+- Final result summaries
+- Numerical frame/window exports required to demonstrate the documented runs
+- Media-level summary files required to preserve batch PASS/FAIL accounting
 
-Obsolete result-directory layouts, temporary diagnostic outputs, caches, and
-superseded intermediate files should not be retained in the final integration
-package.
+Obsolete result-directory layouts, temporary diagnostic outputs, caches,
+intentional failure fixtures, and superseded intermediate files should not be
+retained in the final integration package.
 
-The integration scripts must remain isolated from the benchmark datasets and
-must not modify files outside validation/integration during normal validation
-runs.
+The integration scripts must remain isolated from benchmark datasets and must
+not modify files outside validation/integration during normal validation runs.

@@ -13,16 +13,20 @@ from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = SCRIPT_DIR / "test_data"
-
-VIDEO_PATH = (
-    TEST_DATA_DIR
-    / "istockphoto-1370809321-640_adpp_is.mp4"
+TEST_DATA_DIR = (
+    SCRIPT_DIR
+    / "test_data"
+    / "whole_project"
 )
 
-VIDEO_LABEL = str(
-    VIDEO_PATH.relative_to(SCRIPT_DIR)
-).replace("\\", "/")
+VIDEO_EXTENSIONS = {
+    ".avi",
+    ".m4v",
+    ".mkv",
+    ".mov",
+    ".mp4",
+    ".webm",
+}
 
 OUTPUT_DIR = (
     SCRIPT_DIR
@@ -48,6 +52,36 @@ MODULES = [
 ]
 
 
+def get_video_paths() -> list[Path]:
+    if not TEST_DATA_DIR.exists():
+        raise FileNotFoundError(
+            f"Test-data directory not found: {TEST_DATA_DIR}"
+        )
+
+    video_paths = sorted(
+        path
+        for path in TEST_DATA_DIR.iterdir()
+        if (
+            path.is_file()
+            and path.suffix.lower() in VIDEO_EXTENSIONS
+        )
+    )
+
+    if not video_paths:
+        raise FileNotFoundError(
+            f"No supported video files found in: {TEST_DATA_DIR}"
+        )
+
+    return video_paths
+
+
+def video_label(
+    video_path: Path,
+) -> str:
+    return str(
+        video_path.relative_to(SCRIPT_DIR)
+    ).replace("\\", "/")
+
 
 def clean_output_directory() -> None:
     if OUTPUT_DIR.exists():
@@ -58,11 +92,20 @@ def clean_output_directory() -> None:
         exist_ok=True,
     )
 
+
 def to_jsonable(value: Any) -> Any:
     if value is None:
         return None
 
-    if isinstance(value, (str, int, float, bool)):
+    if isinstance(
+        value,
+        (
+            str,
+            int,
+            float,
+            bool,
+        ),
+    ):
         return value
 
     if isinstance(value, np.generic):
@@ -91,6 +134,186 @@ def to_jsonable(value: Any) -> Any:
         }
 
     return str(value)
+
+
+def flatten_value(
+    prefix: str,
+    value: Any,
+    output: dict[str, Any],
+) -> None:
+    if value is None:
+        output[prefix] = None
+        return
+
+    if isinstance(
+        value,
+        (
+            str,
+            int,
+            float,
+            bool,
+        ),
+    ):
+        output[prefix] = value
+        return
+
+    if isinstance(value, np.generic):
+        output[prefix] = value.item()
+        return
+
+    if isinstance(value, np.ndarray):
+        flatten_value(
+            prefix,
+            value.tolist(),
+            output,
+        )
+        return
+
+    if isinstance(value, dict):
+        if not value:
+            output[prefix] = None
+            return
+
+        for key, item in value.items():
+            child_prefix = (
+                f"{prefix}_{key}"
+                if prefix
+                else str(key)
+            )
+
+            flatten_value(
+                child_prefix,
+                item,
+                output,
+            )
+
+        return
+
+    if isinstance(value, (list, tuple)):
+        if not value:
+            output[prefix] = None
+            return
+
+        for index, item in enumerate(value):
+            flatten_value(
+                f"{prefix}_{index}",
+                item,
+                output,
+            )
+
+        return
+
+    if hasattr(value, "__dict__"):
+        flatten_value(
+            prefix,
+            {
+                key: item
+                for key, item in vars(value).items()
+                if not key.startswith("_")
+            },
+            output,
+        )
+
+        return
+
+    output[prefix] = str(value)
+
+
+def make_frame_csv_row(
+    record: dict[str, Any],
+) -> dict[str, Any]:
+    row = {
+        "video":
+            record["video"],
+        "frame_index":
+            record["frame_index"],
+        "timestamp_seconds":
+            record["timestamp_seconds"],
+        "face_index":
+            record["face_index"],
+        "track_id":
+            record["track_id"],
+    }
+
+    box = record.get(
+        "box"
+    )
+
+    if isinstance(
+        box,
+        (list, tuple),
+    ):
+        row["box_x1"] = (
+            box[0]
+            if len(box) > 0
+            else None
+        )
+
+        row["box_y1"] = (
+            box[1]
+            if len(box) > 1
+            else None
+        )
+
+        row["box_x2"] = (
+            box[2]
+            if len(box) > 2
+            else None
+        )
+
+        row["box_y2"] = (
+            box[3]
+            if len(box) > 3
+            else None
+        )
+
+    else:
+        row["box_x1"] = None
+        row["box_y1"] = None
+        row["box_x2"] = None
+        row["box_y2"] = None
+
+    head_pose = record.get(
+        "head_pose"
+    )
+
+    if head_pose is not None:
+        flatten_value(
+            "head_pose",
+            head_pose,
+            row,
+        )
+
+    features = record.get(
+        "face_features",
+        {},
+    )
+
+    if isinstance(
+        features,
+        dict,
+    ):
+        for module, value in features.items():
+            flatten_value(
+                module,
+                value,
+                row,
+            )
+
+    module_status = record.get(
+        "module_status",
+        {},
+    )
+
+    for module in MODULES:
+        row[
+            f"module_{module}_available"
+        ] = module_status.get(
+            module,
+            False,
+        )
+
+    return row
 
 
 def make_config() -> FaceAnalysisConfig:
@@ -123,7 +346,9 @@ def module_available(value: Any) -> bool:
 
     if isinstance(value, dict):
         if "available" in value:
-            return bool(value["available"])
+            return bool(
+                value["available"]
+            )
 
         return len(value) > 0
 
@@ -181,7 +406,10 @@ def get_track_id(face: Any) -> Any:
         "person_id",
     ):
         if hasattr(face, name):
-            value = getattr(face, name)
+            value = getattr(
+                face,
+                name,
+            )
 
             if value is not None:
                 return value
@@ -196,7 +424,10 @@ def get_box(face: Any) -> Any:
         "bounding_box",
     ):
         if hasattr(face, name):
-            value = getattr(face, name)
+            value = getattr(
+                face,
+                name,
+            )
 
             if value is not None:
                 return value
@@ -222,7 +453,10 @@ def get_head_pose(
         "pose",
     ):
         if hasattr(face, name):
-            value = getattr(face, name)
+            value = getattr(
+                face,
+                name,
+            )
 
             if value is not None:
                 return value
@@ -230,21 +464,95 @@ def get_head_pose(
     return None
 
 
-def main() -> None:
-    if not VIDEO_PATH.exists():
-        raise FileNotFoundError(
-            f"Video not found: {VIDEO_PATH}"
-        )
+def failed_video_summary(
+    video_path: Path,
+    reason: str,
+) -> dict[str, Any]:
+    module_summary = {}
 
-    clean_output_directory()
+    for module in MODULES:
+        module_summary[module] = {
+            "status":
+                "ERROR",
+            "successful_face_samples":
+                0,
+            "total_face_samples":
+                0,
+            "coverage_percent":
+                0.0,
+        }
 
+    return {
+        "test_type":
+            "final_whole_project_end_to_end",
+        "video":
+            video_label(
+                video_path
+            ),
+        "resolution":
+            None,
+        "fps":
+            None,
+        "reported_video_frames":
+            None,
+        "processed_frames":
+            0,
+        "frames_with_faces":
+            0,
+        "frames_without_faces":
+            0,
+        "frames_with_one_face":
+            0,
+        "frames_with_multiple_faces":
+            0,
+        "total_face_samples":
+            0,
+        "unique_track_ids":
+            [],
+        "modules":
+            module_summary,
+        "frame_count_matches_video":
+            False,
+        "tracking_observed":
+            False,
+        "record_count_matches":
+            False,
+        "all_modules_observed":
+            False,
+        "blink_configuration":
+            None,
+        "eye_openness": {
+            "finite_samples":
+                0,
+            "matches_available_eye_samples":
+                False,
+        },
+        "mouth_openness": {
+            "finite_samples":
+                0,
+            "matches_available_mouth_samples":
+                False,
+        },
+        "failure_reason":
+            reason,
+        "overall_status":
+            "FAIL",
+    }
+
+
+def run_video(
+    video_path: Path,
+) -> tuple[
+    list[dict[str, Any]],
+    dict[str, Any],
+]:
     capture = cv2.VideoCapture(
-        str(VIDEO_PATH)
+        str(video_path)
     )
 
     if not capture.isOpened():
         raise RuntimeError(
-            f"Could not open video: {VIDEO_PATH}"
+            f"Could not open video: {video_path}"
         )
 
     fps = float(
@@ -286,23 +594,33 @@ def main() -> None:
     )
 
     print("=" * 86)
+
     print(
         "PhysioTrack Final Whole-Project "
         "End-to-End Test"
     )
+
     print("=" * 86)
 
-    print(f"Video: {VIDEO_PATH}")
+    print(
+        f"Video: {video_path}"
+    )
+
     print(
         f"Resolution: {width} x {height}"
     )
-    print(f"FPS: {fps}")
+
+    print(
+        f"FPS: {fps}"
+    )
+
     print(
         "Reported video frames:",
         reported_video_frames,
     )
 
     print()
+
     print(
         "Initializing full FaceAnalysis pipeline..."
     )
@@ -317,17 +635,26 @@ def main() -> None:
         for module in MODULES
     }
 
-    records: list[dict[str, Any]] = []
-    frame_face_counts: list[int] = []
+    records: list[
+        dict[str, Any]
+    ] = []
+
+    frame_face_counts: list[
+        int
+    ] = []
 
     processed_frames = 0
     frames_with_faces = 0
     total_faces = 0
 
-    track_ids: set[Any] = set()
+    track_ids: set[
+        Any
+    ] = set()
 
     valid_eye_openness_samples = 0
     valid_mouth_openness_samples = 0
+
+    processing_error = None
 
     try:
         while True:
@@ -336,9 +663,18 @@ def main() -> None:
             if not ok:
                 break
 
-            prediction = pipeline.predict(
-                frame
-            )
+            try:
+                prediction = pipeline.predict(
+                    frame
+                )
+
+            except Exception as exc:
+                processing_error = (
+                    "processing_error_at_frame_"
+                    f"{processed_frames}: {exc}"
+                )
+
+                break
 
             faces = get_faces(
                 prediction
@@ -351,7 +687,9 @@ def main() -> None:
             if faces:
                 frames_with_faces += 1
 
-            total_faces += len(faces)
+            total_faces += len(
+                faces
+            )
 
             for face_index, face in enumerate(
                 faces
@@ -375,7 +713,8 @@ def main() -> None:
                     )
 
                 status = {
-                    "detection": True,
+                    "detection":
+                        True,
                     "tracking":
                         track_id is not None,
                 }
@@ -384,7 +723,9 @@ def main() -> None:
                     "detection"
                 ] += 1
 
-                if status["tracking"]:
+                if status[
+                    "tracking"
+                ]:
                     success_counts[
                         "tracking"
                     ] += 1
@@ -452,9 +793,9 @@ def main() -> None:
                         )
                     )
 
-                    status[module] = (
-                        available
-                    )
+                    status[
+                        module
+                    ] = available
 
                     if available:
                         success_counts[
@@ -505,6 +846,10 @@ def main() -> None:
 
                 records.append(
                     {
+                        "video":
+                            video_label(
+                                video_path
+                            ),
                         "frame_index":
                             processed_frames,
                         "timestamp_seconds":
@@ -518,7 +863,9 @@ def main() -> None:
                             ),
                         "box":
                             to_jsonable(
-                                get_box(face)
+                                get_box(
+                                    face
+                                )
                             ),
                         "module_status":
                             status,
@@ -540,8 +887,8 @@ def main() -> None:
                 == 0
             ):
                 print(
-                    "Processed frames:",
-                    processed_frames,
+                    f"{video_path.name}: "
+                    f"processed {processed_frames} frames"
                 )
 
     finally:
@@ -552,7 +899,9 @@ def main() -> None:
 
     for module in MODULES:
         successful = (
-            success_counts[module]
+            success_counts[
+                module
+            ]
         )
 
         if total_faces > 0:
@@ -561,21 +910,30 @@ def main() -> None:
                 / total_faces
                 * 100.0
             )
+
         else:
             coverage = 0.0
 
         if total_faces == 0:
-            status = "NO_FACES"
+            module_status = (
+                "NO_FACES"
+            )
 
         elif successful > 0:
-            status = "PASS"
+            module_status = (
+                "PASS"
+            )
 
         else:
-            status = "UNAVAILABLE"
+            module_status = (
+                "UNAVAILABLE"
+            )
 
-        module_summary[module] = {
+        module_summary[
+            module
+        ] = {
             "status":
-                status,
+                module_status,
             "successful_face_samples":
                 successful,
             "total_face_samples":
@@ -600,7 +958,9 @@ def main() -> None:
     )
 
     all_modules_observed = all(
-        module_summary[module][
+        module_summary[
+            module
+        ][
             "status"
         ]
         == "PASS"
@@ -608,41 +968,102 @@ def main() -> None:
     )
 
     frame_count_matches = (
-        reported_video_frames <= 0
-        or processed_frames == reported_video_frames
+        processing_error is None
+        and (
+            reported_video_frames <= 0
+            or processed_frames
+            == reported_video_frames
+        )
     )
 
     tracking_observed = (
-        len(track_ids) > 0
-        and success_counts["tracking"] > 0
+        len(
+            track_ids
+        )
+        > 0
+        and success_counts[
+            "tracking"
+        ]
+        > 0
     )
 
     record_count_matches = (
-        len(records) == total_faces
+        len(
+            records
+        )
+        == total_faces
     )
 
     eye_openness_values_valid = (
         valid_eye_openness_samples > 0
         and valid_eye_openness_samples
-        == success_counts["eyes"]
+        == success_counts[
+            "eyes"
+        ]
     )
 
     mouth_openness_values_valid = (
         valid_mouth_openness_samples > 0
         and valid_mouth_openness_samples
-        == success_counts["mouth"]
+        == success_counts[
+            "mouth"
+        ]
     )
 
+    failed_checks = []
+
+    if processing_error is not None:
+        failed_checks.append(
+            processing_error
+        )
+
+    if processed_frames <= 0:
+        failed_checks.append(
+            "no_frames_processed"
+        )
+
+    if not frame_count_matches:
+        failed_checks.append(
+            "frame_count_mismatch"
+        )
+
+    if total_faces <= 0:
+        failed_checks.append(
+            "no_faces"
+        )
+
+    if not tracking_observed:
+        failed_checks.append(
+            "tracking_not_observed"
+        )
+
+    if not record_count_matches:
+        failed_checks.append(
+            "record_count_mismatch"
+        )
+
+    if not all_modules_observed:
+        failed_checks.append(
+            "one_or_more_modules_unobserved"
+        )
+
+    if not blink_configuration_valid:
+        failed_checks.append(
+            "blink_configuration_mismatch"
+        )
+
+    if not eye_openness_values_valid:
+        failed_checks.append(
+            "eye_openness_values_invalid"
+        )
+
+    if not mouth_openness_values_valid:
+        failed_checks.append(
+            "mouth_openness_values_invalid"
+        )
+
     overall_pass = (
-        processed_frames > 0
-        and frame_count_matches
-        and total_faces > 0
-        and tracking_observed
-        and record_count_matches
-        and all_modules_observed
-        and blink_configuration_valid
-        and eye_openness_values_valid
-        and mouth_openness_values_valid
+        not failed_checks
     )
 
     normalized_track_ids = sorted(
@@ -660,7 +1081,9 @@ def main() -> None:
         "test_type":
             "final_whole_project_end_to_end",
         "video":
-            VIDEO_LABEL,
+            video_label(
+                video_path
+            ),
         "resolution": {
             "width":
                 width,
@@ -723,6 +1146,190 @@ def main() -> None:
             ),
     }
 
+    if failed_checks:
+        summary[
+            "failure_reason"
+        ] = ", ".join(
+            failed_checks
+        )
+
+    return (
+        records,
+        summary,
+    )
+
+
+def main() -> None:
+    video_paths = get_video_paths()
+
+    clean_output_directory()
+
+    all_records: list[
+        dict[str, Any]
+    ] = []
+
+    video_summaries: list[
+        dict[str, Any]
+    ] = []
+
+    for video_path in video_paths:
+        print()
+        print("=" * 86)
+
+        print(
+            f"Testing video: {video_path}"
+        )
+
+        print("=" * 86)
+
+        try:
+            records, summary = (
+                run_video(
+                    video_path
+                )
+            )
+
+        except Exception as exc:
+            records = []
+
+            summary = failed_video_summary(
+                video_path,
+                str(
+                    exc
+                ),
+            )
+
+        all_records.extend(
+            records
+        )
+
+        video_summaries.append(
+            summary
+        )
+
+        print()
+
+        print(
+            "Processed frames:",
+            summary[
+                "processed_frames"
+            ],
+        )
+
+        print(
+            "Frames with faces:",
+            summary[
+                "frames_with_faces"
+            ],
+        )
+
+        print(
+            "Frames without faces:",
+            summary[
+                "frames_without_faces"
+            ],
+        )
+
+        print(
+            "Frames with one face:",
+            summary[
+                "frames_with_one_face"
+            ],
+        )
+
+        print(
+            "Frames with multiple faces:",
+            summary[
+                "frames_with_multiple_faces"
+            ],
+        )
+
+        print(
+            "Total face samples:",
+            summary[
+                "total_face_samples"
+            ],
+        )
+
+        print(
+            "Unique track IDs:",
+            summary[
+                "unique_track_ids"
+            ],
+        )
+
+        print(
+            "Status:",
+            summary[
+                "overall_status"
+            ],
+        )
+
+        if summary.get(
+            "failure_reason"
+        ):
+            print(
+                "Reason:",
+                summary[
+                    "failure_reason"
+                ],
+            )
+
+    overall_pass = all(
+        summary[
+            "overall_status"
+        ]
+        == "PASS"
+        for summary in video_summaries
+    )
+
+    combined_summary = {
+        "test_type":
+            "final_whole_project_end_to_end",
+        "videos":
+            video_summaries,
+        "video_count":
+            len(
+                video_summaries
+            ),
+        "passed_videos":
+            sum(
+                summary[
+                    "overall_status"
+                ]
+                == "PASS"
+                for summary in video_summaries
+            ),
+        "failed_videos":
+            sum(
+                summary[
+                    "overall_status"
+                ]
+                != "PASS"
+                for summary in video_summaries
+            ),
+        "total_processed_frames":
+            sum(
+                summary[
+                    "processed_frames"
+                ]
+                for summary in video_summaries
+            ),
+        "total_face_samples":
+            sum(
+                summary[
+                    "total_face_samples"
+                ]
+                for summary in video_summaries
+            ),
+        "overall_status":
+            (
+                "PASS"
+                if overall_pass
+                else "FAIL"
+            ),
+    }
+
     detailed_json_path = (
         OUTPUT_DIR
         / "whole_project_e2e_results.json"
@@ -750,9 +1357,11 @@ def main() -> None:
         json.dump(
             {
                 "summary":
-                    summary,
+                    combined_summary,
+                "videos":
+                    video_summaries,
                 "frames":
-                    records,
+                    all_records,
             },
             file,
             indent=2,
@@ -764,62 +1373,72 @@ def main() -> None:
         encoding="utf-8",
     ) as file:
         json.dump(
-            summary,
+            combined_summary,
             file,
             indent=2,
             ensure_ascii=False,
         )
+
+    frame_rows = [
+        make_frame_csv_row(
+            record
+        )
+        for record in all_records
+    ]
+
+    metadata_fieldnames = [
+        "video",
+        "frame_index",
+        "timestamp_seconds",
+        "face_index",
+        "track_id",
+        "box_x1",
+        "box_y1",
+        "box_x2",
+        "box_y2",
+    ]
+
+    all_fieldnames = {
+        key
+        for row in frame_rows
+        for key in row
+    }
+
+    feature_fieldnames = sorted(
+        field
+        for field in all_fieldnames
+        if (
+            field not in metadata_fieldnames
+            and not field.startswith(
+                "module_"
+            )
+        )
+    )
+
+    module_fieldnames = [
+        f"module_{module}_available"
+        for module in MODULES
+    ]
+
+    frame_fieldnames = (
+        metadata_fieldnames
+        + feature_fieldnames
+        + module_fieldnames
+    )
 
     with frames_csv_path.open(
         "w",
         newline="",
         encoding="utf-8",
     ) as file:
-        fieldnames = [
-            "frame_index",
-            "timestamp_seconds",
-            "face_index",
-            "track_id",
-            *MODULES,
-        ]
-
         writer = csv.DictWriter(
             file,
-            fieldnames=fieldnames,
+            fieldnames=frame_fieldnames,
         )
 
         writer.writeheader()
 
-        for record in records:
-            row = {
-                "frame_index":
-                    record[
-                        "frame_index"
-                    ],
-                "timestamp_seconds":
-                    record[
-                        "timestamp_seconds"
-                    ],
-                "face_index":
-                    record[
-                        "face_index"
-                    ],
-                "track_id":
-                    record[
-                        "track_id"
-                    ],
-            }
-
-            for module in MODULES:
-                row[module] = (
-                    record[
-                        "module_status"
-                    ].get(
-                        module,
-                        False,
-                    )
-                )
-
+        for row in frame_rows:
             writer.writerow(
                 row
             )
@@ -830,6 +1449,9 @@ def main() -> None:
         encoding="utf-8",
     ) as file:
         fieldnames = [
+            "video",
+            "video_status",
+            "failure_reason",
             "module",
             "status",
             "successful_face_samples",
@@ -844,146 +1466,98 @@ def main() -> None:
 
         writer.writeheader()
 
-        for module in MODULES:
-            item = module_summary[
-                module
-            ]
+        for summary in video_summaries:
+            for module in MODULES:
+                item = summary[
+                    "modules"
+                ][
+                    module
+                ]
 
-            writer.writerow(
-                {
-                    "module":
-                        module,
-                    "status":
-                        item[
-                            "status"
-                        ],
-                    "successful_face_samples":
-                        item[
-                            "successful_face_samples"
-                        ],
-                    "total_face_samples":
-                        item[
-                            "total_face_samples"
-                        ],
-                    "coverage_percent":
-                        item[
-                            "coverage_percent"
-                        ],
-                }
-            )
+                writer.writerow(
+                    {
+                        "video":
+                            summary[
+                                "video"
+                            ],
+                        "video_status":
+                            summary[
+                                "overall_status"
+                            ],
+                        "failure_reason":
+                            summary.get(
+                                "failure_reason"
+                            ),
+                        "module":
+                            module,
+                        "status":
+                            item[
+                                "status"
+                            ],
+                        "successful_face_samples":
+                            item[
+                                "successful_face_samples"
+                            ],
+                        "total_face_samples":
+                            item[
+                                "total_face_samples"
+                            ],
+                        "coverage_percent":
+                            item[
+                                "coverage_percent"
+                            ],
+                    }
+                )
 
     print()
     print("=" * 86)
+
     print(
         "Final Whole-Project Results"
     )
+
     print("=" * 86)
 
     print(
-        "Processed frames:",
-        processed_frames,
+        "Videos tested:",
+        len(
+            video_summaries
+        ),
     )
 
     print(
-        "Frames with faces:",
-        frames_with_faces,
+        "Passed videos:",
+        combined_summary[
+            "passed_videos"
+        ],
     )
 
     print(
-        "Frames without faces:",
-        frames_without_faces,
+        "Failed videos:",
+        combined_summary[
+            "failed_videos"
+        ],
     )
 
     print(
-        "Frames with one face:",
-        frames_with_one_face,
-    )
-
-    print(
-        "Frames with multiple faces:",
-        frames_with_multiple_faces,
+        "Total processed frames:",
+        combined_summary[
+            "total_processed_frames"
+        ],
     )
 
     print(
         "Total face samples:",
-        total_faces,
-    )
-
-    print(
-        "Unique track IDs:",
-        normalized_track_ids,
-    )
-
-    print()
-
-    print(
-        f"{'Module':<22}"
-        f"{'Status':<14}"
-        f"{'Samples':<14}"
-        f"{'Coverage':<14}"
-    )
-
-    print("-" * 64)
-
-    for module in MODULES:
-        item = module_summary[
-            module
-        ]
-
-        print(
-            f"{module:<22}"
-            f"{item['status']:<14}"
-            f"{item['successful_face_samples']:<14}"
-            f"{item['coverage_percent']:.2f}%"
-        )
-
-    print("-" * 64)
-
-    print(
-        "All modules observed:",
-        all_modules_observed,
-    )
-
-    print(
-        "Blink configuration:",
-        (
-            f"threshold={config.blink_threshold}, "
-            f"min_closed_frames={config.min_closed_frames}"
-        ),
-    )
-
-    print(
-        "Blink configuration valid:",
-        blink_configuration_valid,
-    )
-
-    print(
-        "Finite eye-openness samples:",
-        valid_eye_openness_samples,
-    )
-
-    print(
-        "Eye-openness values valid:",
-        eye_openness_values_valid,
-    )
-
-    print(
-        "Finite mouth-openness samples:",
-        valid_mouth_openness_samples,
-    )
-
-    print(
-        "Mouth-openness values valid:",
-        mouth_openness_values_valid,
+        combined_summary[
+            "total_face_samples"
+        ],
     )
 
     print(
         "FINAL WHOLE-PROJECT E2E TEST:",
-        (
-            "PASS"
-            if overall_pass
-            else "FAIL"
-        ),
+        combined_summary[
+            "overall_status"
+        ],
     )
 
     print()
@@ -1002,56 +1576,9 @@ def main() -> None:
     )
 
     if not overall_pass:
-        failed_checks = []
-
-        if processed_frames <= 0:
-            failed_checks.append(
-                "no_frames_processed"
-            )
-
-        if not frame_count_matches:
-            failed_checks.append(
-                "frame_count_mismatch"
-            )
-
-        if total_faces <= 0:
-            failed_checks.append(
-                "no_faces"
-            )
-
-        if not tracking_observed:
-            failed_checks.append(
-                "tracking_not_observed"
-            )
-
-        if not record_count_matches:
-            failed_checks.append(
-                "record_count_mismatch"
-            )
-
-        if not all_modules_observed:
-            failed_checks.append(
-                "one_or_more_modules_unobserved"
-            )
-
-        if not blink_configuration_valid:
-            failed_checks.append(
-                "blink_configuration_mismatch"
-            )
-
-        if not eye_openness_values_valid:
-            failed_checks.append(
-                "eye_openness_values_invalid"
-            )
-
-        if not mouth_openness_values_valid:
-            failed_checks.append(
-                "mouth_openness_values_invalid"
-            )
-
         raise RuntimeError(
-            "Whole-project end-to-end test failed: "
-            + ", ".join(failed_checks)
+            "Whole-project end-to-end test "
+            "completed with one or more failed videos."
         )
 
 

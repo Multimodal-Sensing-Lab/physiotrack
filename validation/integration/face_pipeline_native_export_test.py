@@ -12,13 +12,20 @@ from physiotrack.face.export import FaceResultExporter
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = SCRIPT_DIR / "test_data"
+TEST_DATA_DIR = (
+    SCRIPT_DIR
+    / "test_data"
+    / "single_person"
+)
 
-VIDEO_PATH = TEST_DATA_DIR / "face_blink_pose.mp4"
-
-VIDEO_LABEL = str(
-    VIDEO_PATH.relative_to(SCRIPT_DIR)
-).replace("\\", "/")
+VIDEO_EXTENSIONS = {
+    ".avi",
+    ".m4v",
+    ".mkv",
+    ".mov",
+    ".mp4",
+    ".webm",
+}
 
 OUTPUT_DIR = (
     SCRIPT_DIR
@@ -26,6 +33,36 @@ OUTPUT_DIR = (
     / "native_export"
 )
 
+
+def get_video_paths() -> list[Path]:
+    if not TEST_DATA_DIR.exists():
+        raise FileNotFoundError(
+            f"Test-data directory not found: {TEST_DATA_DIR}"
+        )
+
+    video_paths = sorted(
+        path
+        for path in TEST_DATA_DIR.iterdir()
+        if (
+            path.is_file()
+            and path.suffix.lower() in VIDEO_EXTENSIONS
+        )
+    )
+
+    if not video_paths:
+        raise FileNotFoundError(
+            f"No supported video files found in: {TEST_DATA_DIR}"
+        )
+
+    return video_paths
+
+
+def video_label(
+    video_path: Path,
+) -> str:
+    return str(
+        video_path.relative_to(SCRIPT_DIR)
+    ).replace("\\", "/")
 
 
 def clean_output_directory() -> None:
@@ -36,6 +73,7 @@ def clean_output_directory() -> None:
         parents=True,
         exist_ok=True,
     )
+
 
 def finite_numeric(value) -> bool:
     if value is None:
@@ -74,19 +112,64 @@ def numeric_summary_valid(
     )
 
 
-def main() -> None:
-    if not VIDEO_PATH.exists():
-        raise FileNotFoundError(
-            f"Video not found: {VIDEO_PATH}"
-        )
+def failed_video_summary(
+    video_path: Path,
+    reason: str,
+) -> dict:
+    return {
+        "video":
+            video_label(
+                video_path
+            ),
+        "fps":
+            None,
+        "video_frames":
+            None,
+        "processed_frames":
+            0,
+        "detected_faces":
+            0,
+        "frame_records":
+            0,
+        "window_records":
+            0,
+        "gaze_available":
+            0,
+        "gaze_estimation_available":
+            0,
+        "blink_available":
+            0,
+        "blink_events":
+            0,
+        "mouth_motion_available":
+            0,
+        "temporal_available":
+            0,
+        "blink_configuration":
+            None,
+        "integration_checks":
+            {},
+        "failure_reason":
+            reason,
+        "overall_status":
+            "FAIL",
+    }
 
-    clean_output_directory()
 
-    capture = cv2.VideoCapture(str(VIDEO_PATH))
+def run_video(
+    video_path: Path,
+) -> tuple[
+    list[dict],
+    list[dict],
+    dict,
+]:
+    capture = cv2.VideoCapture(
+        str(video_path)
+    )
 
     if not capture.isOpened():
         raise RuntimeError(
-            f"Could not open video: {VIDEO_PATH}"
+            f"Could not open video: {video_path}"
         )
 
     fps = float(
@@ -99,6 +182,7 @@ def main() -> None:
 
     if fps <= 0:
         capture.release()
+
         raise RuntimeError(
             f"Invalid video FPS: {fps}"
         )
@@ -147,9 +231,14 @@ def main() -> None:
             if not ok:
                 break
 
-            timestamp = processed_frames / fps
+            timestamp = (
+                processed_frames
+                / fps
+            )
 
-            result = pipeline.predict(frame)
+            result = pipeline.predict(
+                frame
+            )
 
             current_frame_records = (
                 FaceResultExporter.frame_records(
@@ -166,6 +255,16 @@ def main() -> None:
                     timestamp=timestamp,
                 )
             )
+
+            for record in current_frame_records:
+                record["video"] = video_label(
+                    video_path
+                )
+
+            for record in current_window_records:
+                record["video"] = video_label(
+                    video_path
+                )
 
             frame_records.extend(
                 current_frame_records
@@ -184,22 +283,35 @@ def main() -> None:
                     else {}
                 )
 
-                gaze = features.get("gaze", {})
+                gaze = features.get(
+                    "gaze",
+                    {},
+                )
+
                 gaze_estimation = features.get(
                     "gaze_estimation",
                     {},
                 )
-                blink = features.get("blink", {})
+
+                blink = features.get(
+                    "blink",
+                    {},
+                )
+
                 mouth_motion = features.get(
                     "mouth_motion",
                     {},
                 )
+
                 temporal = features.get(
                     "temporal",
                     {},
                 )
 
-                if gaze.get("available", False):
+                if gaze.get(
+                    "available",
+                    False,
+                ):
                     gaze_available += 1
 
                 if gaze_estimation.get(
@@ -208,10 +320,16 @@ def main() -> None:
                 ):
                     gaze_estimation_available += 1
 
-                if blink.get("available", False):
+                if blink.get(
+                    "available",
+                    False,
+                ):
                     blink_available += 1
 
-                if blink.get("blink", False):
+                if blink.get(
+                    "blink",
+                    False,
+                ):
                     blink_events += 1
 
                 if mouth_motion.get(
@@ -231,56 +349,6 @@ def main() -> None:
     finally:
         capture.release()
         pipeline.close()
-
-    OUTPUT_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    frame_json_path = (
-        OUTPUT_DIR
-        / "face_pipeline_frames.json"
-    )
-
-    frame_csv_path = (
-        OUTPUT_DIR
-        / "face_pipeline_frames.csv"
-    )
-
-    window_json_path = (
-        OUTPUT_DIR
-        / "face_pipeline_windows.json"
-    )
-
-    window_csv_path = (
-        OUTPUT_DIR
-        / "face_pipeline_windows.csv"
-    )
-
-    summary_path = (
-        OUTPUT_DIR
-        / "face_pipeline_native_export_summary.json"
-    )
-
-    FaceResultExporter.save_json(
-        frame_records,
-        frame_json_path,
-    )
-
-    FaceResultExporter.save_csv(
-        frame_records,
-        frame_csv_path,
-    )
-
-    FaceResultExporter.save_json(
-        window_records,
-        window_json_path,
-    )
-
-    FaceResultExporter.save_csv(
-        window_records,
-        window_csv_path,
-    )
 
     frame_feature_dicts_valid = all(
         isinstance(
@@ -485,18 +553,30 @@ def main() -> None:
     )
 
     summary = {
-        "video": VIDEO_LABEL,
-        "fps": fps,
-        "video_frames": total_video_frames,
-        "processed_frames": processed_frames,
-        "detected_faces": detected_faces,
-        "frame_records": len(frame_records),
-        "window_records": len(window_records),
-        "gaze_available": gaze_available,
+        "video":
+            video_label(
+                video_path
+            ),
+        "fps":
+            fps,
+        "video_frames":
+            total_video_frames,
+        "processed_frames":
+            processed_frames,
+        "detected_faces":
+            detected_faces,
+        "frame_records":
+            len(frame_records),
+        "window_records":
+            len(window_records),
+        "gaze_available":
+            gaze_available,
         "gaze_estimation_available":
             gaze_estimation_available,
-        "blink_available": blink_available,
-        "blink_events": blink_events,
+        "blink_available":
+            blink_available,
+        "blink_events":
+            blink_events,
         "mouth_motion_available":
             mouth_motion_available,
         "temporal_available":
@@ -510,7 +590,239 @@ def main() -> None:
         "integration_checks":
             integration_checks,
         "overall_status":
-            "PASS" if overall_pass else "FAIL",
+            (
+                "PASS"
+                if overall_pass
+                else "FAIL"
+            ),
+    }
+
+    if not overall_pass:
+        failed_checks = [
+            name
+            for name, passed
+            in integration_checks.items()
+            if not passed
+        ]
+
+        raise RuntimeError(
+            f"{summary['video']}: "
+            "native export integration test failed: "
+            + ", ".join(failed_checks)
+        )
+
+    return (
+        frame_records,
+        window_records,
+        summary,
+    )
+
+
+def main() -> None:
+    video_paths = get_video_paths()
+
+    clean_output_directory()
+
+    frame_records = []
+    window_records = []
+    video_summaries = []
+
+    for video_path in video_paths:
+        print()
+        print("=" * 72)
+        print(f"Video: {video_path}")
+        print("=" * 72)
+
+        try:
+            (
+                current_frame_records,
+                current_window_records,
+                current_summary,
+            ) = run_video(
+                video_path
+            )
+
+        except Exception as exc:
+            current_frame_records = []
+            current_window_records = []
+
+            current_summary = (
+                failed_video_summary(
+                    video_path,
+                    str(exc),
+                )
+            )
+
+            print(
+                "Status: FAIL"
+            )
+
+            print(
+                "Reason:",
+                current_summary[
+                    "failure_reason"
+                ],
+            )
+
+        frame_records.extend(
+            current_frame_records
+        )
+
+        window_records.extend(
+            current_window_records
+        )
+
+        video_summaries.append(
+            current_summary
+        )
+
+        print(
+            "Processed frames:",
+            current_summary[
+                "processed_frames"
+            ],
+        )
+
+        print(
+            "Detected faces:",
+            current_summary[
+                "detected_faces"
+            ],
+        )
+
+        print(
+            "Frame records:",
+            current_summary[
+                "frame_records"
+            ],
+        )
+
+        print(
+            "Window records:",
+            current_summary[
+                "window_records"
+            ],
+        )
+
+        print(
+            "Blink events:",
+            current_summary[
+                "blink_events"
+            ],
+        )
+
+        print(
+            "Status:",
+            current_summary[
+                "overall_status"
+            ],
+        )
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    frame_json_path = (
+        OUTPUT_DIR
+        / "face_pipeline_frames.json"
+    )
+
+    frame_csv_path = (
+        OUTPUT_DIR
+        / "face_pipeline_frames.csv"
+    )
+
+    window_json_path = (
+        OUTPUT_DIR
+        / "face_pipeline_windows.json"
+    )
+
+    window_csv_path = (
+        OUTPUT_DIR
+        / "face_pipeline_windows.csv"
+    )
+
+    summary_path = (
+        OUTPUT_DIR
+        / "face_pipeline_native_export_summary.json"
+    )
+
+    FaceResultExporter.save_json(
+        frame_records,
+        frame_json_path,
+    )
+
+    FaceResultExporter.save_csv(
+        frame_records,
+        frame_csv_path,
+    )
+
+    FaceResultExporter.save_json(
+        window_records,
+        window_json_path,
+    )
+
+    FaceResultExporter.save_csv(
+        window_records,
+        window_csv_path,
+    )
+
+    overall_pass = all(
+        summary[
+            "overall_status"
+        ]
+        == "PASS"
+        for summary in video_summaries
+    )
+
+    combined_summary = {
+        "test_type":
+            "native_export_integration",
+        "videos":
+            video_summaries,
+        "video_count":
+            len(video_summaries),
+        "passed_videos":
+            sum(
+                summary[
+                    "overall_status"
+                ]
+                == "PASS"
+                for summary in video_summaries
+            ),
+        "failed_videos":
+            sum(
+                summary[
+                    "overall_status"
+                ]
+                != "PASS"
+                for summary in video_summaries
+            ),
+        "total_processed_frames":
+            sum(
+                summary[
+                    "processed_frames"
+                ]
+                for summary in video_summaries
+            ),
+        "total_detected_faces":
+            sum(
+                summary[
+                    "detected_faces"
+                ]
+                for summary in video_summaries
+            ),
+        "total_frame_records":
+            len(frame_records),
+        "total_window_records":
+            len(window_records),
+        "overall_status":
+            (
+                "PASS"
+                if overall_pass
+                else "FAIL"
+            ),
     }
 
     with summary_path.open(
@@ -518,7 +830,7 @@ def main() -> None:
         encoding="utf-8",
     ) as file:
         json.dump(
-            summary,
+            combined_summary,
             file,
             indent=2,
         )
@@ -530,79 +842,57 @@ def main() -> None:
         "Integration Test"
     )
     print("=" * 72)
-    print(f"FPS: {fps}")
+
     print(
-        f"Video frames: {total_video_frames}"
+        "Videos tested:",
+        len(video_summaries),
     )
+
     print(
-        f"Processed frames: {processed_frames}"
+        "Passed videos:",
+        combined_summary[
+            "passed_videos"
+        ],
     )
+
     print(
-        f"Detected faces: {detected_faces}"
+        "Failed videos:",
+        combined_summary[
+            "failed_videos"
+        ],
     )
+
     print(
-        f"Frame records: {len(frame_records)}"
+        "Total processed frames:",
+        combined_summary[
+            "total_processed_frames"
+        ],
     )
+
     print(
-        f"Window records: {len(window_records)}"
+        "Total detected faces:",
+        combined_summary[
+            "total_detected_faces"
+        ],
     )
+
     print(
-        f"Old gaze available: {gaze_available}"
+        "Total frame records:",
+        len(frame_records),
     )
+
     print(
-        "Gaze estimation available:",
-        gaze_estimation_available,
+        "Total window records:",
+        len(window_records),
     )
+
     print(
-        f"Blink available: {blink_available}"
+        "Overall status:",
+        combined_summary[
+            "overall_status"
+        ],
     )
-    print(
-        f"Blink events: {blink_events}"
-    )
-    print(
-        "Mouth motion available:",
-        mouth_motion_available,
-    )
-    print(
-        "Temporal available:",
-        temporal_available,
-    )
-    print(
-        "Frame records contain old gaze key:",
-        frame_has_old_gaze_key,
-    )
-    print(
-        "Frame records contain gaze estimation key:",
-        frame_has_gaze_estimation_key,
-    )
-    print(
-        "Frame eye-openness export valid:",
-        frame_eye_openness_valid,
-    )
-    print(
-        "Frame mouth-openness export valid:",
-        frame_mouth_openness_valid,
-    )
-    print(
-        "Window records have expected structure:",
-        windows_have_expected_structure,
-    )
-    print(
-        "Window eye-openness summary valid:",
-        window_eye_openness_valid,
-    )
-    print(
-        "Window mouth-openness summary valid:",
-        window_mouth_openness_valid,
-    )
-    print(
-        "Blink configuration valid:",
-        blink_configuration_valid,
-    )
-    print(
-        "Export record counts match detected faces:",
-        export_record_counts_match,
-    )
+
     print("=" * 72)
 
     print()
@@ -614,16 +904,9 @@ def main() -> None:
     print(summary_path)
 
     if not overall_pass:
-        failed_checks = [
-            name
-            for name, passed
-            in integration_checks.items()
-            if not passed
-        ]
-
         raise RuntimeError(
-            "Native export integration test failed: "
-            + ", ".join(failed_checks)
+            "Native export integration test "
+            "completed with one or more failed videos."
         )
 
     print()

@@ -13,13 +13,20 @@ from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = SCRIPT_DIR / "test_data"
+TEST_DATA_DIR = (
+    SCRIPT_DIR
+    / "test_data"
+    / "single_person"
+)
 
-VIDEO_PATH = TEST_DATA_DIR / "face_blink_pose.mp4"
-
-VIDEO_LABEL = str(
-    VIDEO_PATH.relative_to(SCRIPT_DIR)
-).replace("\\", "/")
+VIDEO_EXTENSIONS = {
+    ".avi",
+    ".m4v",
+    ".mkv",
+    ".mov",
+    ".mp4",
+    ".webm",
+}
 
 OUTPUT_DIR = (
     SCRIPT_DIR
@@ -45,6 +52,36 @@ MODULES = [
 ]
 
 
+def get_video_paths() -> list[Path]:
+    if not TEST_DATA_DIR.exists():
+        raise FileNotFoundError(
+            f"Test-data directory not found: {TEST_DATA_DIR}"
+        )
+
+    video_paths = sorted(
+        path
+        for path in TEST_DATA_DIR.iterdir()
+        if (
+            path.is_file()
+            and path.suffix.lower() in VIDEO_EXTENSIONS
+        )
+    )
+
+    if not video_paths:
+        raise FileNotFoundError(
+            f"No supported video files found in: {TEST_DATA_DIR}"
+        )
+
+    return video_paths
+
+
+def video_label(
+    video_path: Path,
+) -> str:
+    return str(
+        video_path.relative_to(SCRIPT_DIR)
+    ).replace("\\", "/")
+
 
 def clean_output_directory() -> None:
     if OUTPUT_DIR.exists():
@@ -54,6 +91,7 @@ def clean_output_directory() -> None:
         parents=True,
         exist_ok=True,
     )
+
 
 def to_jsonable(value: Any) -> Any:
     if value is None:
@@ -75,7 +113,10 @@ def to_jsonable(value: Any) -> Any:
         }
 
     if isinstance(value, (list, tuple)):
-        return [to_jsonable(item) for item in value]
+        return [
+            to_jsonable(item)
+            for item in value
+        ]
 
     if hasattr(value, "__dict__"):
         return {
@@ -85,6 +126,192 @@ def to_jsonable(value: Any) -> Any:
         }
 
     return str(value)
+
+
+def flatten_value(
+    prefix: str,
+    value: Any,
+    output: dict[str, Any],
+) -> None:
+    if value is None:
+        output[prefix] = None
+        return
+
+    if isinstance(
+        value,
+        (
+            str,
+            int,
+            float,
+            bool,
+        ),
+    ):
+        output[prefix] = value
+        return
+
+    if isinstance(value, np.generic):
+        output[prefix] = value.item()
+        return
+
+    if isinstance(value, np.ndarray):
+        flatten_value(
+            prefix,
+            value.tolist(),
+            output,
+        )
+        return
+
+    if isinstance(value, dict):
+        if not value:
+            output[prefix] = None
+            return
+
+        for key, item in value.items():
+            child_prefix = (
+                f"{prefix}_{key}"
+                if prefix
+                else str(key)
+            )
+
+            flatten_value(
+                child_prefix,
+                item,
+                output,
+            )
+
+        return
+
+    if isinstance(value, (list, tuple)):
+        if not value:
+            output[prefix] = None
+            return
+
+        for index, item in enumerate(value):
+            flatten_value(
+                f"{prefix}_{index}",
+                item,
+                output,
+            )
+
+        return
+
+    if hasattr(value, "__dict__"):
+        flatten_value(
+            prefix,
+            {
+                key: item
+                for key, item in vars(value).items()
+                if not key.startswith("_")
+            },
+            output,
+        )
+
+        return
+
+    output[prefix] = str(value)
+
+
+def make_frame_csv_row(
+    record: dict[str, Any],
+) -> dict[str, Any]:
+    row = {
+        "video":
+            record["video"],
+        "run":
+            record["run"],
+        "gaze_estimation_enabled":
+            record[
+                "gaze_estimation_enabled"
+            ],
+        "frame_index":
+            record["frame_index"],
+        "timestamp":
+            record["timestamp"],
+        "face_index":
+            record["face_index"],
+        "track_id":
+            record["track_id"],
+    }
+
+    box = record.get(
+        "box"
+    )
+
+    if isinstance(
+        box,
+        (list, tuple),
+    ):
+        row["box_x1"] = (
+            box[0]
+            if len(box) > 0
+            else None
+        )
+
+        row["box_y1"] = (
+            box[1]
+            if len(box) > 1
+            else None
+        )
+
+        row["box_x2"] = (
+            box[2]
+            if len(box) > 2
+            else None
+        )
+
+        row["box_y2"] = (
+            box[3]
+            if len(box) > 3
+            else None
+        )
+
+    else:
+        row["box_x1"] = None
+        row["box_y1"] = None
+        row["box_x2"] = None
+        row["box_y2"] = None
+
+    head_pose = record.get(
+        "head_pose"
+    )
+
+    if head_pose is not None:
+        flatten_value(
+            "head_pose",
+            head_pose,
+            row,
+        )
+
+    features = record.get(
+        "face_features",
+        {},
+    )
+
+    if isinstance(
+        features,
+        dict,
+    ):
+        for module, value in features.items():
+            flatten_value(
+                module,
+                value,
+                row,
+            )
+
+    module_status = record.get(
+        "module_status",
+        {},
+    )
+
+    for module in MODULES:
+        row[
+            f"module_{module}_available"
+        ] = module_status.get(
+            module,
+            False,
+        )
+
+    return row
 
 
 def make_config(
@@ -154,7 +381,11 @@ def get_faces(prediction: Any) -> list[Any]:
 
 
 def get_track_id(face: Any) -> Any:
-    for name in ("track_id", "id", "person_id"):
+    for name in (
+        "track_id",
+        "id",
+        "person_id",
+    ):
         if hasattr(face, name):
             value = getattr(face, name)
 
@@ -165,7 +396,11 @@ def get_track_id(face: Any) -> Any:
 
 
 def get_box(face: Any) -> Any:
-    for name in ("box", "bbox", "bounding_box"):
+    for name in (
+        "box",
+        "bbox",
+        "bounding_box",
+    ):
         if hasattr(face, name):
             value = getattr(face, name)
 
@@ -179,11 +414,19 @@ def get_head_pose(
     face: Any,
     features: dict[str, Any],
 ) -> Any:
-    for key in ("head_pose", "orientation", "pose"):
+    for key in (
+        "head_pose",
+        "orientation",
+        "pose",
+    ):
         if key in features:
             return features[key]
 
-    for name in ("head_pose", "orientation", "pose"):
+    for name in (
+        "head_pose",
+        "orientation",
+        "pose",
+    ):
         if hasattr(face, name):
             value = getattr(face, name)
 
@@ -194,22 +437,32 @@ def get_head_pose(
 
 
 def run_pipeline(
+    video_path: Path,
     run_name: str,
     gaze_estimation_enabled: bool,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    capture = cv2.VideoCapture(str(VIDEO_PATH))
+) -> tuple[
+    list[dict[str, Any]],
+    dict[str, Any],
+]:
+    capture = cv2.VideoCapture(
+        str(video_path)
+    )
 
     if not capture.isOpened():
         raise RuntimeError(
-            f"Could not open video: {VIDEO_PATH}"
+            f"Could not open video: {video_path}"
         )
 
     fps = float(
-        capture.get(cv2.CAP_PROP_FPS)
+        capture.get(
+            cv2.CAP_PROP_FPS
+        )
     )
 
     frame_count = int(
-        capture.get(cv2.CAP_PROP_FRAME_COUNT)
+        capture.get(
+            cv2.CAP_PROP_FRAME_COUNT
+        )
     )
 
     if fps <= 0:
@@ -224,6 +477,7 @@ def run_pipeline(
     )
 
     print()
+    print(f"Video: {video_path}")
     print(f"Starting run: {run_name}")
     print(f"FPS: {fps}")
     print(f"Video frames: {frame_count}")
@@ -251,16 +505,22 @@ def run_pipeline(
             if not ok:
                 break
 
-            prediction = pipeline.predict(frame)
+            prediction = pipeline.predict(
+                frame
+            )
 
-            faces = get_faces(prediction)
+            faces = get_faces(
+                prediction
+            )
 
             if faces:
                 frames_with_faces += 1
 
             total_faces += len(faces)
 
-            for face_index, face in enumerate(faces):
+            for face_index, face in enumerate(
+                faces
+            ):
                 features = getattr(
                     face,
                     "face_features",
@@ -270,59 +530,89 @@ def run_pipeline(
                 if features is None:
                     features = {}
 
-                track_id = get_track_id(face)
+                track_id = get_track_id(
+                    face
+                )
 
                 status = {
-                    "detection": True,
-                    "tracking": track_id is not None,
+                    "detection":
+                        True,
+                    "tracking":
+                        track_id is not None,
                 }
 
                 if status["detection"]:
-                    success_counts["detection"] += 1
+                    success_counts[
+                        "detection"
+                    ] += 1
 
                 if status["tracking"]:
-                    success_counts["tracking"] += 1
+                    success_counts[
+                        "tracking"
+                    ] += 1
 
                 values = {
                     "landmarks":
-                        features.get("landmarks"),
+                        features.get(
+                            "landmarks"
+                        ),
                     "quality":
-                        features.get("quality"),
+                        features.get(
+                            "quality"
+                        ),
                     "head_pose":
                         get_head_pose(
                             face,
                             features,
                         ),
                     "eyes":
-                        features.get("eyes"),
+                        features.get(
+                            "eyes"
+                        ),
                     "blink":
-                        features.get("blink"),
+                        features.get(
+                            "blink"
+                        ),
                     "gaze":
-                        features.get("gaze"),
+                        features.get(
+                            "gaze"
+                        ),
                     "gaze_estimation":
                         features.get(
                             "gaze_estimation"
                         ),
                     "mouth":
-                        features.get("mouth"),
+                        features.get(
+                            "mouth"
+                        ),
                     "mouth_motion":
                         features.get(
                             "mouth_motion"
                         ),
                     "emotion":
-                        features.get("emotion"),
+                        features.get(
+                            "emotion"
+                        ),
                     "regions":
-                        features.get("regions"),
+                        features.get(
+                            "regions"
+                        ),
                     "temporal":
-                        features.get("temporal"),
+                        features.get(
+                            "temporal"
+                        ),
                 }
 
                 for module, value in values.items():
-                    available = module_available(
-                        value
+                    available = (
+                        module_available(
+                            value
+                        )
                     )
 
-                    status[module] = available
+                    status[module] = (
+                        available
+                    )
 
                     if available:
                         success_counts[
@@ -331,17 +621,25 @@ def run_pipeline(
 
                 records.append(
                     {
-                        "run": run_name,
+                        "video":
+                            video_label(
+                                video_path
+                            ),
+                        "run":
+                            run_name,
                         "gaze_estimation_enabled":
                             gaze_estimation_enabled,
                         "frame_index":
                             processed_frames,
                         "timestamp":
-                            processed_frames / fps,
+                            processed_frames
+                            / fps,
                         "face_index":
                             face_index,
                         "track_id":
-                            to_jsonable(track_id),
+                            to_jsonable(
+                                track_id
+                            ),
                         "box":
                             to_jsonable(
                                 get_box(face)
@@ -349,10 +647,14 @@ def run_pipeline(
                         "module_status":
                             status,
                         "face_features":
-                            to_jsonable(features),
+                            to_jsonable(
+                                features
+                            ),
                         "head_pose":
                             to_jsonable(
-                                values["head_pose"]
+                                values[
+                                    "head_pose"
+                                ]
                             ),
                     }
                 )
@@ -366,10 +668,13 @@ def run_pipeline(
     module_summary = {}
 
     for module in MODULES:
-        count = success_counts[module]
+        count = success_counts[
+            module
+        ]
 
         if (
-            module == "gaze_estimation"
+            module
+            == "gaze_estimation"
             and not gaze_estimation_enabled
         ):
             module_status = "ABSENT"
@@ -384,29 +689,83 @@ def run_pipeline(
             module_status = "UNAVAILABLE"
 
         module_summary[module] = {
-            "status": module_status,
-            "successful_face_samples": count,
+            "status":
+                module_status,
+            "successful_face_samples":
+                count,
         }
 
     summary = {
-        "run": run_name,
+        "video":
+            video_label(
+                video_path
+            ),
+        "run":
+            run_name,
         "gaze_estimation_enabled":
             gaze_estimation_enabled,
-        "video": VIDEO_LABEL,
-        "fps": fps,
-        "video_frames": frame_count,
-        "processed_frames": processed_frames,
-        "frames_with_faces": frames_with_faces,
-        "total_faces": total_faces,
-        "modules": module_summary,
+        "fps":
+            fps,
+        "video_frames":
+            frame_count,
+        "processed_frames":
+            processed_frames,
+        "frames_with_faces":
+            frames_with_faces,
+        "total_faces":
+            total_faces,
+        "modules":
+            module_summary,
     }
 
     return records, summary
 
 
+def failed_run_summary(
+    video_path: Path,
+    run_name: str,
+    gaze_estimation_enabled: bool,
+    reason: str,
+) -> dict[str, Any]:
+    module_summary = {}
+
+    for module in MODULES:
+        module_summary[module] = {
+            "status":
+                "ERROR",
+            "successful_face_samples":
+                0,
+        }
+
+    return {
+        "video":
+            video_label(
+                video_path
+            ),
+        "run":
+            run_name,
+        "gaze_estimation_enabled":
+            gaze_estimation_enabled,
+        "fps":
+            None,
+        "video_frames":
+            None,
+        "processed_frames":
+            0,
+        "frames_with_faces":
+            0,
+        "total_faces":
+            0,
+        "modules":
+            module_summary,
+        "failure_reason":
+            reason,
+    }
+
+
 def save_results(
     records: list[dict[str, Any]],
-    summaries: list[dict[str, Any]],
+    video_summaries: list[dict[str, Any]],
 ) -> None:
     OUTPUT_DIR.mkdir(
         parents=True,
@@ -436,8 +795,8 @@ def save_results(
             {
                 "test_type":
                     "end_to_end_integration",
-                "summaries":
-                    summaries,
+                "video_summaries":
+                    video_summaries,
                 "frames":
                     records,
             },
@@ -446,60 +805,71 @@ def save_results(
             ensure_ascii=False,
         )
 
+    frame_rows = [
+        make_frame_csv_row(
+            record
+        )
+        for record in records
+    ]
+
+    metadata_fieldnames = [
+        "video",
+        "run",
+        "gaze_estimation_enabled",
+        "frame_index",
+        "timestamp",
+        "face_index",
+        "track_id",
+        "box_x1",
+        "box_y1",
+        "box_x2",
+        "box_y2",
+    ]
+
+    all_fieldnames = {
+        key
+        for row in frame_rows
+        for key in row
+    }
+
+    feature_fieldnames = sorted(
+        field
+        for field in all_fieldnames
+        if (
+            field not in metadata_fieldnames
+            and not field.startswith(
+                "module_"
+            )
+        )
+    )
+
+    module_fieldnames = [
+        f"module_{module}_available"
+        for module in MODULES
+    ]
+
+    frame_fieldnames = (
+        metadata_fieldnames
+        + feature_fieldnames
+        + module_fieldnames
+    )
+
     with frame_csv_path.open(
         "w",
         newline="",
         encoding="utf-8",
     ) as file:
-        fieldnames = [
-            "run",
-            "gaze_estimation_enabled",
-            "frame_index",
-            "timestamp",
-            "face_index",
-            "track_id",
-            *MODULES,
-        ]
-
         writer = csv.DictWriter(
             file,
-            fieldnames=fieldnames,
+            fieldnames=frame_fieldnames,
         )
 
         writer.writeheader()
 
-        for record in records:
-            row = {
-                "run":
-                    record["run"],
-                "gaze_estimation_enabled":
-                    record[
-                        "gaze_estimation_enabled"
-                    ],
-                "frame_index":
-                    record["frame_index"],
-                "timestamp":
-                    record["timestamp"],
-                "face_index":
-                    record["face_index"],
-                "track_id":
-                    record["track_id"],
-            }
-
-            for module in MODULES:
-                row[module] = (
-                    record[
-                        "module_status"
-                    ].get(
-                        module,
-                        False,
-                    )
-                )
-
-            writer.writerow(row)
-
-    disabled = summaries[0]
-    enabled = summaries[1]
+        for row in frame_rows:
+            writer.writerow(
+                row
+            )
 
     with summary_csv_path.open(
         "w",
@@ -507,6 +877,9 @@ def save_results(
         encoding="utf-8",
     ) as file:
         fieldnames = [
+            "video",
+            "status",
+            "failure_reason",
             "module",
             "disabled_status",
             "enabled_status",
@@ -521,45 +894,66 @@ def save_results(
 
         writer.writeheader()
 
-        for module in MODULES:
-            writer.writerow(
-                {
-                    "module":
-                        module,
-                    "disabled_status":
-                        disabled[
-                            "modules"
-                        ][
-                            module
-                        ][
-                            "status"
-                        ],
-                    "enabled_status":
-                        enabled[
-                            "modules"
-                        ][
-                            module
-                        ][
-                            "status"
-                        ],
-                    "disabled_successful_face_samples":
-                        disabled[
-                            "modules"
-                        ][
-                            module
-                        ][
-                            "successful_face_samples"
-                        ],
-                    "enabled_successful_face_samples":
-                        enabled[
-                            "modules"
-                        ][
-                            module
-                        ][
-                            "successful_face_samples"
-                        ],
-                }
-            )
+        for video_summary in video_summaries:
+            disabled = video_summary[
+                "disabled"
+            ]
+
+            enabled = video_summary[
+                "enabled"
+            ]
+
+            for module in MODULES:
+                writer.writerow(
+                    {
+                        "video":
+                            video_summary[
+                                "video"
+                            ],
+                        "status":
+                            video_summary[
+                                "status"
+                            ],
+                        "failure_reason":
+                            video_summary.get(
+                                "failure_reason"
+                            ),
+                        "module":
+                            module,
+                        "disabled_status":
+                            disabled[
+                                "modules"
+                            ][
+                                module
+                            ][
+                                "status"
+                            ],
+                        "enabled_status":
+                            enabled[
+                                "modules"
+                            ][
+                                module
+                            ][
+                                "status"
+                            ],
+                        "disabled_successful_face_samples":
+                            disabled[
+                                "modules"
+                            ][
+                                module
+                            ][
+                                "successful_face_samples"
+                            ],
+                        "enabled_successful_face_samples":
+                            enabled[
+                                "modules"
+                            ][
+                                module
+                            ][
+                                "successful_face_samples"
+                            ],
+                    }
+                )
 
     print()
     print("Saved:")
@@ -569,11 +963,8 @@ def save_results(
 
 
 def print_summary(
-    summaries: list[dict[str, Any]],
+    video_summaries: list[dict[str, Any]],
 ) -> None:
-    disabled = summaries[0]
-    enabled = summaries[1]
-
     print()
     print("=" * 82)
 
@@ -584,47 +975,229 @@ def print_summary(
 
     print("=" * 82)
 
-    print(f"Video: {VIDEO_PATH}")
-    print(f"FPS: {disabled['fps']}")
-    print(
-        f"Frames: "
-        f"{disabled['video_frames']}"
-    )
+    for video_summary in video_summaries:
+        disabled = video_summary[
+            "disabled"
+        ]
 
-    print()
+        enabled = video_summary[
+            "enabled"
+        ]
 
-    print(
-        "Disabled run - processed frames:",
-        disabled["processed_frames"],
-    )
+        print()
+        print(
+            "Video:",
+            video_summary[
+                "video"
+            ],
+        )
 
-    print(
-        "Disabled run - total faces:",
-        disabled["total_faces"],
-    )
+        print(
+            "Status:",
+            video_summary[
+                "status"
+            ],
+        )
 
-    print(
-        "Enabled run - processed frames:",
-        enabled["processed_frames"],
-    )
+        if video_summary.get(
+            "failure_reason"
+        ):
+            print(
+                "Reason:",
+                video_summary[
+                    "failure_reason"
+                ],
+            )
 
-    print(
-        "Enabled run - total faces:",
-        enabled["total_faces"],
-    )
+        print(
+            "FPS:",
+            disabled.get(
+                "fps"
+            ),
+        )
 
-    print()
+        print(
+            "Frames:",
+            disabled.get(
+                "video_frames"
+            ),
+        )
 
-    print(
-        f"{'Module':<22}"
-        f"{'Disabled':<16}"
-        f"{'Enabled':<16}"
-    )
+        print()
 
-    print("-" * 54)
+        print(
+            "Disabled run - processed frames:",
+            disabled[
+                "processed_frames"
+            ],
+        )
+
+        print(
+            "Disabled run - total faces:",
+            disabled[
+                "total_faces"
+            ],
+        )
+
+        print(
+            "Enabled run - processed frames:",
+            enabled[
+                "processed_frames"
+            ],
+        )
+
+        print(
+            "Enabled run - total faces:",
+            enabled[
+                "total_faces"
+            ],
+        )
+
+        print()
+
+        print(
+            f"{'Module':<22}"
+            f"{'Disabled':<16}"
+            f"{'Enabled':<16}"
+        )
+
+        print("-" * 54)
+
+        for module in MODULES:
+            disabled_status = (
+                disabled[
+                    "modules"
+                ][
+                    module
+                ][
+                    "status"
+                ]
+            )
+
+            enabled_status = (
+                enabled[
+                    "modules"
+                ][
+                    module
+                ][
+                    "status"
+                ]
+            )
+
+            print(
+                f"{module:<22}"
+                f"{disabled_status:<16}"
+                f"{enabled_status:<16}"
+            )
+
+        print("-" * 54)
+
+    print("=" * 82)
+
+
+def validate_integration_summaries(
+    disabled: dict[str, Any],
+    enabled: dict[str, Any],
+) -> None:
+    for summary in (
+        disabled,
+        enabled,
+    ):
+        if summary[
+            "processed_frames"
+        ] <= 0:
+            raise RuntimeError(
+                f"{summary['video']} | "
+                f"{summary['run']}: "
+                "no video frames were processed."
+            )
+
+        if (
+            summary["video_frames"] > 0
+            and summary[
+                "processed_frames"
+            ]
+            != summary[
+                "video_frames"
+            ]
+        ):
+            raise RuntimeError(
+                f"{summary['video']} | "
+                f"{summary['run']}: "
+                "processed frame count does not "
+                "match the video-reported frame count."
+            )
+
+        if summary[
+            "total_faces"
+        ] <= 0:
+            raise RuntimeError(
+                f"{summary['video']} | "
+                f"{summary['run']}: "
+                "no faces were detected."
+            )
+
+    if (
+        disabled[
+            "modules"
+        ][
+            "gaze_estimation"
+        ][
+            "status"
+        ]
+        != "ABSENT"
+    ):
+        raise RuntimeError(
+            f"{disabled['video']}: "
+            "gaze estimation produced output "
+            "while disabled."
+        )
+
+    if (
+        disabled[
+            "modules"
+        ][
+            "gaze_estimation"
+        ][
+            "successful_face_samples"
+        ]
+        != 0
+    ):
+        raise RuntimeError(
+            f"{disabled['video']}: "
+            "gaze estimation produced "
+            "successful samples while disabled."
+        )
+
+    if (
+        enabled[
+            "modules"
+        ][
+            "gaze_estimation"
+        ][
+            "status"
+        ]
+        != "PASS"
+        or enabled[
+            "modules"
+        ][
+            "gaze_estimation"
+        ][
+            "successful_face_samples"
+        ]
+        <= 0
+    ):
+        raise RuntimeError(
+            f"{enabled['video']}: "
+            "gaze estimation was enabled "
+            "but no successful output was observed."
+        )
 
     for module in MODULES:
-        disabled_status = (
+        if module == "gaze_estimation":
+            continue
+
+        if (
             disabled[
                 "modules"
             ][
@@ -632,9 +1205,15 @@ def print_summary(
             ][
                 "status"
             ]
-        )
+            != "PASS"
+        ):
+            raise RuntimeError(
+                f"{disabled['video']}: "
+                f"{module} was unavailable "
+                "in the gaze-disabled run."
+            )
 
-        enabled_status = (
+        if (
             enabled[
                 "modules"
             ][
@@ -642,151 +1221,278 @@ def print_summary(
             ][
                 "status"
             ]
-        )
-
-        print(
-            f"{module:<22}"
-            f"{disabled_status:<16}"
-            f"{enabled_status:<16}"
-        )
-
-    print("=" * 82)
-
-
-
-def validate_integration_summaries(
-    disabled: dict[str, Any],
-    enabled: dict[str, Any],
-) -> None:
-    for summary in (disabled, enabled):
-        if summary["processed_frames"] <= 0:
-            raise RuntimeError(
-                f"{summary['run']}: no video frames were processed."
-            )
-
-        if (
-            summary["video_frames"] > 0
-            and summary["processed_frames"]
-            != summary["video_frames"]
+            != "PASS"
         ):
             raise RuntimeError(
-                f"{summary['run']}: processed frame count does not "
-                "match the video-reported frame count."
-            )
-
-        if summary["total_faces"] <= 0:
-            raise RuntimeError(
-                f"{summary['run']}: no faces were detected."
-            )
-
-    if (
-        disabled["modules"]["gaze_estimation"]["status"]
-        != "ABSENT"
-    ):
-        raise RuntimeError(
-            "Gaze estimation produced output while disabled."
-        )
-
-    if (
-        disabled["modules"]["gaze_estimation"][
-            "successful_face_samples"
-        ]
-        != 0
-    ):
-        raise RuntimeError(
-            "Gaze estimation produced successful samples while disabled."
-        )
-
-    if (
-        enabled["modules"]["gaze_estimation"]["status"]
-        != "PASS"
-        or enabled["modules"]["gaze_estimation"][
-            "successful_face_samples"
-        ]
-        <= 0
-    ):
-        raise RuntimeError(
-            "Gaze estimation was enabled but no successful output "
-            "was observed."
-        )
-
-    for module in MODULES:
-        if module == "gaze_estimation":
-            continue
-
-        if disabled["modules"][module]["status"] != "PASS":
-            raise RuntimeError(
-                f"{module} was unavailable in the gaze-disabled run."
-            )
-
-        if enabled["modules"][module]["status"] != "PASS":
-            raise RuntimeError(
-                f"{module} was unavailable in the gaze-enabled run."
+                f"{enabled['video']}: "
+                f"{module} was unavailable "
+                "in the gaze-enabled run."
             )
 
 
 def main() -> None:
-    if not VIDEO_PATH.exists():
-        raise FileNotFoundError(
-            f"Video not found: "
-            f"{VIDEO_PATH}"
-        )
+    video_paths = get_video_paths()
 
     clean_output_directory()
 
-    print(
-        "Running baseline pipeline "
-        "with gaze estimation disabled..."
-    )
+    records: list[
+        dict[str, Any]
+    ] = []
 
-    disabled_records, disabled_summary = (
-        run_pipeline(
-            run_name="gaze_disabled",
-            gaze_estimation_enabled=False,
+    video_summaries: list[
+        dict[str, Any]
+    ] = []
+
+    for video_path in video_paths:
+        print()
+        print("=" * 82)
+        print(f"Testing video: {video_path}")
+        print("=" * 82)
+
+        print()
+        print(
+            "Running baseline pipeline "
+            "with gaze estimation disabled..."
         )
-    )
 
-    print()
-    print(
-        "Running pipeline with "
-        "gaze estimation enabled..."
-    )
+        disabled_records = []
+        disabled_error = None
 
-    enabled_records, enabled_summary = (
-        run_pipeline(
-            run_name="gaze_enabled",
-            gaze_estimation_enabled=True,
+        try:
+            (
+                disabled_records,
+                disabled_summary,
+            ) = run_pipeline(
+                video_path=video_path,
+                run_name="gaze_disabled",
+                gaze_estimation_enabled=False,
+            )
+
+        except Exception as exc:
+            disabled_error = str(
+                exc
+            )
+
+            disabled_summary = (
+                failed_run_summary(
+                    video_path=video_path,
+                    run_name="gaze_disabled",
+                    gaze_estimation_enabled=False,
+                    reason=disabled_error,
+                )
+            )
+
+            print(
+                "Gaze-disabled run: FAIL"
+            )
+
+            print(
+                "Reason:",
+                disabled_error,
+            )
+
+        print()
+        print(
+            "Running pipeline with "
+            "gaze estimation enabled..."
         )
-    )
 
-    records = (
-        disabled_records
-        + enabled_records
-    )
+        enabled_records = []
+        enabled_error = None
 
-    summaries = [
-        disabled_summary,
-        enabled_summary,
-    ]
+        try:
+            (
+                enabled_records,
+                enabled_summary,
+            ) = run_pipeline(
+                video_path=video_path,
+                run_name="gaze_enabled",
+                gaze_estimation_enabled=True,
+            )
 
-    validate_integration_summaries(
-        disabled_summary,
-        enabled_summary,
-    )
+        except Exception as exc:
+            enabled_error = str(
+                exc
+            )
+
+            enabled_summary = (
+                failed_run_summary(
+                    video_path=video_path,
+                    run_name="gaze_enabled",
+                    gaze_estimation_enabled=True,
+                    reason=enabled_error,
+                )
+            )
+
+            print(
+                "Gaze-enabled run: FAIL"
+            )
+
+            print(
+                "Reason:",
+                enabled_error,
+            )
+
+        validation_error = None
+
+        if (
+            disabled_error is None
+            and enabled_error is None
+        ):
+            try:
+                validate_integration_summaries(
+                    disabled_summary,
+                    enabled_summary,
+                )
+
+            except Exception as exc:
+                validation_error = str(
+                    exc
+                )
+
+                print(
+                    "Integration validation: FAIL"
+                )
+
+                print(
+                    "Reason:",
+                    validation_error,
+                )
+
+        failure_reasons = [
+            reason
+            for reason in (
+                (
+                    "gaze_disabled: "
+                    + disabled_error
+                    if disabled_error
+                    else None
+                ),
+                (
+                    "gaze_enabled: "
+                    + enabled_error
+                    if enabled_error
+                    else None
+                ),
+                (
+                    "validation: "
+                    + validation_error
+                    if validation_error
+                    else None
+                ),
+            )
+            if reason is not None
+        ]
+
+        video_pass = (
+            not failure_reasons
+        )
+
+        records.extend(
+            disabled_records
+        )
+
+        records.extend(
+            enabled_records
+        )
+
+        video_summary = {
+            "video":
+                video_label(
+                    video_path
+                ),
+            "disabled":
+                disabled_summary,
+            "enabled":
+                enabled_summary,
+            "status":
+                (
+                    "PASS"
+                    if video_pass
+                    else "FAIL"
+                ),
+        }
+
+        if failure_reasons:
+            video_summary[
+                "failure_reason"
+            ] = "; ".join(
+                failure_reasons
+            )
+
+        video_summaries.append(
+            video_summary
+        )
+
+        print()
+        print(
+            "Video status:",
+            video_summary[
+                "status"
+            ],
+        )
 
     save_results(
         records,
-        summaries,
+        video_summaries,
     )
 
     print_summary(
-        summaries
+        video_summaries
+    )
+
+    overall_pass = all(
+        video_summary[
+            "status"
+        ]
+        == "PASS"
+        for video_summary in video_summaries
     )
 
     print()
     print(
-        "Face pipeline end-to-end integration test: PASS"
+        "Face pipeline end-to-end "
+        "integration test:",
+        (
+            "PASS"
+            if overall_pass
+            else "FAIL"
+        ),
     )
+
+    print(
+        "Videos tested:",
+        len(video_summaries),
+    )
+
+    print(
+        "Passed videos:",
+        sum(
+            video_summary[
+                "status"
+            ]
+            == "PASS"
+            for video_summary in video_summaries
+        ),
+    )
+
+    print(
+        "Failed videos:",
+        sum(
+            video_summary[
+                "status"
+            ]
+            != "PASS"
+            for video_summary in video_summaries
+        ),
+    )
+
+    if not overall_pass:
+        raise RuntimeError(
+            "Face pipeline end-to-end integration "
+            "test completed with one or more "
+            "failed videos."
+        )
 
 
 if __name__ == "__main__":
