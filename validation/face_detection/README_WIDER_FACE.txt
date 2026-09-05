@@ -1,10 +1,26 @@
 WIDER FACE Face Detection Validation
 ====================================
 
-This directory contains the scripts used to evaluate the PhysioTrack face detector on the WIDER FACE validation split and to generate reproducible qualitative benchmark examples from the final quantitative predictions.
+Overview
+--------
+This directory contains the reproducible Face Detection validation package for
+PhysioTrack.
+
+The package provides two complementary evidence layers:
+
+1. Scientific benchmark validation on the official WIDER FACE validation split.
+2. Isolated PhysioTrack Face Detection component execution using the real
+   project implementation with unrelated face-analysis components disabled.
+
+The scientific benchmark measures predictive accuracy against WIDER FACE
+ground-truth annotations. The isolated component execution verifies that the
+actual PhysioTrack Face Detection path runs correctly and exports real numerical
+outputs. The isolated component execution is not an accuracy benchmark and must
+not be interpreted as a substitute for WIDER FACE Average Precision (AP).
 
 Dataset
 -------
+Dataset:
 WIDER FACE
 
 Official page:
@@ -21,7 +37,7 @@ Create the following directory at the project root:
 
 datasets/WIDER_FACE
 
-Extract the downloaded archives so that the relevant structure is:
+Extract the downloaded packages so that the relevant structure is:
 
 datasets/
 └── WIDER_FACE/
@@ -36,26 +52,41 @@ datasets/
                 ├── wider_medium_val.mat
                 └── wider_hard_val.mat
 
-The dataset location is resolved relative to the project structure using the documented directory layout.
+All validation paths are project-relative. The dataset is treated as read-only.
 
-Validation files
-----------------
+Validation scripts
+------------------
 wider_face_inference.py
-    Runs face detection on all images in the WIDER FACE validation split and writes the prediction files and inference summary required by the later validation stages.
+    Runs Face Detection on all WIDER FACE validation images and writes the
+    WIDER-format prediction files and inference summary.
 
 wider_face_eval.py
-    Evaluates the generated predictions using the official WIDER FACE Easy, Medium, and Hard validation ground truth and writes the detailed benchmark results to wider_face_results.csv.
+    Evaluates the saved predictions against the official WIDER FACE Easy,
+    Medium, and Hard validation ground truth and writes the complete
+    precision-recall result table.
 
 wider_face_plot.py
-    Reads the saved benchmark results and generates the final precision-recall figure, thesis result tables, and validation summary.
+    Reads the final benchmark results and inference summary and generates the
+    quantitative summary, thesis tables, and precision-recall figure.
 
 wider_face_qualitative.py
-    Generates reproducible qualitative benchmark examples from the real saved WIDER FACE predictions and the official WIDER FACE ground truth. It does not rerun the detector and does not modify the final quantitative predictions or AP results.
+    Generates deterministic qualitative examples from the saved predictions and
+    official WIDER FACE ground truth. It does not rerun the detector and does
+    not modify the benchmark AP calculation.
 
-Validation protocol
--------------------
+face_detection_component_test.py
+    Runs the real PhysioTrack Face Detection implementation through the
+    FaceAnalysis project path with unrelated face-analysis components disabled.
+    It processes the full WIDER FACE validation image set and exports numerical
+    detector outputs to a structured table.
+
+Scientific benchmark protocol
+-----------------------------
 Validation split:
 WIDER FACE validation set
+
+Validation images:
+3226
 
 Evaluation subsets:
 - Easy
@@ -74,47 +105,31 @@ Maximum detections per image:
 Device:
 CPU
 
-Number of score thresholds used by the evaluator:
+Evaluator score thresholds:
 1000
 
-Running the validation
-----------------------
+Running the scientific benchmark
+--------------------------------
 Activate the PhysioTrack environment:
 
 conda activate PhysioTrack-Thesis
 
-Open the face detection validation directory:
+Open:
 
 physiotrack/validation/face_detection
 
-Run the quantitative validation scripts in this order:
+Run:
 
 python wider_face_inference.py
-
 python wider_face_eval.py
-
 python wider_face_plot.py
-
-After the quantitative validation has completed successfully, generate the qualitative benchmark outputs:
-
 python wider_face_qualitative.py
 
-The inference stage processes the complete WIDER FACE validation split and stores the generated prediction files in:
+The scripts should be run in the order shown above because the later stages
+consume outputs created by earlier stages.
 
-validation/face_detection/results/predictions
-
-The evaluator then computes Average Precision for the Easy, Medium, and Hard subsets and stores the detailed precision-recall results in:
-
-validation/face_detection/results/wider_face_results.csv
-
-The plotting script reads the saved benchmark results and inference summary to create the final quantitative validation artifacts.
-
-The qualitative script reads the existing prediction files, official WIDER FACE ground truth, and the final quantitative result table. It verifies that the expected validation image count, prediction file count, and final AP values are present before generating qualitative outputs.
-
-Expected quantitative results
------------------------------
-The validated configuration produces:
-
+Validated quantitative results
+------------------------------
 Easy AP:
 0.958883
 
@@ -144,16 +159,27 @@ Failed images:
 Prediction files:
 3226
 
+Total detections:
+193618
+
 Maximum detections in one image:
 3134
 
-Minor differences in runtime are expected between machines. The scientific results should remain unchanged when the same code, model, dataset, and evaluation protocol are used.
+Image with maximum detections:
+0--Parade/0_Parade_Parade_0_275.jpg
 
-Qualitative benchmark outputs
------------------------------
-The qualitative stage produces ten deterministic WIDER FACE examples that cover clear detections, scale variation, a readable Hard example, a readable failure case, and larger group scenes.
+Runtime varies between machines and is not a scientific metric.
 
-The ten output roles are:
+The observed AP ordering:
+
+Easy > Medium > Hard
+
+is consistent with the intended difficulty structure of the WIDER FACE
+benchmark.
+
+Qualitative benchmark
+---------------------
+The qualitative stage produces ten deterministic examples:
 
 - easy_clear_01
 - easy_clear_02
@@ -166,31 +192,21 @@ The ten output roles are:
 - group_hard_01
 - group_hard_02
 
-The Hard challenge example is intentionally selected to show a real, readable limitation rather than only successful cases. The group examples provide additional evidence on images containing larger numbers of faces.
+The examples include clear detections, scale variation, larger group scenes,
+and a readable challenging case. The challenging example is retained to show a
+real limitation rather than presenting only successful cases.
 
-The annotated images are stored in:
+Annotated images are stored in:
 
-validation/face_detection/results/qualitative/annotated_images
+results/qualitative/annotated_images
 
 The qualitative selection table is stored in:
 
-validation/face_detection/results/qualitative/wider_face_qualitative_selection.csv
+results/qualitative/wider_face_qualitative_selection.csv
 
 The combined qualitative figure is stored in:
 
-validation/face_detection/results/figures/wider_face_qualitative_examples.png
-
-Each annotated image contains:
-- WIDER FACE benchmark image
-- true-positive detections
-- false-positive detections when present
-- false-negative eligible ground-truth boxes when present
-- ignored/non-subset predictions when present
-- per-image display metrics
-- matching IoU
-- raw visualization threshold
-- full benchmark AP for the corresponding WIDER FACE subset
-- a legend explaining the visualization
+results/figures/wider_face_qualitative_examples.png
 
 Qualitative display protocol
 ----------------------------
@@ -200,42 +216,195 @@ Matching IoU:
 Raw display threshold:
 0.25
 
-The raw display threshold is used only to keep the qualitative figures readable. It does not define or modify the benchmark AP calculation.
+The raw display threshold is used only for visualization readability. It does
+not define or modify the benchmark AP calculation.
 
-The full benchmark AP displayed in each qualitative panel is read from:
+Per-image precision, recall, F1, matched IoU, and confidence values shown in the
+qualitative panels are example-level display measurements. They must not be
+interpreted as replacements for the official full-dataset WIDER FACE AP metrics.
 
-validation/face_detection/results/wider_face_thesis_table.csv
+Isolated PhysioTrack Face Detection execution
+---------------------------------------------
+Run:
 
-The qualitative script verifies these values against the final results before producing the figures.
+python face_detection_component_test.py
 
-Per-image precision, recall, F1, matched IoU, and confidence values shown in the qualitative panels are display-level measurements for the selected example at the raw display threshold. They must not be interpreted as replacements for the official full-dataset WIDER FACE AP metrics.
+Purpose:
+Verify software-level operation of the real PhysioTrack Face Detection path and
+preserve its numerical outputs in a reproducible structured table.
 
-Qualitative output cleanup
+The script:
+- uses the real PhysioTrack FaceAnalysis detection path
+- processes all 3226 WIDER FACE validation images
+- disables unrelated optional face-analysis components
+- uses CPU execution
+- uses confidence threshold 0.001
+- uses max_det 10000
+- preserves raw detector outputs
+- records explicit status and failure information
+- uses project-relative paths
+- leaves the source dataset unchanged
+- uses staged output generation and validated replacement
+
+The following unrelated face-analysis components are disabled:
+- tracking
+- head pose
+- landmarks
+- quality
+- eyes
+- blink
+- gaze
+- gaze estimation
+- mouth
+- mouth motion
+- emotion
+- face regions
+- temporal analysis
+
+Isolated component outputs
 --------------------------
-Before generating a new qualitative result set, wider_face_qualitative.py removes only its own existing qualitative outputs:
+Main numerical result table:
 
-- files inside results/qualitative/annotated_images
-- results/qualitative/wider_face_qualitative_selection.csv
-- results/figures/wider_face_qualitative_examples.png
+results/component_execution/face_detection_component_results.csv
 
-It then regenerates the complete qualitative output set.
+Execution summary:
 
-The script does not delete or modify:
+results/component_execution/face_detection_component_summary.json
 
-results/predictions
+The result table contains:
+- input_identifier
+- input_type
+- image_index
+- detection_index
+- detections_in_image
+- image_width
+- image_height
+- person_id
+- class_id
+- class_name
+- box_x1
+- box_y1
+- box_x2
+- box_y2
+- box_width
+- box_height
+- box_area
+- confidence
+- status
+- failure_reason
 
-or any other quantitative validation artifact.
+For valid detections:
 
-This separation ensures that repeated qualitative runs do not leave obsolete images while preserving the final quantitative predictions required for reproducibility.
+box_width = box_x2 - box_x1
 
-Generated results
+box_height = box_y2 - box_y1
+
+box_area = box_width × box_height
+
+Because tracking is disabled, person_id is expected to be empty.
+
+Validated isolated execution results
+------------------------------------
+Validation images:
+3226
+
+Processed images:
+3226
+
+Failed images:
+0
+
+Read failures:
+0
+
+Prediction failures:
+0
+
+Images with detections:
+3226
+
+Images without detections:
+0
+
+Total detections:
+193618
+
+Result rows:
+193618
+
+Invalid-box diagnostic detections:
+18
+
+Overall execution status:
+PASS
+
+The result table contains 3226 unique input identifiers corresponding to the
+3226 validation images. Image indices cover the complete range 1 to 3226.
+Within each image, detection indices are unique and consecutive, and the
+reported detections_in_image value agrees with the number of rows belonging to
+that image.
+
+The 18 invalid-box diagnostic rows represent approximately 0.0093% of all
+193618 detector outputs. They are retained explicitly with status:
+
+DETECTED_INVALID_BOX
+
+The raw detector coordinates are preserved without silent correction or
+removal. Derived width, height, and area values are intentionally left empty
+for these diagnostic rows because the raw box geometry has a non-positive
+dimension.
+
+These rows provide auditable diagnostic evidence and do not replace or modify
+the scientific WIDER FACE benchmark results.
+
+Safe rerun design
 -----------------
-After a complete quantitative and qualitative run, the main outputs are stored under:
+The validation package follows the safe-rerun pattern:
 
-validation/face_detection/results
+preflight
+-> temporary/staging generation
+-> validation of newly generated outputs
+-> replacement of script-owned final outputs
 
-Expected contents:
+The preflight stage occurs before previously valid final outputs are replaced.
 
+If required dataset files, annotations, prediction dependencies, or other
+critical inputs are unavailable or invalid, the affected script stops without
+deleting previously valid evidence.
+
+Output ownership
+----------------
+wider_face_inference.py
+    Owns:
+    - results/predictions
+    - results/wider_face_inference_summary.json
+
+wider_face_eval.py
+    Owns:
+    - results/wider_face_results.csv
+
+wider_face_plot.py
+    Owns:
+    - results/wider_face_summary.txt
+    - results/wider_face_thesis_table.csv
+    - results/wider_face_thesis_table.md
+    - results/figures/wider_face_precision_recall.png
+
+wider_face_qualitative.py
+    Owns:
+    - results/qualitative/annotated_images
+    - results/qualitative/wider_face_qualitative_selection.csv
+    - results/figures/wider_face_qualitative_examples.png
+
+face_detection_component_test.py
+    Owns:
+    - results/component_execution/face_detection_component_results.csv
+    - results/component_execution/face_detection_component_summary.json
+
+No script should delete another script's final outputs.
+
+Expected result structure
+-------------------------
 results/
 ├── predictions/
 ├── qualitative/
@@ -251,6 +420,9 @@ results/
 │   │   ├── group_hard_01.png
 │   │   └── group_hard_02.png
 │   └── wider_face_qualitative_selection.csv
+├── component_execution/
+│   ├── face_detection_component_results.csv
+│   └── face_detection_component_summary.json
 ├── wider_face_inference_summary.json
 ├── wider_face_results.csv
 ├── wider_face_summary.txt
@@ -260,49 +432,117 @@ results/
     ├── wider_face_precision_recall.png
     └── wider_face_qualitative_examples.png
 
-wider_face_inference_summary.json
-    Inference metadata including image counts, failure counts, detector settings, and runtime information.
+Output descriptions
+-------------------
+results/predictions
+    WIDER FACE prediction files generated from all validation images.
 
-wider_face_results.csv
-    Detailed benchmark results containing the saved precision-recall data for the Easy, Medium, and Hard subsets.
+results/wider_face_inference_summary.json
+    Inference metadata, detector settings, image accounting, detection counts,
+    and runtime information.
 
-wider_face_summary.txt
-    Detailed record of the quantitative validation setup, inference statistics, and final benchmark results.
+results/wider_face_results.csv
+    Complete saved precision-recall data for the Easy, Medium, and Hard subsets.
 
-wider_face_thesis_table.csv
-    CSV version of the final Easy, Medium, and Hard quantitative results.
+results/wider_face_summary.txt
+    Text record of the benchmark configuration and final quantitative results.
 
-wider_face_thesis_table.md
-    Markdown version of the same quantitative results table.
+results/wider_face_thesis_table.csv
+    Compact CSV table of final AP values and evaluated-face counts.
 
-figures/wider_face_precision_recall.png
+results/wider_face_thesis_table.md
+    Markdown version of the same benchmark table.
+
+results/figures/wider_face_precision_recall.png
     Precision-recall curves for the three WIDER FACE validation subsets.
 
-predictions/
-    Prediction files generated from the WIDER FACE validation images and consumed by the evaluator and qualitative script.
+results/qualitative/annotated_images
+    Ten annotated benchmark examples.
 
-qualitative/annotated_images/
-    Ten annotated WIDER FACE benchmark examples showing detector outputs and per-image display metrics.
+results/qualitative/wider_face_qualitative_selection.csv
+    Machine-readable record of the selected qualitative examples and their
+    display-level metrics.
 
-qualitative/wider_face_qualitative_selection.csv
-    Machine-readable record of the selected qualitative examples and their per-image display metrics.
+results/figures/wider_face_qualitative_examples.png
+    Combined qualitative figure.
 
-figures/wider_face_qualitative_examples.png
-    Combined overview figure containing the ten qualitative examples.
+results/component_execution/face_detection_component_results.csv
+    Numerical outputs from isolated execution of the real PhysioTrack Face
+    Detection component.
 
-Reproducing the validation
---------------------------
-A complete reproduction consists of:
+results/component_execution/face_detection_component_summary.json
+    Execution metadata and accounting summary for the isolated component test.
 
-1. Downloading the three required WIDER FACE packages.
-2. Extracting them into datasets/WIDER_FACE using the directory structure shown above.
-3. Running wider_face_inference.py.
-4. Running wider_face_eval.py.
-5. Running wider_face_plot.py.
-6. Confirming that the reported AP values and evaluated-face counts match the expected quantitative results above.
-7. Running wider_face_qualitative.py.
-8. Confirming that ten annotated qualitative images, the qualitative selection CSV, and the combined qualitative figure are generated.
+Complete reproduction procedure
+-------------------------------
+1. Install the PhysioTrack project environment and dependencies.
+2. Download the required official WIDER FACE packages.
+3. Extract them into datasets/WIDER_FACE using the documented structure.
+4. Activate:
 
-If the reported quantitative metrics differ materially from the expected values, verify the dataset structure, model version, environment, and validation configuration before using the results.
+   conda activate PhysioTrack-Thesis
 
-If the qualitative script fails its preflight checks, verify that the quantitative validation has been completed successfully and that results/predictions and results/wider_face_thesis_table.csv contain the final outputs.
+5. Open:
+
+   physiotrack/validation/face_detection
+
+6. Run the scientific benchmark:
+
+   python wider_face_inference.py
+   python wider_face_eval.py
+   python wider_face_plot.py
+   python wider_face_qualitative.py
+
+7. Verify the quantitative and qualitative outputs.
+
+8. Run the isolated Face Detection component execution:
+
+   python face_detection_component_test.py
+
+9. Verify the isolated component CSV and JSON summary.
+
+10. Confirm image accounting, failure accounting, output schemas, and benchmark
+    metrics before using the package as reproducibility evidence.
+
+Interpretation and limitations
+------------------------------
+The scientific WIDER FACE benchmark is the evidence used to characterize Face
+Detection predictive accuracy.
+
+The isolated component execution is software-level evidence that the actual
+PhysioTrack Face Detection implementation operates independently and exports
+real numerical detector outputs.
+
+Integration or isolated execution PASS must not be interpreted as scientific
+predictive accuracy.
+
+Qualitative examples are illustrative and intentionally limited in number.
+They do not define dataset-level accuracy.
+
+Runtime is environment-dependent and is not used as an accuracy measure.
+
+Final files to preserve
+-----------------------
+Preserve:
+- wider_face_inference.py
+- wider_face_eval.py
+- wider_face_plot.py
+- wider_face_qualitative.py
+- face_detection_component_test.py
+- README_WIDER_FACE.txt
+- results/predictions
+- results/wider_face_inference_summary.json
+- results/wider_face_results.csv
+- results/wider_face_summary.txt
+- results/wider_face_thesis_table.csv
+- results/wider_face_thesis_table.md
+- results/figures/wider_face_precision_recall.png
+- results/qualitative/annotated_images
+- results/qualitative/wider_face_qualitative_selection.csv
+- results/figures/wider_face_qualitative_examples.png
+- results/component_execution/face_detection_component_results.csv
+- results/component_execution/face_detection_component_summary.json
+
+Together, these files preserve the scientific benchmark evidence, qualitative
+evidence, and isolated PhysioTrack Face Detection execution record required for
+reproducibility.

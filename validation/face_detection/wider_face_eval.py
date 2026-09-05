@@ -1,5 +1,7 @@
 from pathlib import Path
 import csv
+import shutil
+import tempfile
 
 import numpy as np
 from scipy.io import loadmat
@@ -455,13 +457,32 @@ def main():
         / "ground_truth"
     )
 
-    results_dir.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    required_paths = [
+        pred_dir,
+        gt_dir / "wider_face_val.mat",
+        gt_dir / "wider_easy_val.mat",
+        gt_dir / "wider_medium_val.mat",
+        gt_dir / "wider_hard_val.mat",
+    ]
 
-    if results_path.exists():
-        results_path.unlink()
+    for path in required_paths:
+        if not path.exists():
+            raise FileNotFoundError(
+                "Required evaluation input was not found: "
+                f"{path}"
+            )
+
+    if not pred_dir.is_dir():
+        raise RuntimeError(
+            "Prediction input path is not a directory: "
+            f"{pred_dir}"
+        )
+
+    if results_path.exists() and not results_path.is_file():
+        raise RuntimeError(
+            "Benchmark results path exists but is not a file: "
+            f"{results_path}"
+        )
 
     val_data = loadmat(
         gt_dir / "wider_face_val.mat"
@@ -470,6 +491,19 @@ def main():
     event_list = val_data["event_list"]
     file_list = val_data["file_list"]
     face_bbx_list = val_data["face_bbx_list"]
+
+    settings = {
+        "Easy": "wider_easy_val.mat",
+        "Medium": "wider_medium_val.mat",
+        "Hard": "wider_hard_val.mat",
+    }
+
+    setting_data = {
+        name: loadmat(
+            gt_dir / filename
+        )
+        for name, filename in settings.items()
+    }
 
     print("Reading predictions...")
 
@@ -483,107 +517,172 @@ def main():
         predictions
     )
 
-    settings = {
-        "Easy": "wider_easy_val.mat",
-        "Medium": "wider_medium_val.mat",
-        "Hard": "wider_hard_val.mat",
-    }
-
-    rows = []
-
-    print(
-        "\nWIDER FACE validation results"
+    results_dir.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
-    for name, filename in settings.items():
-        setting_data = loadmat(
-            gt_dir / filename
-        )
+    print("WIDER FACE evaluation preflight: PASS")
 
-        (
-            ap,
-            precision,
-            recall,
-            total_faces,
-        ) = evaluate_setting(
-            predictions,
-            face_bbx_list,
-            setting_data["gt_list"],
+    staging_root = Path(
+        tempfile.mkdtemp(
+            prefix=".wider_face_eval_",
+            dir=results_dir,
         )
+    )
 
-        print(f"\n{name}")
+    staged_results_path = (
+        staging_root
+        / "wider_face_results.csv"
+    )
+
+    try:
+        rows = []
+
         print(
-            "Evaluated faces:",
-            total_faces,
-        )
-        print(
-            "AP:",
-            round(float(ap), 6),
+            "\nWIDER FACE validation results"
         )
 
-        for threshold_index in range(
-            NUM_THRESHOLDS
-        ):
-            rows.append(
-                {
-                    "Difficulty": name,
-                    "Threshold Index": (
-                        threshold_index
-                    ),
-                    "Score Threshold": (
-                        1
-                        - (
-                            (threshold_index + 1)
-                            / NUM_THRESHOLDS
-                        )
-                    ),
-                    "Precision": float(
-                        precision[
-                            threshold_index
-                        ]
-                    ),
-                    "Recall": float(
-                        recall[
-                            threshold_index
-                        ]
-                    ),
-                    "Average Precision": float(
-                        ap
-                    ),
-                    "Evaluated Faces": int(
-                        total_faces
-                    ),
-                }
+        for name in settings:
+            (
+                ap,
+                precision,
+                recall,
+                total_faces,
+            ) = evaluate_setting(
+                predictions,
+                face_bbx_list,
+                setting_data[name]["gt_list"],
             )
 
-    with open(
-        results_path,
-        "w",
-        encoding="utf-8",
-        newline="",
-    ) as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=[
-                "Difficulty",
-                "Threshold Index",
-                "Score Threshold",
-                "Precision",
-                "Recall",
-                "Average Precision",
-                "Evaluated Faces",
-            ],
+            print(f"\n{name}")
+            print(
+                "Evaluated faces:",
+                total_faces,
+            )
+            print(
+                "AP:",
+                round(float(ap), 6),
+            )
+
+            for threshold_index in range(
+                NUM_THRESHOLDS
+            ):
+                rows.append(
+                    {
+                        "Difficulty": name,
+                        "Threshold Index": (
+                            threshold_index
+                        ),
+                        "Score Threshold": (
+                            1
+                            - (
+                                (threshold_index + 1)
+                                / NUM_THRESHOLDS
+                            )
+                        ),
+                        "Precision": float(
+                            precision[
+                                threshold_index
+                            ]
+                        ),
+                        "Recall": float(
+                            recall[
+                                threshold_index
+                            ]
+                        ),
+                        "Average Precision": float(
+                            ap
+                        ),
+                        "Evaluated Faces": int(
+                            total_faces
+                        ),
+                    }
+                )
+
+        fieldnames = [
+            "Difficulty",
+            "Threshold Index",
+            "Score Threshold",
+            "Precision",
+            "Recall",
+            "Average Precision",
+            "Evaluated Faces",
+        ]
+
+        with open(
+            staged_results_path,
+            "w",
+            encoding="utf-8",
+            newline="",
+        ) as file:
+            writer = csv.DictWriter(
+                file,
+                fieldnames=fieldnames,
+            )
+
+            writer.writeheader()
+            writer.writerows(rows)
+
+        with open(
+            staged_results_path,
+            "r",
+            encoding="utf-8",
+            newline="",
+        ) as file:
+            reader = csv.DictReader(
+                file
+            )
+            validated_rows = list(
+                reader
+            )
+            validated_fields = reader.fieldnames
+
+        expected_rows = (
+            len(settings)
+            * NUM_THRESHOLDS
         )
 
-        writer.writeheader()
-        writer.writerows(rows)
+        if validated_fields != fieldnames:
+            raise RuntimeError(
+                "Unexpected columns in staged benchmark results: "
+                f"{validated_fields}"
+            )
+
+        if len(validated_rows) != expected_rows:
+            raise RuntimeError(
+                "Unexpected number of rows in staged benchmark results: "
+                f"{len(validated_rows)}. Expected {expected_rows}."
+            )
+
+        for name in settings:
+            subset_rows = [
+                row
+                for row in validated_rows
+                if row["Difficulty"] == name
+            ]
+
+            if len(subset_rows) != NUM_THRESHOLDS:
+                raise RuntimeError(
+                    f"Unexpected number of {name} threshold rows in "
+                    f"staged benchmark results: {len(subset_rows)}"
+                )
+
+        staged_results_path.replace(
+            results_path
+        )
+
+    finally:
+        if staging_root.exists():
+            shutil.rmtree(
+                staging_root
+            )
 
     print()
     print(
         "Saved benchmark results:",
         results_path,
     )
-
 
 if __name__ == "__main__":
     main()

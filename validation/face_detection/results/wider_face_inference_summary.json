@@ -10,6 +10,6 @@
   "confidence_threshold": 0.001,
   "max_det": 10000,
   "device": "CPU",
-  "runtime_seconds": 769.6111426000001,
-  "runtime_minutes": 12.826852376666668
+  "runtime_seconds": 577.1301888000003,
+  "runtime_minutes": 9.618836480000004
 }

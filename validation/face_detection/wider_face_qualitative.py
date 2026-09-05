@@ -1,6 +1,8 @@
 from pathlib import Path
 import csv
 import math
+import shutil
+import tempfile
 import textwrap
 
 import cv2
@@ -1315,19 +1317,74 @@ def create_grid(rendered_images, output_path):
         )
 
 
-def clear_previous_outputs(annotated_dir, selection_csv, grid_path):
-    annotated_dir.mkdir(parents=True, exist_ok=True)
+def replace_outputs(
+    staged_annotated_dir,
+    staged_selection_csv,
+    staged_grid_path,
+    annotated_dir,
+    selection_csv,
+    grid_path,
+    staging_root,
+):
+    final_paths = [
+        annotated_dir,
+        selection_csv,
+        grid_path,
+    ]
 
-    for path in annotated_dir.iterdir():
-        if path.is_file():
-            path.unlink()
+    staged_paths = [
+        staged_annotated_dir,
+        staged_selection_csv,
+        staged_grid_path,
+    ]
 
-    if selection_csv.exists():
-        selection_csv.unlink()
+    backup_paths = [
+        staging_root / f"previous_{path.name}"
+        for path in final_paths
+    ]
 
-    if grid_path.exists():
-        grid_path.unlink()
+    committed = []
 
+    try:
+        for final_path, backup_path in zip(
+            final_paths,
+            backup_paths,
+        ):
+            if final_path.exists():
+                final_path.replace(
+                    backup_path
+                )
+
+        for staged_path, final_path in zip(
+            staged_paths,
+            final_paths,
+        ):
+            staged_path.replace(
+                final_path
+            )
+            committed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in committed:
+            if final_path.is_dir():
+                shutil.rmtree(
+                    final_path
+                )
+            elif final_path.exists():
+                final_path.unlink()
+
+        for final_path, backup_path in zip(
+            final_paths,
+            backup_paths,
+        ):
+            if backup_path.exists():
+                backup_path.replace(
+                    final_path
+                )
+
+        raise
 
 def main():
     validation_dir = Path(__file__).resolve().parent
@@ -1369,6 +1426,32 @@ def main():
                 f"Required path not found: {path}"
             )
 
+    if not images_dir.is_dir():
+        raise RuntimeError(
+            f"Validation image path is not a directory: {images_dir}"
+        )
+
+    if not pred_dir.is_dir():
+        raise RuntimeError(
+            f"Prediction path is not a directory: {pred_dir}"
+        )
+
+    if annotated_dir.exists() and not annotated_dir.is_dir():
+        raise RuntimeError(
+            "Annotated-image output path exists but is not a directory: "
+            f"{annotated_dir}"
+        )
+
+    for path in [
+        selection_csv,
+        grid_path,
+    ]:
+        if path.exists() and not path.is_file():
+            raise RuntimeError(
+                "Owned qualitative output path exists but is not a file: "
+                f"{path}"
+            )
+
     image_count = len(list(images_dir.rglob("*.jpg")))
     prediction_count = len(list(pred_dir.rglob("*.txt")))
 
@@ -1386,12 +1469,6 @@ def main():
 
     benchmark_ap = load_benchmark_ap(quantitative_table_path)
 
-    qualitative_dir.mkdir(parents=True, exist_ok=True)
-    figures_dir.mkdir(parents=True, exist_ok=True)
-    annotated_dir.mkdir(parents=True, exist_ok=True)
-
-    clear_previous_outputs(annotated_dir, selection_csv, grid_path)
-
     print("WIDER FACE qualitative preflight: PASS")
     print("Validation images:", image_count)
     print("Prediction files:", prediction_count)
@@ -1401,7 +1478,6 @@ def main():
     for subset in ("Easy", "Medium", "Hard"):
         print(f"{subset} AP: {benchmark_ap[subset]:.6f}")
     print()
-    print("Cleaned previous qualitative outputs.")
     print("Scanning benchmark results for deterministic qualitative selection...")
 
     records = build_records(images_dir, pred_dir, gt_dir)
@@ -1411,37 +1487,144 @@ def main():
 
     selected = choose_examples(records)
 
-    rendered_images = []
-
-    for record in selected:
-        metrics = record["metrics"]
-
-        print(
-            f"{record['role']}: "
-            f"{record['relative_image']} | "
-            f"subset={record['subset']} | "
-            f"eligible={metrics['eligible_gt_count']} | "
-            f"shown={metrics['predictions_shown']} | "
-            f"TP={metrics['tp']} | "
-            f"FP={metrics['fp']} | "
-            f"FN={metrics['fn']} | "
-            f"P={metrics['precision']:.3f} | "
-            f"R={metrics['recall']:.3f}"
+    if len(selected) != len(ROLE_SPECS):
+        raise RuntimeError(
+            "Unexpected number of selected qualitative examples: "
+            f"{len(selected)}. Expected {len(ROLE_SPECS)}."
         )
 
-        rendered = render_example(record, benchmark_ap)
+    qualitative_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = annotated_dir / f"{record['role']}.png"
+    staging_root = Path(
+        tempfile.mkdtemp(
+            prefix=".wider_face_qualitative_",
+            dir=results_dir,
+        )
+    )
 
-        if not cv2.imwrite(str(output_path), rendered):
-            raise RuntimeError(
-                f"Failed to save annotated image: {output_path}"
+    staged_annotated_dir = (
+        staging_root
+        / ANNOTATED_DIRNAME
+    )
+
+    staged_selection_csv = (
+        staging_root
+        / "wider_face_qualitative_selection.csv"
+    )
+
+    staged_grid_path = (
+        staging_root
+        / "wider_face_qualitative_examples.png"
+    )
+
+    staged_annotated_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    try:
+        rendered_images = []
+
+        for record in selected:
+            metrics = record["metrics"]
+
+            print(
+                f"{record['role']}: "
+                f"{record['relative_image']} | "
+                f"subset={record['subset']} | "
+                f"eligible={metrics['eligible_gt_count']} | "
+                f"shown={metrics['predictions_shown']} | "
+                f"TP={metrics['tp']} | "
+                f"FP={metrics['fp']} | "
+                f"FN={metrics['fn']} | "
+                f"P={metrics['precision']:.3f} | "
+                f"R={metrics['recall']:.3f}"
             )
 
-        rendered_images.append(rendered)
+            rendered = render_example(record, benchmark_ap)
 
-    write_selection_csv(selected, selection_csv, benchmark_ap)
-    create_grid(rendered_images, grid_path)
+            output_path = (
+                staged_annotated_dir
+                / f"{record['role']}.png"
+            )
+
+            if not cv2.imwrite(str(output_path), rendered):
+                raise RuntimeError(
+                    f"Failed to save annotated image: {output_path}"
+                )
+
+            rendered_images.append(rendered)
+
+        write_selection_csv(
+            selected,
+            staged_selection_csv,
+            benchmark_ap,
+        )
+
+        create_grid(
+            rendered_images,
+            staged_grid_path,
+        )
+
+        staged_images = sorted(
+            staged_annotated_dir.glob("*.png")
+        )
+
+        if len(staged_images) != len(selected):
+            raise RuntimeError(
+                "Unexpected number of staged annotated images: "
+                f"{len(staged_images)}. Expected {len(selected)}."
+            )
+
+        for path in staged_images:
+            image = cv2.imread(
+                str(path)
+            )
+
+            if image is None:
+                raise RuntimeError(
+                    "Failed to validate staged annotated image: "
+                    f"{path}"
+                )
+
+        with open(
+            staged_selection_csv,
+            "r",
+            encoding="utf-8",
+            newline="",
+        ) as file:
+            selection_rows = list(
+                csv.DictReader(file)
+            )
+
+        if len(selection_rows) != len(selected):
+            raise RuntimeError(
+                "Unexpected number of staged qualitative rows: "
+                f"{len(selection_rows)}. Expected {len(selected)}."
+            )
+
+        if cv2.imread(str(staged_grid_path)) is None:
+            raise RuntimeError(
+                "Failed to validate staged qualitative grid: "
+                f"{staged_grid_path}"
+            )
+
+        replace_outputs(
+            staged_annotated_dir,
+            staged_selection_csv,
+            staged_grid_path,
+            annotated_dir,
+            selection_csv,
+            grid_path,
+            staging_root,
+        )
+
+    finally:
+        if staging_root.exists():
+            shutil.rmtree(
+                staging_root
+            )
 
     print()
     print("Saved annotated images:")
@@ -1455,7 +1638,6 @@ def main():
         "DONE. Qualitative figures use real saved predictions and "
         "official WIDER FACE ground truth. Quantitative AP remains unchanged."
     )
-
 
 if __name__ == "__main__":
     main()
