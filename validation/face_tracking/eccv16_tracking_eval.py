@@ -1,5 +1,8 @@
 from pathlib import Path
 import csv
+import os
+import shutil
+import tempfile
 import time
 import xml.etree.ElementTree as ET
 
@@ -276,7 +279,7 @@ def compute_reporting_values(row):
     }
 
 
-def main():
+def run_evaluation(staging_dir):
     metrics = mm.metrics.create()
 
     metric_names = [
@@ -415,7 +418,7 @@ def main():
         )
 
     csv_path = (
-        RESULTS_DIR
+        staging_dir
         / "eccv16_tracking_results.csv"
     )
 
@@ -501,7 +504,7 @@ def main():
             )
 
     txt_path = (
-        RESULTS_DIR
+        staging_dir
         / "eccv16_tracking_summary.txt"
     )
 
@@ -725,6 +728,221 @@ def main():
         f"Overall processing speed: "
         f"{overall_fps:.2f} FPS"
     )
+
+
+
+def preflight():
+    """Validate all benchmark inputs before any final output can be replaced."""
+    missing = []
+
+    for _, video_name, gt_name in VIDEO_CONFIGS:
+        video_path = (
+            DATASET_ROOT
+            / "videos"
+            / video_name
+        )
+
+        gt_path = (
+            DATASET_ROOT
+            / "ground_truth"
+            / "GT"
+            / gt_name
+        )
+
+        if not video_path.is_file():
+            missing.append(str(video_path))
+
+        if not gt_path.is_file():
+            missing.append(str(gt_path))
+
+    if missing:
+        raise FileNotFoundError(
+            "Required ECCV 2016 inputs are missing:\n"
+            + "\n".join(missing)
+        )
+
+    for _, video_name, gt_name in VIDEO_CONFIGS:
+        video_path = DATASET_ROOT / "videos" / video_name
+        gt_path = DATASET_ROOT / "ground_truth" / "GT" / gt_name
+
+        ET.parse(gt_path)
+
+        cap = cv2.VideoCapture(str(video_path))
+
+        if not cap.isOpened():
+            raise RuntimeError(
+                f"Could not open video during preflight: {video_path}"
+            )
+
+        ok, _ = cap.read()
+        cap.release()
+
+        if not ok:
+            raise RuntimeError(
+                f"Could not read video during preflight: {video_path}"
+            )
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    probe_path = RESULTS_DIR / ".write_probe"
+
+    try:
+        probe_path.write_text("preflight", encoding="utf-8")
+    finally:
+        if probe_path.exists():
+            probe_path.unlink()
+
+
+def validate_staged_outputs(csv_path, txt_path):
+    """Validate newly generated evaluator outputs before final replacement."""
+    if not csv_path.is_file():
+        raise RuntimeError(
+            "Staged tracking result CSV was not created."
+        )
+
+    if not txt_path.is_file():
+        raise RuntimeError(
+            "Staged tracking summary was not created."
+        )
+
+    with open(
+        csv_path,
+        "r",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        rows = list(csv.DictReader(file))
+
+    expected_names = [
+        name
+        for name, _, _ in VIDEO_CONFIGS
+    ] + ["OVERALL"]
+
+    if [row["Video"] for row in rows] != expected_names:
+        raise RuntimeError(
+            "Staged tracking CSV has unexpected or incomplete video coverage."
+        )
+
+    if len(rows) != 9:
+        raise RuntimeError(
+            "Staged tracking CSV row count is incorrect."
+        )
+
+    required_numeric = [
+        "Recall_percent",
+        "Precision_percent",
+        "F1_percent",
+        "FAF",
+        "IDS",
+        "Frag",
+        "MOTA_percent",
+        "MOTP_IoU_percent",
+        "IDF1_percent",
+        "GT_objects",
+        "Predictions",
+        "Matches",
+        "FN",
+        "FP",
+        "Runtime_seconds",
+        "Processing_FPS",
+    ]
+
+    for row in rows:
+        for column in required_numeric:
+            value = row.get(column, "")
+            if value == "":
+                raise RuntimeError(
+                    f"Staged tracking CSV contains an empty {column} value."
+                )
+            float(value)
+
+    summary_text = txt_path.read_text(encoding="utf-8")
+
+    if not summary_text.strip() or "OVERALL" not in summary_text:
+        raise RuntimeError(
+            "Staged tracking summary validation failed."
+        )
+
+
+def replace_owned_outputs(staged_csv, staged_txt, staging_dir):
+    """Replace evaluator-owned outputs with rollback on commit failure."""
+    outputs = [
+        (
+            staged_csv,
+            RESULTS_DIR / "eccv16_tracking_results.csv",
+        ),
+        (
+            staged_txt,
+            RESULTS_DIR / "eccv16_tracking_summary.txt",
+        ),
+    ]
+
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backups = []
+    installed = []
+
+    try:
+        for _, final_path in outputs:
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+
+        for staged_path, final_path in outputs:
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists():
+                os.replace(backup_path, final_path)
+
+        raise
+
+
+def main():
+    """Run the ECCV 2016 benchmark with staged output replacement."""
+    print("ECCV 2016 face tracking evaluation preflight...")
+    preflight()
+    print("Preflight: PASS")
+
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".eccv16_tracking_eval_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    staged_csv = staging_dir / "eccv16_tracking_results.csv"
+    staged_txt = staging_dir / "eccv16_tracking_summary.txt"
+
+    try:
+        run_evaluation(staging_dir)
+
+        validate_staged_outputs(
+            staged_csv,
+            staged_txt,
+        )
+
+        replace_owned_outputs(
+            staged_csv,
+            staged_txt,
+            staging_dir,
+        )
+
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
+
+    print("\nCommitted final evaluator outputs:")
+    print(RESULTS_DIR / "eccv16_tracking_results.csv")
+    print(RESULTS_DIR / "eccv16_tracking_summary.txt")
 
 
 if __name__ == "__main__":

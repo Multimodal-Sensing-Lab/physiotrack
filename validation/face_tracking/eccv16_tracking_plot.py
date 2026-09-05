@@ -1,5 +1,9 @@
 from pathlib import Path
+import os
+import shutil
+import tempfile
 
+import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -19,11 +23,6 @@ FIGURES_DIR = (
     / "figures"
 )
 
-FIGURES_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
 OUTPUT_PATH = (
     FIGURES_DIR
     / "eccv16_tracking_metrics.png"
@@ -32,9 +31,39 @@ OUTPUT_PATH = (
 
 def main():
     """Create a summary figure for the ECCV 2016 tracking results."""
+    if not CSV_PATH.is_file():
+        raise FileNotFoundError(
+            f"Required input file not found: {CSV_PATH}"
+        )
+
     df = pd.read_csv(
         CSV_PATH
     )
+
+    required_columns = [
+        "Video",
+        "F1_percent",
+        "MOTA_percent",
+        "MOTP_IoU_percent",
+        "IDF1_percent",
+    ]
+
+    missing = [
+        column
+        for column in required_columns
+        if column not in df.columns
+    ]
+
+    if missing:
+        raise RuntimeError(
+            "Tracking result table is missing required columns: "
+            + ", ".join(missing)
+        )
+
+    if df.empty:
+        raise RuntimeError(
+            "Tracking result table is empty."
+        )
 
     videos = df["Video"]
 
@@ -119,13 +148,77 @@ def main():
 
     fig.tight_layout()
 
-    fig.savefig(
-        OUTPUT_PATH,
-        dpi=300,
-        bbox_inches="tight",
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
-    plt.close(fig)
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".eccv16_tracking_plot_",
+            dir=FIGURES_DIR,
+        )
+    )
+
+    staged_output = (
+        staging_dir
+        / OUTPUT_PATH.name
+    )
+
+    try:
+        try:
+            fig.savefig(
+                staged_output,
+                dpi=300,
+                bbox_inches="tight",
+            )
+        finally:
+            plt.close(fig)
+
+        image = cv2.imread(
+            str(staged_output)
+        )
+
+        if (
+            image is None
+            or image.size == 0
+        ):
+            raise RuntimeError(
+                "Staged tracking figure validation failed."
+            )
+
+        backup_path = (
+            staging_dir
+            / (
+                OUTPUT_PATH.name
+                + ".backup"
+            )
+        )
+
+        if OUTPUT_PATH.exists():
+            os.replace(
+                OUTPUT_PATH,
+                backup_path,
+            )
+
+        try:
+            os.replace(
+                staged_output,
+                OUTPUT_PATH,
+            )
+        except Exception:
+            if backup_path.exists():
+                os.replace(
+                    backup_path,
+                    OUTPUT_PATH,
+                )
+            raise
+
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(
+                staging_dir
+            )
 
     print("Loaded results:")
     print(CSV_PATH)

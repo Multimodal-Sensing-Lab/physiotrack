@@ -131,8 +131,8 @@ Fragmentations: 2340
 
 Runtime:
 Total frames: 42007
-Total runtime: 91.45 min
-Overall processing speed: 7.66 FPS
+Total runtime: 89.43 min
+Overall processing speed: 7.83 FPS
 
 Generated outputs:
 Detailed results CSV: results/eccv16_tracking_results.csv

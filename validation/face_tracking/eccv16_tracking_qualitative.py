@@ -1,6 +1,8 @@
 from pathlib import Path
 import csv
+import os
 import shutil
+import tempfile
 import xml.etree.ElementTree as ET
 
 import cv2
@@ -71,6 +73,14 @@ SUMMARY_FIGURE = (
     FIGURES_DIR
     / "eccv16_tracking_qualitative_examples.png"
 )
+
+FINAL_QUALITATIVE_DIR = QUALITATIVE_DIR
+FINAL_VIDEOS_DIR = VIDEOS_DIR
+FINAL_FRAMES_DIR = FRAMES_DIR
+FINAL_OUTPUT_VIDEO = OUTPUT_VIDEO
+FINAL_SELECTION_CSV = SELECTION_CSV
+FINAL_EVENTS_CSV = EVENTS_CSV
+FINAL_SUMMARY_FIGURE = SUMMARY_FIGURE
 
 
 
@@ -2480,7 +2490,7 @@ def write_selection_csv(
                     f"{float(accepted_row['IDF1_percent']):.4f}"
                 ),
                 str(
-                    OUTPUT_VIDEO.relative_to(
+                    FINAL_OUTPUT_VIDEO.relative_to(
                         VALIDATION_DIR
                     )
                 ).replace(
@@ -2556,11 +2566,19 @@ def create_summary_figure(
     caption_height = 76
 
     for row in representative_rows:
+        staged_path = row.get(
+            "_staged_output_path"
+        )
+
         image_path = (
-            VALIDATION_DIR
-            / row[
-                "output_path"
-            ]
+            Path(staged_path)
+            if staged_path
+            else (
+                VALIDATION_DIR
+                / row[
+                    "output_path"
+                ]
+            )
         )
 
         image = cv2.imread(
@@ -2885,15 +2903,26 @@ def render_selected_clip(
                     "Could not save representative frame."
                 )
 
+            final_output_path = (
+                FINAL_FRAMES_DIR
+                / output_path.name
+            )
+
             target[
                 "output_path"
             ] = str(
-                output_path.relative_to(
+                final_output_path.relative_to(
                     VALIDATION_DIR
                 )
             ).replace(
                 "\\",
                 "/",
+            )
+
+            target[
+                "_staged_output_path"
+            ] = str(
+                output_path
             )
 
             saved_representatives.append(
@@ -3126,7 +3155,7 @@ def print_preflight(
     )
 
 
-def main():
+def run_qualitative_generation():
     """Generate final, verified, tracking-specific T-ara qualitative evidence."""
     video_path, gt_path = (
         verify_inputs()
@@ -3299,6 +3328,446 @@ def main():
     print(
         "\nAccepted quantitative artifacts were not modified."
     )
+
+
+
+
+def validate_staged_qualitative_outputs(
+    staging_qualitative_dir,
+    staging_summary_figure,
+):
+    """Validate all newly generated qualitative artifacts before replacement."""
+    staged_video = (
+        staging_qualitative_dir
+        / "annotated_videos"
+        / "T-ara_face_tracking_qualitative.mp4"
+    )
+
+    staged_events = (
+        staging_qualitative_dir
+        / "eccv16_tracking_qualitative_events.csv"
+    )
+
+    staged_selection = (
+        staging_qualitative_dir
+        / "eccv16_tracking_qualitative_selection.csv"
+    )
+
+    staged_frames_dir = (
+        staging_qualitative_dir
+        / "representative_frames"
+    )
+
+    required = [
+        staged_video,
+        staged_events,
+        staged_selection,
+        staging_summary_figure,
+    ]
+
+    missing = [
+        str(path)
+        for path in required
+        if not path.is_file()
+    ]
+
+    if missing:
+        raise RuntimeError(
+            "Staged qualitative outputs are incomplete:\n"
+            + "\n".join(missing)
+        )
+
+    frame_paths = sorted(
+        staged_frames_dir.glob("*.png")
+    )
+
+    if len(frame_paths) != REPRESENTATIVE_FRAME_COUNT:
+        raise RuntimeError(
+            "Staged qualitative output does not contain exactly six representative frames."
+        )
+
+    for frame_path in frame_paths:
+        image = cv2.imread(str(frame_path))
+        if image is None or image.size == 0:
+            raise RuntimeError(
+                f"Could not read staged representative frame: {frame_path}"
+            )
+
+    summary_image = cv2.imread(
+        str(staging_summary_figure)
+    )
+
+    if summary_image is None or summary_image.size == 0:
+        raise RuntimeError(
+            "Staged qualitative summary figure is unreadable."
+        )
+
+    with staged_selection.open(
+        "r",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        selection_rows = list(
+            csv.reader(
+                file
+            )
+        )
+
+    if len(selection_rows) != (
+        REPRESENTATIVE_FRAME_COUNT
+        + 4
+    ):
+        raise RuntimeError(
+            "Staged qualitative selection CSV has an unexpected row count."
+        )
+
+    clip_header = selection_rows[0]
+    clip_record = selection_rows[1]
+    separator_row = selection_rows[2]
+    representative_header = selection_rows[3]
+    representative_records = (
+        selection_rows[4:]
+    )
+
+    expected_clip_header = [
+        "sequence",
+        "source_video",
+        "clip_start_frame",
+        "clip_end_frame",
+        "clip_start_seconds",
+        "clip_end_seconds",
+        "clip_duration_seconds",
+        "clip_exact_switches",
+        "clip_detected_observations",
+        "clip_misses",
+        "clip_false_positives",
+        "selection_rule",
+        "sequence_recall_percent",
+        "sequence_precision_percent",
+        "sequence_f1_percent",
+        "sequence_faf",
+        "sequence_ids",
+        "sequence_fragmentations",
+        "sequence_mota_percent",
+        "sequence_motp_percent",
+        "sequence_idf1_percent",
+        "annotated_video",
+    ]
+
+    expected_representative_header = [
+        "representative_role",
+        "frame_no",
+        "gt_faces",
+        "matches",
+        "switches",
+        "misses",
+        "false_positives",
+        "detections",
+        "mean_iou",
+        "representative_frame",
+    ]
+
+    if clip_header != expected_clip_header:
+        raise RuntimeError(
+            "Staged qualitative selection CSV clip schema is incorrect."
+        )
+
+    if len(clip_record) != len(
+        expected_clip_header
+    ):
+        raise RuntimeError(
+            "Staged qualitative selection CSV clip record is incomplete."
+        )
+
+    if separator_row:
+        raise RuntimeError(
+            "Staged qualitative selection CSV separator row is not empty."
+        )
+
+    if representative_header != expected_representative_header:
+        raise RuntimeError(
+            "Staged qualitative selection CSV representative-frame schema is incorrect."
+        )
+
+    if len(
+        representative_records
+    ) != REPRESENTATIVE_FRAME_COUNT:
+        raise RuntimeError(
+            "Staged qualitative selection CSV does not contain exactly six representative records."
+        )
+
+    for row in representative_records:
+        if len(row) != len(
+            expected_representative_header
+        ):
+            raise RuntimeError(
+                "Staged qualitative selection CSV contains an incomplete representative record."
+            )
+
+    clip_start_frame = int(
+        clip_record[
+            expected_clip_header.index(
+                "clip_start_frame"
+            )
+        ]
+    )
+
+    clip_end_frame = int(
+        clip_record[
+            expected_clip_header.index(
+                "clip_end_frame"
+            )
+        ]
+    )
+
+    events_df = pd.read_csv(
+        staged_events
+    )
+
+    if events_df.empty:
+        raise RuntimeError(
+            "Staged qualitative event CSV is empty."
+        )
+
+    cap = cv2.VideoCapture(
+        str(staged_video)
+    )
+
+    if not cap.isOpened():
+        raise RuntimeError(
+            "Staged qualitative video could not be opened."
+        )
+
+    frame_count = int(
+        cap.get(
+            cv2.CAP_PROP_FRAME_COUNT
+        )
+    )
+
+    cap.release()
+
+    expected_frames = (
+        clip_end_frame
+        - clip_start_frame
+        + 1
+    )
+
+    if frame_count != expected_frames:
+        raise RuntimeError(
+            "Staged qualitative video frame count does not match the selected clip."
+        )
+
+
+def replace_qualitative_outputs(
+    staging_qualitative_dir,
+    staging_summary_figure,
+    staging_root,
+):
+    """Replace only qualitative-owned outputs with rollback on commit failure."""
+    backup_root = (
+        staging_root
+        / "backup"
+    )
+
+    backup_root.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    backup_qualitative = (
+        backup_root
+        / "qualitative"
+    )
+
+    backup_summary = (
+        backup_root
+        / FINAL_SUMMARY_FIGURE.name
+    )
+
+    installed_qualitative = False
+    installed_summary = False
+
+    try:
+        if FINAL_QUALITATIVE_DIR.exists():
+            os.replace(
+                FINAL_QUALITATIVE_DIR,
+                backup_qualitative,
+            )
+
+        if FINAL_SUMMARY_FIGURE.exists():
+            os.replace(
+                FINAL_SUMMARY_FIGURE,
+                backup_summary,
+            )
+
+        os.replace(
+            staging_qualitative_dir,
+            FINAL_QUALITATIVE_DIR,
+        )
+
+        installed_qualitative = True
+
+        FINAL_SUMMARY_FIGURE.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        os.replace(
+            staging_summary_figure,
+            FINAL_SUMMARY_FIGURE,
+        )
+
+        installed_summary = True
+
+    except Exception:
+        if (
+            installed_summary
+            and FINAL_SUMMARY_FIGURE.exists()
+        ):
+            FINAL_SUMMARY_FIGURE.unlink()
+
+        if (
+            installed_qualitative
+            and FINAL_QUALITATIVE_DIR.exists()
+        ):
+            shutil.rmtree(
+                FINAL_QUALITATIVE_DIR
+            )
+
+        if backup_summary.exists():
+            os.replace(
+                backup_summary,
+                FINAL_SUMMARY_FIGURE,
+            )
+
+        if backup_qualitative.exists():
+            os.replace(
+                backup_qualitative,
+                FINAL_QUALITATIVE_DIR,
+            )
+
+        raise
+
+
+def main():
+    """Generate qualitative tracking evidence with staged replacement."""
+    global QUALITATIVE_DIR
+    global VIDEOS_DIR
+    global FRAMES_DIR
+    global FIGURES_DIR
+    global OUTPUT_VIDEO
+    global SELECTION_CSV
+    global EVENTS_CSV
+    global SUMMARY_FIGURE
+
+    video_path, gt_path = verify_inputs()
+    load_quantitative_row()
+    load_ground_truth(gt_path)
+
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    probe_path = (
+        RESULTS_DIR
+        / ".qualitative_write_probe"
+    )
+
+    try:
+        probe_path.write_text(
+            "preflight",
+            encoding="utf-8",
+        )
+    finally:
+        if probe_path.exists():
+            probe_path.unlink()
+
+    print(
+        "Qualitative safe-rerun preflight: PASS"
+    )
+
+    staging_root = Path(
+        tempfile.mkdtemp(
+            prefix=".eccv16_tracking_qualitative_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    QUALITATIVE_DIR = (
+        staging_root
+        / "qualitative"
+    )
+
+    VIDEOS_DIR = (
+        QUALITATIVE_DIR
+        / "annotated_videos"
+    )
+
+    FRAMES_DIR = (
+        QUALITATIVE_DIR
+        / "representative_frames"
+    )
+
+    FIGURES_DIR = (
+        staging_root
+        / "figures"
+    )
+
+    OUTPUT_VIDEO = (
+        VIDEOS_DIR
+        / FINAL_OUTPUT_VIDEO.name
+    )
+
+    SELECTION_CSV = (
+        QUALITATIVE_DIR
+        / FINAL_SELECTION_CSV.name
+    )
+
+    EVENTS_CSV = (
+        QUALITATIVE_DIR
+        / FINAL_EVENTS_CSV.name
+    )
+
+    SUMMARY_FIGURE = (
+        FIGURES_DIR
+        / FINAL_SUMMARY_FIGURE.name
+    )
+
+    try:
+        run_qualitative_generation()
+
+        validate_staged_qualitative_outputs(
+            QUALITATIVE_DIR,
+            SUMMARY_FIGURE,
+        )
+
+        replace_qualitative_outputs(
+            QUALITATIVE_DIR,
+            SUMMARY_FIGURE,
+            staging_root,
+        )
+
+    finally:
+        QUALITATIVE_DIR = FINAL_QUALITATIVE_DIR
+        VIDEOS_DIR = FINAL_VIDEOS_DIR
+        FRAMES_DIR = FINAL_FRAMES_DIR
+        OUTPUT_VIDEO = FINAL_OUTPUT_VIDEO
+        SELECTION_CSV = FINAL_SELECTION_CSV
+        EVENTS_CSV = FINAL_EVENTS_CSV
+        SUMMARY_FIGURE = FINAL_SUMMARY_FIGURE
+        FIGURES_DIR = FINAL_SUMMARY_FIGURE.parent
+
+        if staging_root.exists():
+            shutil.rmtree(
+                staging_root
+            )
+
+    print(
+        "\nCommitted final qualitative outputs:"
+    )
+    print(FINAL_QUALITATIVE_DIR)
+    print(FINAL_SUMMARY_FIGURE)
 
 
 if __name__ == "__main__":
