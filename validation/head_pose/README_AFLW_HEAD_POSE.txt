@@ -102,7 +102,7 @@ datasets/
             `-- aflw-befit.pdf
 
 The evaluator resolves this location relative to the project workspace. No
-dataset location is resolved from the documented project structure.
+machine-specific dataset path is required.
 
 Ground truth and coordinate convention
 --------------------------------------
@@ -180,8 +180,8 @@ Full evaluation:
 
 python aflw_head_pose_eval.py
 
-After the quantitative evaluation is complete, generate the thesis table
-and figure:
+After the quantitative evaluation is complete, generate the thesis table and
+quantitative figures:
 
 python aflw_head_pose_plot.py
 
@@ -199,7 +199,17 @@ results/
 |-- aflw_head_pose_thesis_table.csv
 |-- aflw_head_pose_thesis_table.md
 `-- figures/
-    `-- aflw_head_pose_error_metrics.png
+    |-- aflw_head_pose_error_metrics.png
+    `-- aflw_head_pose_error_distribution.png
+
+results/figures/aflw_head_pose_error_metrics.png
+    Bar-chart summary of per-axis MAE and median absolute angular error.
+
+results/figures/aflw_head_pose_error_distribution.png
+    Empirical cumulative distribution of absolute angular error for yaw,
+    pitch, and roll across all successful primary-protocol samples. The figure
+    complements the summary statistics by showing the full error distribution
+    and the relative prevalence of larger-error cases.
 
 
 Qualitative benchmark evidence
@@ -227,11 +237,12 @@ qualitative selection and verification. Eight interpretable cases are selected:
 - positive_pitch
 - high_roll
 
-The strong-frontal example is selected from near-frontal faces with low per-face angular error. The representative example is selected to have mean
-axis error close to the overall benchmark MAE. The challenging example
-is selected from the high-error portion of the result distribution.
-The directional cases are selected to provide clear negative and positive yaw,
-negative and positive pitch, and substantial roll examples.
+The strong-frontal example is selected from near-frontal faces with low per-face
+angular error. The representative example is selected to have mean axis error
+close to the overall benchmark MAE. The challenging example is selected from
+the high-error portion of the result distribution. The directional cases are
+selected to provide clear negative and positive yaw, negative and positive
+pitch, and substantial roll examples.
 
 Visual prominence is also considered so that the evaluated target face is large
 enough and sufficiently central to be interpretable in the final evidence
@@ -240,8 +251,8 @@ figures.
 Before any qualitative figure is written, the selected AFLW faces are rerun
 through FaceOrientation using the same ground-truth face rectangle. The rerun
 ground-truth angles, predictions, and wrapped angular errors are compared
-numerically with the per-face result CSV. Qualitative output is written
-only if this verification passes.
+numerically with the per-face result CSV. Qualitative output is written only if
+this verification passes.
 
 Each qualitative evidence figure contains:
 
@@ -289,11 +300,11 @@ results/figures/aflw_head_pose_qualitative_examples.png
     their qualitative role, mean axis error, and ground-truth pose.
 
 The qualitative generator owns and may replace only its own qualitative outputs.
-It does not delete or modify the quantitative result CSV, summary,
-thesis table, or quantitative error figure.
+It does not delete or modify the quantitative result CSV, summary, thesis table,
+or either quantitative head-pose figure.
 
 Validation results
----------------------------
+------------------
 Successful predictions: 23,407 / 23,408 eligible samples
 Success rate: 99.9957%
 
@@ -336,7 +347,7 @@ face-detection plus head-pose pipeline.
 Reproducibility
 ---------------
 The final evaluator uses project-relative paths and does not require any
-documented project-relative path.
+machine-specific dataset path.
 
 For reproducible execution:
 
@@ -345,10 +356,11 @@ For reproducible execution:
 3. Use the documented project environment and dependencies.
 4. Run the evaluator from validation/head_pose.
 5. Verify the generated CSV and summary.
-6. Generate the table and quantitative figure from the quantitative CSV.
+6. Generate the thesis table and both quantitative figures from the accepted
+   quantitative CSV.
 7. Run aflw_head_pose_qualitative.py.
-8. Inspect the individual qualitative figures, selection CSV, and combined
-   qualitative summary figure.
+8. Inspect the individual qualitative figures, selection CSV, combined
+   qualitative summary figure, and both quantitative figures.
 
 Equivalent dataset, model, dependency, and device settings should produce
 scientifically equivalent results. Runtime may vary between systems.

@@ -42,8 +42,6 @@
     }
   ],
   "video_count": 1,
-  "passed_videos": 1,
-  "failed_videos": 0,
   "total_processed_frames": 429,
   "total_detected_faces": 429,
   "total_frame_records": 429,

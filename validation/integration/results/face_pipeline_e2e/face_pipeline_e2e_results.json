@@ -69,6 +69,14 @@
             "status": "PASS",
             "successful_face_samples": 429
           }
+        },
+        "mouth_motion_numerical": {
+          "available_samples": 429,
+          "finite_samples": 429,
+          "initialization_samples": 1,
+          "nonzero_samples": 428,
+          "max_mouth_movement": 0.007374363792506053,
+          "max_mouth_velocity": 0.18435909481265134
         }
       },
       "enabled": {
@@ -137,6 +145,14 @@
             "status": "PASS",
             "successful_face_samples": 429
           }
+        },
+        "mouth_motion_numerical": {
+          "available_samples": 429,
+          "finite_samples": 429,
+          "initialization_samples": 1,
+          "nonzero_samples": 428,
+          "max_mouth_movement": 0.007374363792506053,
+          "max_mouth_velocity": 0.18435909481265134
         }
       },
       "status": "PASS"

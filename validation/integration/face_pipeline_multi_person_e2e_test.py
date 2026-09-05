@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -47,6 +48,31 @@ FEATURE_NAMES = [
     "regions",
     "temporal",
 ]
+
+
+
+def finite_numeric(
+    value,
+) -> bool:
+    """Return True for finite real numerical values."""
+    if isinstance(
+        value,
+        bool,
+    ):
+        return False
+
+    if not isinstance(
+        value,
+        (
+            int,
+            float,
+        ),
+    ):
+        return False
+
+    return math.isfinite(
+        float(value)
+    )
 
 
 def get_video_paths() -> list[Path]:
@@ -117,6 +143,16 @@ def failed_video_result(
             [],
         "gaze_estimation_person_ids":
             [],
+        "mouth_motion_person_ids":
+            [],
+        "mouth_motion_numeric_counts":
+            {},
+        "mouth_motion_nonzero_counts":
+            {},
+        "mouth_motion_initialization":
+            {},
+        "mouth_motion_velocity_consistency":
+            {},
         "frame_records":
             [],
         "window_records":
@@ -218,6 +254,11 @@ def run_video(
     duplicate_track_id_frames = []
     multi_face_frames = 0
     gaze_estimation_person_ids = set()
+    mouth_motion_person_ids = set()
+    mouth_motion_numeric_counts = {}
+    mouth_motion_nonzero_counts = {}
+    mouth_motion_initialization = {}
+    mouth_motion_velocity_consistency = {}
 
     try:
         while True:
@@ -441,6 +482,141 @@ def run_video(
                             }
                         )
 
+                mouth_motion = features.get(
+                    "mouth_motion",
+                    {},
+                )
+
+                if mouth_motion.get(
+                    "available",
+                    False,
+                ):
+                    movement = mouth_motion.get(
+                        "mouth_movement"
+                    )
+
+                    velocity = mouth_motion.get(
+                        "mouth_velocity"
+                    )
+
+                    mouth_motion_person_ids.add(
+                        person_id
+                    )
+
+                    values_are_numeric = (
+                        finite_numeric(
+                            movement
+                        )
+                        and finite_numeric(
+                            velocity
+                        )
+                        and float(
+                            movement
+                        )
+                        >= 0.0
+                        and float(
+                            velocity
+                        )
+                        >= 0.0
+                    )
+
+                    if values_are_numeric:
+                        mouth_motion_numeric_counts[
+                            person_id
+                        ] = (
+                            mouth_motion_numeric_counts.get(
+                                person_id,
+                                0,
+                            )
+                            + 1
+                        )
+
+                        if person_id not in mouth_motion_initialization:
+                            mouth_motion_initialization[
+                                person_id
+                            ] = {
+                                "frame_index":
+                                    processed_frames,
+                                "movement":
+                                    float(
+                                        movement
+                                    ),
+                                "velocity":
+                                    float(
+                                        velocity
+                                    ),
+                                "is_zero":
+                                    (
+                                        math.isclose(
+                                            float(
+                                                movement
+                                            ),
+                                            0.0,
+                                            rel_tol=0.0,
+                                            abs_tol=1e-12,
+                                        )
+                                        and math.isclose(
+                                            float(
+                                                velocity
+                                            ),
+                                            0.0,
+                                            rel_tol=0.0,
+                                            abs_tol=1e-12,
+                                        )
+                                    ),
+                            }
+
+                        if (
+                            float(
+                                movement
+                            )
+                            > 0.0
+                            or float(
+                                velocity
+                            )
+                            > 0.0
+                        ):
+                            mouth_motion_nonzero_counts[
+                                person_id
+                            ] = (
+                                mouth_motion_nonzero_counts.get(
+                                    person_id,
+                                    0,
+                                )
+                                + 1
+                            )
+
+                        velocity_consistent = math.isclose(
+                            float(
+                                velocity
+                            ),
+                            float(
+                                movement
+                            )
+                            * fps,
+                            rel_tol=0.0,
+                            abs_tol=1e-9,
+                        )
+
+                        if person_id not in mouth_motion_velocity_consistency:
+                            mouth_motion_velocity_consistency[
+                                person_id
+                            ] = True
+
+                        mouth_motion_velocity_consistency[
+                            person_id
+                        ] = (
+                            mouth_motion_velocity_consistency[
+                                person_id
+                            ]
+                            and velocity_consistent
+                        )
+
+                    else:
+                        mouth_motion_velocity_consistency[
+                            person_id
+                        ] = False
+
             processed_frames += 1
 
             if (
@@ -589,6 +765,82 @@ def run_video(
             "gaze_estimation_not_observed_for_two_persons"
         )
 
+    if len(
+        mouth_motion_person_ids
+    ) < 2:
+        failed_checks.append(
+            "mouth_motion_not_observed_for_two_persons"
+        )
+
+    for person_id in person_ids:
+        available = (
+            feature_available_counts[
+                "mouth_motion"
+            ].get(
+                person_id,
+                0,
+            )
+        )
+
+        numeric = (
+            mouth_motion_numeric_counts.get(
+                person_id,
+                0,
+            )
+        )
+
+        nonzero = (
+            mouth_motion_nonzero_counts.get(
+                person_id,
+                0,
+            )
+        )
+
+        initialization = (
+            mouth_motion_initialization.get(
+                person_id
+            )
+        )
+
+        velocity_consistent = (
+            mouth_motion_velocity_consistency.get(
+                person_id,
+                False,
+            )
+        )
+
+        if available <= 0:
+            failed_checks.append(
+                f"mouth_motion_missing_for_person_{person_id}"
+            )
+
+        if numeric != available:
+            failed_checks.append(
+                f"mouth_motion_non_numeric_for_person_{person_id}"
+            )
+
+        if initialization is None:
+            failed_checks.append(
+                f"mouth_motion_initialization_missing_for_person_{person_id}"
+            )
+
+        elif not initialization[
+            "is_zero"
+        ]:
+            failed_checks.append(
+                f"mouth_motion_initialization_not_zero_for_person_{person_id}"
+            )
+
+        if nonzero <= 0:
+            failed_checks.append(
+                f"mouth_motion_never_nonzero_for_person_{person_id}"
+            )
+
+        if not velocity_consistent:
+            failed_checks.append(
+                f"mouth_velocity_inconsistent_for_person_{person_id}"
+            )
+
     if total_faces <= 0:
         failed_checks.append(
             "no_face_instances"
@@ -673,6 +925,18 @@ def run_video(
             sorted(
                 gaze_estimation_person_ids
             ),
+        "mouth_motion_person_ids":
+            sorted(
+                mouth_motion_person_ids
+            ),
+        "mouth_motion_numeric_counts":
+            mouth_motion_numeric_counts,
+        "mouth_motion_nonzero_counts":
+            mouth_motion_nonzero_counts,
+        "mouth_motion_initialization":
+            mouth_motion_initialization,
+        "mouth_motion_velocity_consistency":
+            mouth_motion_velocity_consistency,
         "frame_records":
             frame_records,
         "window_records":
@@ -804,6 +1068,26 @@ def main() -> None:
                 result[
                     "gaze_estimation_person_ids"
                 ],
+            "mouth_motion_person_ids":
+                result[
+                    "mouth_motion_person_ids"
+                ],
+            "mouth_motion_numeric_counts":
+                result[
+                    "mouth_motion_numeric_counts"
+                ],
+            "mouth_motion_nonzero_counts":
+                result[
+                    "mouth_motion_nonzero_counts"
+                ],
+            "mouth_motion_initialization":
+                result[
+                    "mouth_motion_initialization"
+                ],
+            "mouth_motion_velocity_consistency":
+                result[
+                    "mouth_motion_velocity_consistency"
+                ],
             "status":
                 result[
                     "status"
@@ -848,6 +1132,41 @@ def main() -> None:
             "Frames with multiple faces:",
             result[
                 "multi_face_frames"
+            ],
+        )
+
+        print(
+            "Person IDs with mouth motion:",
+            result[
+                "mouth_motion_person_ids"
+            ],
+        )
+
+        print(
+            "Mouth-motion numeric counts:",
+            result[
+                "mouth_motion_numeric_counts"
+            ],
+        )
+
+        print(
+            "Mouth-motion non-zero counts:",
+            result[
+                "mouth_motion_nonzero_counts"
+            ],
+        )
+
+        print(
+            "Mouth-motion initialization:",
+            result[
+                "mouth_motion_initialization"
+            ],
+        )
+
+        print(
+            "Mouth-velocity consistency:",
+            result[
+                "mouth_motion_velocity_consistency"
             ],
         )
 
@@ -959,7 +1278,16 @@ def main() -> None:
     )
 
     gaze_failures_df = pd.DataFrame(
-        all_gaze_estimation_failures
+        all_gaze_estimation_failures,
+        columns=[
+            "video",
+            "frame_index",
+            "timestamp",
+            "person_id",
+            "box",
+            "confidence",
+            "association_iou",
+        ],
     )
 
     gaze_failures_df.to_csv(
@@ -1012,6 +1340,36 @@ def main() -> None:
                     json.dumps(
                         summary[
                             "gaze_estimation_person_ids"
+                        ]
+                    ),
+                "mouth_motion_person_ids":
+                    json.dumps(
+                        summary[
+                            "mouth_motion_person_ids"
+                        ]
+                    ),
+                "mouth_motion_numeric_counts":
+                    json.dumps(
+                        summary[
+                            "mouth_motion_numeric_counts"
+                        ]
+                    ),
+                "mouth_motion_nonzero_counts":
+                    json.dumps(
+                        summary[
+                            "mouth_motion_nonzero_counts"
+                        ]
+                    ),
+                "mouth_motion_initialization":
+                    json.dumps(
+                        summary[
+                            "mouth_motion_initialization"
+                        ]
+                    ),
+                "mouth_motion_velocity_consistency":
+                    json.dumps(
+                        summary[
+                            "mouth_motion_velocity_consistency"
                         ]
                     ),
                 "status":
@@ -1179,6 +1537,41 @@ def main() -> None:
             "Person IDs with gaze estimation:",
             summary[
                 "gaze_estimation_person_ids"
+            ],
+        )
+
+        print(
+            "Person IDs with mouth motion:",
+            summary[
+                "mouth_motion_person_ids"
+            ],
+        )
+
+        print(
+            "Mouth-motion numeric counts:",
+            summary[
+                "mouth_motion_numeric_counts"
+            ],
+        )
+
+        print(
+            "Mouth-motion non-zero counts:",
+            summary[
+                "mouth_motion_nonzero_counts"
+            ],
+        )
+
+        print(
+            "Mouth-motion initialization:",
+            summary[
+                "mouth_motion_initialization"
+            ],
+        )
+
+        print(
+            "Mouth-velocity consistency:",
+            summary[
+                "mouth_motion_velocity_consistency"
             ],
         )
 

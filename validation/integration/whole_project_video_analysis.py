@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -31,6 +32,31 @@ OUTPUT_DIR = (
     / "results"
     / "whole_project_video_analysis"
 )
+
+
+
+def finite_numeric(
+    value,
+) -> bool:
+    """Return True for finite real numerical values."""
+    if isinstance(
+        value,
+        bool,
+    ):
+        return False
+
+    if not isinstance(
+        value,
+        (
+            int,
+            float,
+        ),
+    ):
+        return False
+
+    return math.isfinite(
+        float(value)
+    )
 
 
 def get_video_paths() -> list[Path]:
@@ -123,6 +149,16 @@ def failed_video_summary(
             0,
         "window_records":
             0,
+        "mouth_motion_available":
+            0,
+        "mouth_motion_numeric":
+            0,
+        "mouth_motion_nonzero":
+            0,
+        "mouth_motion_velocity_consistent":
+            False,
+        "mouth_motion_person_ids":
+            [],
         "frame_count_matches_video":
             False,
         "export_counts_match":
@@ -248,6 +284,12 @@ def run_video(
     processed_frames = 0
     detected_faces = 0
 
+    mouth_motion_available = 0
+    mouth_motion_numeric = 0
+    mouth_motion_nonzero = 0
+    mouth_motion_velocity_consistent = True
+    mouth_motion_person_ids = set()
+
     processing_error = None
 
     try:
@@ -304,6 +346,89 @@ def run_video(
                 ] = video_label(
                     video_path
                 )
+
+            for record in current_frame_records:
+                features = record.get(
+                    "face_features",
+                    {},
+                )
+
+                mouth_motion = features.get(
+                    "mouth_motion",
+                    {},
+                )
+
+                if mouth_motion.get(
+                    "available",
+                    False,
+                ):
+                    mouth_motion_available += 1
+
+                    person_id = record.get(
+                        "person_id"
+                    )
+
+                    mouth_motion_person_ids.add(
+                        person_id
+                    )
+
+                    movement = mouth_motion.get(
+                        "mouth_movement"
+                    )
+
+                    velocity = mouth_motion.get(
+                        "mouth_velocity"
+                    )
+
+                    values_are_numeric = (
+                        finite_numeric(
+                            movement
+                        )
+                        and finite_numeric(
+                            velocity
+                        )
+                        and float(
+                            movement
+                        )
+                        >= 0.0
+                        and float(
+                            velocity
+                        )
+                        >= 0.0
+                    )
+
+                    if values_are_numeric:
+                        mouth_motion_numeric += 1
+
+                        if (
+                            float(
+                                movement
+                            )
+                            > 0.0
+                            or float(
+                                velocity
+                            )
+                            > 0.0
+                        ):
+                            mouth_motion_nonzero += 1
+
+                        mouth_motion_velocity_consistent = (
+                            mouth_motion_velocity_consistent
+                            and math.isclose(
+                                float(
+                                    velocity
+                                ),
+                                float(
+                                    movement
+                                )
+                                * fps,
+                                rel_tol=0.0,
+                                abs_tol=1e-9,
+                            )
+                        )
+
+                    else:
+                        mouth_motion_velocity_consistent = False
 
             frame_records.extend(
                 current_frame_records
@@ -375,6 +500,34 @@ def run_video(
             "export_record_count_mismatch"
         )
 
+    if mouth_motion_available <= 0:
+        failed_checks.append(
+            "mouth_motion_not_observed"
+        )
+
+    if (
+        mouth_motion_numeric
+        != mouth_motion_available
+    ):
+        failed_checks.append(
+            "mouth_motion_contains_non_numeric_values"
+        )
+
+    if mouth_motion_nonzero <= 0:
+        failed_checks.append(
+            "mouth_motion_never_nonzero"
+        )
+
+    if not mouth_motion_velocity_consistent:
+        failed_checks.append(
+            "mouth_velocity_inconsistent_with_movement_and_fps"
+        )
+
+    if not mouth_motion_person_ids:
+        failed_checks.append(
+            "mouth_motion_has_no_person_ids"
+        )
+
     analysis_status = (
         "PASS"
         if not failed_checks
@@ -406,6 +559,22 @@ def run_video(
             len(frame_records),
         "window_records":
             len(window_records),
+        "mouth_motion_available":
+            mouth_motion_available,
+        "mouth_motion_numeric":
+            mouth_motion_numeric,
+        "mouth_motion_nonzero":
+            mouth_motion_nonzero,
+        "mouth_motion_velocity_consistent":
+            mouth_motion_velocity_consistent,
+        "mouth_motion_person_ids":
+            sorted(
+                mouth_motion_person_ids,
+                key=lambda value: (
+                    value is None,
+                    str(value),
+                ),
+            ),
         "frame_count_matches_video":
             frame_count_matches,
         "export_counts_match":
@@ -532,6 +701,41 @@ def main() -> None:
         )
 
         print(
+            "Mouth-motion available:",
+            summary[
+                "mouth_motion_available"
+            ],
+        )
+
+        print(
+            "Mouth-motion numeric:",
+            summary[
+                "mouth_motion_numeric"
+            ],
+        )
+
+        print(
+            "Mouth-motion non-zero:",
+            summary[
+                "mouth_motion_nonzero"
+            ],
+        )
+
+        print(
+            "Mouth-velocity consistency:",
+            summary[
+                "mouth_motion_velocity_consistent"
+            ],
+        )
+
+        print(
+            "Mouth-motion person IDs:",
+            summary[
+                "mouth_motion_person_ids"
+            ],
+        )
+
+        print(
             "Status:",
             summary[
                 "analysis_status"
@@ -651,6 +855,38 @@ def main() -> None:
             len(
                 all_window_records
             ),
+        "mouth_motion_available":
+            sum(
+                summary[
+                    "mouth_motion_available"
+                ]
+                for summary in video_summaries
+            ),
+        "mouth_motion_numeric":
+            sum(
+                summary[
+                    "mouth_motion_numeric"
+                ]
+                for summary in video_summaries
+            ),
+        "mouth_motion_nonzero":
+            sum(
+                summary[
+                    "mouth_motion_nonzero"
+                ]
+                for summary in video_summaries
+            ),
+        "mouth_motion_velocity_consistent":
+            all(
+                summary[
+                    "mouth_motion_velocity_consistent"
+                ]
+                for summary in video_summaries
+                if summary[
+                    "analysis_status"
+                ]
+                == "PASS"
+            ),
         "analysis_status":
             (
                 "PASS"
@@ -724,6 +960,34 @@ def main() -> None:
         len(
             all_window_records
         ),
+    )
+
+    print(
+        "Total mouth-motion available records:",
+        combined_summary[
+            "mouth_motion_available"
+        ],
+    )
+
+    print(
+        "Total mouth-motion numeric records:",
+        combined_summary[
+            "mouth_motion_numeric"
+        ],
+    )
+
+    print(
+        "Total mouth-motion non-zero records:",
+        combined_summary[
+            "mouth_motion_nonzero"
+        ],
+    )
+
+    print(
+        "Mouth-velocity consistency:",
+        combined_summary[
+            "mouth_motion_velocity_consistent"
+        ],
     )
 
     print(

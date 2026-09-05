@@ -14,6 +14,13 @@
       "detected_faces": 1127,
       "frame_records": 1127,
       "window_records": 1127,
+      "mouth_motion_available": 1127,
+      "mouth_motion_numeric": 1127,
+      "mouth_motion_nonzero": 1126,
+      "mouth_motion_velocity_consistent": true,
+      "mouth_motion_person_ids": [
+        1
+      ],
       "frame_count_matches_video": true,
       "export_counts_match": true,
       "analysis_status": "PASS",
@@ -41,5 +48,9 @@
   "total_detected_faces": 1127,
   "total_frame_records": 1127,
   "total_window_records": 1127,
+  "mouth_motion_available": 1127,
+  "mouth_motion_numeric": 1127,
+  "mouth_motion_nonzero": 1126,
+  "mouth_motion_velocity_consistent": true,
   "analysis_status": "PASS"
 }

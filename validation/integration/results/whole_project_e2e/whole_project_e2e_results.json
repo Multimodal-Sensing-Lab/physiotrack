@@ -123,6 +123,26 @@
           "finite_samples": 1127,
           "matches_available_mouth_samples": true
         },
+        "mouth_motion": {
+          "available_samples": 1127,
+          "finite_samples": 1127,
+          "nonzero_samples": 1126,
+          "matches_available_samples": true,
+          "velocity_consistent_with_movement_and_fps": true,
+          "person_ids": [
+            "1"
+          ],
+          "initialization": {
+            "1": {
+              "frame_index": 0,
+              "movement": 0.0,
+              "velocity": 0.0,
+              "is_zero": true
+            }
+          },
+          "initialization_valid": true,
+          "tracking_ids_valid": true
+        },
         "overall_status": "PASS"
       }
     ],
@@ -131,6 +151,16 @@
     "failed_videos": 0,
     "total_processed_frames": 1127,
     "total_face_samples": 1127,
+    "mouth_motion": {
+      "available_samples": 1127,
+      "finite_samples": 1127,
+      "nonzero_samples": 1126,
+      "all_videos_velocity_consistent": true,
+      "all_videos_initialization_valid": true,
+      "frame_csv_columns_present": true,
+      "frame_csv_numeric": true,
+      "frame_csv_nonzero_observed": true
+    },
     "overall_status": "PASS"
   },
   "videos": [
@@ -254,6 +284,26 @@
       "mouth_openness": {
         "finite_samples": 1127,
         "matches_available_mouth_samples": true
+      },
+      "mouth_motion": {
+        "available_samples": 1127,
+        "finite_samples": 1127,
+        "nonzero_samples": 1126,
+        "matches_available_samples": true,
+        "velocity_consistent_with_movement_and_fps": true,
+        "person_ids": [
+          "1"
+        ],
+        "initialization": {
+          "1": {
+            "frame_index": 0,
+            "movement": 0.0,
+            "velocity": 0.0,
+            "is_zero": true
+          }
+        },
+        "initialization_valid": true,
+        "tracking_ids_valid": true
       },
       "overall_status": "PASS"
     }

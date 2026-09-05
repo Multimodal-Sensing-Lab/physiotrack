@@ -14,6 +14,9 @@ RESULTS_CSV = RESULTS_DIR / "aflw_head_pose_results.csv"
 THESIS_TABLE_CSV = RESULTS_DIR / "aflw_head_pose_thesis_table.csv"
 THESIS_TABLE_MD = RESULTS_DIR / "aflw_head_pose_thesis_table.md"
 FIGURE_PATH = FIGURES_DIR / "aflw_head_pose_error_metrics.png"
+DISTRIBUTION_FIGURE_PATH = (
+    FIGURES_DIR / "aflw_head_pose_error_distribution.png"
+)
 
 REQUIRED_COLUMNS = {
     "status",
@@ -200,11 +203,58 @@ def create_figure(table):
     plt.close(figure)
 
 
+
+def create_distribution_figure(data):
+    """Create an empirical CDF of absolute angular errors by pose axis."""
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    axis_columns = {
+        "Yaw": "yaw_error",
+        "Pitch": "pitch_error",
+        "Roll": "roll_error",
+    }
+
+    figure, axis = plt.subplots(figsize=(8, 5))
+
+    for label, column in axis_columns.items():
+        errors = np.sort(
+            data[column].to_numpy(dtype=float)
+        )
+
+        cumulative = (
+            np.arange(1, len(errors) + 1, dtype=float)
+            / len(errors)
+            * 100.0
+        )
+
+        axis.plot(
+            errors,
+            cumulative,
+            label=label,
+        )
+
+    axis.set_xlabel("Absolute angular error (degrees)")
+    axis.set_ylabel("Cumulative successful samples (%)")
+    axis.set_title("AFLW Head Pose Absolute-Error Distribution")
+    axis.set_xlim(left=0.0)
+    axis.set_ylim(0.0, 100.0)
+    axis.grid(alpha=0.25)
+    axis.legend()
+
+    figure.tight_layout()
+    figure.savefig(
+        DISTRIBUTION_FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+    plt.close(figure)
+
 def main():
     all_rows, successful = load_successful_results()
     table, overall_metrics = calculate_metrics(successful)
     output_table = save_thesis_table(table, overall_metrics)
     create_figure(table)
+    create_distribution_figure(successful)
 
     print("Evaluation rows:", len(all_rows))
     print("Successful samples:", len(successful))
@@ -233,6 +283,7 @@ def main():
     print(THESIS_TABLE_CSV)
     print(THESIS_TABLE_MD)
     print(FIGURE_PATH)
+    print(DISTRIBUTION_FIGURE_PATH)
 
 
 if __name__ == "__main__":

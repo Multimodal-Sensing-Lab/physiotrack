@@ -12,11 +12,19 @@ FIGURES_DIR = RESULTS_DIR / "figures"
 
 SUMMARY_PATH = RESULTS_DIR / "mpeblink_test_summary.txt"
 SEQUENCE_RESULTS_PATH = RESULTS_DIR / "mpeblink_test_sequence_results.csv"
+CALIBRATION_CSV_PATH = RESULTS_DIR / "mpeblink_val_calibration.csv"
 
 TABLE_CSV_PATH = RESULTS_DIR / "mpeblink_test_thesis_table.csv"
 TABLE_MD_PATH = RESULTS_DIR / "mpeblink_test_thesis_table.md"
 
 FIGURE_PATH = FIGURES_DIR / "mpeblink_eye_blink_metrics.png"
+CALIBRATION_FIGURE_PATH = (
+    FIGURES_DIR
+    / "mpeblink_validation_f1_calibration.png"
+)
+
+SELECTED_THRESHOLD = 0.22
+SELECTED_MIN_CLOSED_FRAMES = 3
 
 
 REQUIRED_SEQUENCE_COLUMNS = {
@@ -48,6 +56,7 @@ def clean_plot_outputs():
         TABLE_CSV_PATH,
         TABLE_MD_PATH,
         FIGURE_PATH,
+        CALIBRATION_FIGURE_PATH,
     ]
 
     for path in paths:
@@ -788,6 +797,267 @@ def save_figure(metrics):
     )
 
 
+def save_calibration_figure():
+    """Create the validation-split F1 calibration figure."""
+    if not CALIBRATION_CSV_PATH.is_file():
+        raise FileNotFoundError(
+            "Validation calibration CSV was not found: "
+            f"{CALIBRATION_CSV_PATH}"
+        )
+
+    calibration = pd.read_csv(
+        CALIBRATION_CSV_PATH
+    )
+
+    required_columns = {
+        "threshold",
+        "min_closed_frames",
+        "f1",
+    }
+
+    missing_columns = sorted(
+        required_columns
+        - set(
+            calibration.columns
+        )
+    )
+
+    if missing_columns:
+        raise RuntimeError(
+            "Calibration CSV is missing required columns: "
+            + ", ".join(
+                missing_columns
+            )
+        )
+
+    calibration = calibration.copy()
+
+    for column in [
+        "threshold",
+        "min_closed_frames",
+        "f1",
+    ]:
+        calibration[
+            column
+        ] = pd.to_numeric(
+            calibration[
+                column
+            ],
+            errors="raise",
+        )
+
+    if not np.all(
+        np.isfinite(
+            calibration[
+                [
+                    "threshold",
+                    "min_closed_frames",
+                    "f1",
+                ]
+            ].to_numpy(
+                dtype=float
+            )
+        )
+    ):
+        raise RuntimeError(
+            "Calibration CSV contains non-finite threshold, "
+            "min_closed_frames, or F1 values."
+        )
+
+    selected = calibration[
+        np.isclose(
+            calibration[
+                "threshold"
+            ].to_numpy(
+                dtype=float
+            ),
+            SELECTED_THRESHOLD,
+            atol=1e-12,
+            rtol=0.0,
+        )
+        & (
+            calibration[
+                "min_closed_frames"
+            ].astype(
+                int
+            )
+            == SELECTED_MIN_CLOSED_FRAMES
+        )
+    ]
+
+    if len(
+        selected
+    ) != 1:
+        raise RuntimeError(
+            "Expected exactly one selected calibration row for "
+            f"threshold={SELECTED_THRESHOLD:.2f} and "
+            f"min_closed_frames={SELECTED_MIN_CLOSED_FRAMES}."
+        )
+
+    selected_f1 = float(
+        selected.iloc[
+            0
+        ][
+            "f1"
+        ]
+    )
+
+    best_f1 = float(
+        calibration[
+            "f1"
+        ].max()
+    )
+
+    if not np.isclose(
+        selected_f1,
+        best_f1,
+        atol=1e-12,
+        rtol=0.0,
+    ):
+        raise RuntimeError(
+            "Frozen selected blink parameters are not the maximum-F1 "
+            "configuration in the calibration CSV."
+        )
+
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    figure, axis = plt.subplots(
+        figsize=(
+            9,
+            5.5,
+        )
+    )
+
+    min_frame_values = sorted(
+        calibration[
+            "min_closed_frames"
+        ]
+        .astype(
+            int
+        )
+        .unique()
+        .tolist()
+    )
+
+    for min_closed_frames in min_frame_values:
+        subset = calibration[
+            calibration[
+                "min_closed_frames"
+            ].astype(
+                int
+            )
+            == min_closed_frames
+        ].sort_values(
+            "threshold"
+        )
+
+        axis.plot(
+            subset[
+                "threshold"
+            ],
+            subset[
+                "f1"
+            ],
+            marker="o",
+            markersize=3,
+            linewidth=1.4,
+            label=(
+                f"min_closed_frames = "
+                f"{min_closed_frames}"
+            ),
+        )
+
+    axis.scatter(
+        [
+            SELECTED_THRESHOLD
+        ],
+        [
+            selected_f1
+        ],
+        s=80,
+        zorder=5,
+        label=(
+            "Selected: "
+            f"threshold={SELECTED_THRESHOLD:.2f}, "
+            f"min_frames={SELECTED_MIN_CLOSED_FRAMES}, "
+            f"F1={selected_f1:.4f}"
+        ),
+    )
+
+    axis.axvline(
+        SELECTED_THRESHOLD,
+        linestyle="--",
+        linewidth=1.0,
+        alpha=0.6,
+    )
+
+    axis.set_xlabel(
+        "EyeOpenness Threshold"
+    )
+
+    axis.set_ylabel(
+        "Validation Blink-Event F1"
+    )
+
+    axis.set_title(
+        "MPEBlink 2.0 Validation Calibration"
+    )
+
+    axis.set_xlim(
+        float(
+            calibration[
+                "threshold"
+            ].min()
+        ),
+        float(
+            calibration[
+                "threshold"
+            ].max()
+        ),
+    )
+
+    axis.set_ylim(
+        0.0,
+        min(
+            1.0,
+            max(
+                0.35,
+                float(
+                    calibration[
+                        "f1"
+                    ].max()
+                )
+                + 0.05,
+            ),
+        ),
+    )
+
+    axis.grid(
+        alpha=0.25,
+    )
+
+    axis.legend(
+        fontsize=9
+    )
+
+    figure.tight_layout()
+
+    figure.savefig(
+        CALIBRATION_FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        figure
+    )
+
+    return selected_f1
+
+
 def print_sequence_summary(
     sequence_results,
 ):
@@ -852,8 +1122,17 @@ def main():
         metrics
     )
 
+    selected_validation_f1 = (
+        save_calibration_figure()
+    )
+
     print(
         "Independent result verification: PASS"
+    )
+
+    print(
+        "Selected validation calibration F1:",
+        f"{selected_validation_f1:.6f}",
     )
 
     print(
@@ -888,6 +1167,10 @@ def main():
 
     print(
         FIGURE_PATH
+    )
+
+    print(
+        CALIBRATION_FIGURE_PATH
     )
 
 

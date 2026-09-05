@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 import cv2
+import pandas as pd
 
 from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
 from physiotrack.face.export import FaceResultExporter
@@ -109,6 +110,18 @@ def numeric_summary_valid(
             "min",
             "max",
         )
+    )
+
+
+def values_finite(
+    mapping: dict,
+    keys: tuple[str, ...],
+) -> bool:
+    return all(
+        finite_numeric(
+            mapping.get(key)
+        )
+        for key in keys
     )
 
 
@@ -221,6 +234,8 @@ def run_video(
     gaze_estimation_available = 0
     blink_available = 0
     mouth_motion_available = 0
+    mouth_motion_numeric = 0
+    mouth_motion_nonzero = 0
     temporal_available = 0
     blink_events = 0
 
@@ -338,6 +353,36 @@ def run_video(
                 ):
                     mouth_motion_available += 1
 
+                    movement = mouth_motion.get(
+                        "mouth_movement"
+                    )
+
+                    velocity = mouth_motion.get(
+                        "mouth_velocity"
+                    )
+
+                    if (
+                        finite_numeric(
+                            movement
+                        )
+                        and finite_numeric(
+                            velocity
+                        )
+                    ):
+                        mouth_motion_numeric += 1
+
+                        if (
+                            float(
+                                movement
+                            )
+                            > 0.0
+                            or float(
+                                velocity
+                            )
+                            > 0.0
+                        ):
+                            mouth_motion_nonzero += 1
+
                 if temporal.get(
                     "available",
                     False,
@@ -374,6 +419,448 @@ def run_video(
         in record.get(
             "face_features",
             {},
+        )
+        for record in frame_records
+    )
+
+    frame_landmarks_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "landmarks",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and record[
+                "face_features"
+            ][
+                "landmarks"
+            ].get(
+                "count"
+            )
+            == 478
+        )
+        for record in frame_records
+    )
+
+    frame_quality_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "quality",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and values_finite(
+                record[
+                    "face_features"
+                ][
+                    "quality"
+                ],
+                (
+                    "confidence",
+                    "brightness",
+                    "sharpness",
+                    "face_area_ratio",
+                ),
+            )
+            and math.isclose(
+                float(
+                    record[
+                        "face_features"
+                    ][
+                        "quality"
+                    ][
+                        "confidence"
+                    ]
+                ),
+                float(
+                    record.get(
+                        "confidence"
+                    )
+                ),
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_head_pose_valid = all(
+        values_finite(
+            record.get(
+                "orientation",
+                {},
+            ),
+            (
+                "pitch",
+                "yaw",
+                "roll",
+            ),
+        )
+        for record in frame_records
+    )
+
+    frame_gaze_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "gaze",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and values_finite(
+                record[
+                    "face_features"
+                ][
+                    "gaze"
+                ],
+                (
+                    "right_iris_x",
+                    "right_iris_y",
+                    "left_iris_x",
+                    "left_iris_y",
+                    "mean_iris_x",
+                    "mean_iris_y",
+                ),
+            )
+            and math.isclose(
+                float(
+                    record[
+                        "face_features"
+                    ][
+                        "gaze"
+                    ][
+                        "mean_iris_x"
+                    ]
+                ),
+                (
+                    float(
+                        record[
+                            "face_features"
+                        ][
+                            "gaze"
+                        ][
+                            "right_iris_x"
+                        ]
+                    )
+                    + float(
+                        record[
+                            "face_features"
+                        ][
+                            "gaze"
+                        ][
+                            "left_iris_x"
+                        ]
+                    )
+                )
+                / 2.0,
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            )
+            and math.isclose(
+                float(
+                    record[
+                        "face_features"
+                    ][
+                        "gaze"
+                    ][
+                        "mean_iris_y"
+                    ]
+                ),
+                (
+                    float(
+                        record[
+                            "face_features"
+                        ][
+                            "gaze"
+                        ][
+                            "right_iris_y"
+                        ]
+                    )
+                    + float(
+                        record[
+                            "face_features"
+                        ][
+                            "gaze"
+                        ][
+                            "left_iris_y"
+                        ]
+                    )
+                )
+                / 2.0,
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_gaze_estimation_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "gaze_estimation",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and isinstance(
+                record[
+                    "face_features"
+                ][
+                    "gaze_estimation"
+                ].get(
+                    "gaze_vector"
+                ),
+                list,
+            )
+            and len(
+                record[
+                    "face_features"
+                ][
+                    "gaze_estimation"
+                ][
+                    "gaze_vector"
+                ]
+            )
+            == 3
+            and all(
+                finite_numeric(value)
+                for value in record[
+                    "face_features"
+                ][
+                    "gaze_estimation"
+                ][
+                    "gaze_vector"
+                ]
+            )
+            and math.isclose(
+                math.sqrt(
+                    sum(
+                        float(value) ** 2
+                        for value in record[
+                            "face_features"
+                        ][
+                            "gaze_estimation"
+                        ][
+                            "gaze_vector"
+                        ]
+                    )
+                ),
+                1.0,
+                rel_tol=1e-6,
+                abs_tol=1e-6,
+            )
+            and values_finite(
+                record[
+                    "face_features"
+                ][
+                    "gaze_estimation"
+                ],
+                (
+                    "pitch",
+                    "yaw",
+                    "association_iou",
+                ),
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_emotion_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "emotion",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and isinstance(
+                record[
+                    "face_features"
+                ][
+                    "emotion"
+                ].get(
+                    "scores"
+                ),
+                dict,
+            )
+            and math.isclose(
+                sum(
+                    float(value)
+                    for value in record[
+                        "face_features"
+                    ][
+                        "emotion"
+                    ][
+                        "scores"
+                    ].values()
+                ),
+                1.0,
+                rel_tol=1e-5,
+                abs_tol=1e-5,
+            )
+            and record[
+                "face_features"
+            ][
+                "emotion"
+            ].get(
+                "emotion"
+            )
+            in record[
+                "face_features"
+            ][
+                "emotion"
+            ][
+                "scores"
+            ]
+            and math.isclose(
+                float(
+                    record[
+                        "face_features"
+                    ][
+                        "emotion"
+                    ][
+                        "confidence"
+                    ]
+                ),
+                float(
+                    record[
+                        "face_features"
+                    ][
+                        "emotion"
+                    ][
+                        "scores"
+                    ][
+                        record[
+                            "face_features"
+                        ][
+                            "emotion"
+                        ][
+                            "emotion"
+                        ]
+                    ]
+                ),
+                rel_tol=1e-6,
+                abs_tol=1e-8,
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_regions_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "regions",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and isinstance(
+                record[
+                    "face_features"
+                ][
+                    "regions"
+                ].get(
+                    "pixel_counts"
+                ),
+                dict,
+            )
+            and all(
+                finite_numeric(value)
+                and float(value) >= 0.0
+                for value in record[
+                    "face_features"
+                ][
+                    "regions"
+                ][
+                    "pixel_counts"
+                ].values()
+            )
+            and values_finite(
+                record[
+                    "face_features"
+                ][
+                    "regions"
+                ],
+                (
+                    "skin_pixel_count",
+                    "skin_fraction",
+                    "association_iou",
+                ),
+            )
+        )
+        for record in frame_records
+    )
+
+    frame_temporal_numeric_valid = all(
+        (
+            record.get(
+                "face_features",
+                {},
+            ).get(
+                "temporal",
+                {},
+            ).get(
+                "available",
+                False,
+            )
+            and isinstance(
+                record[
+                    "face_features"
+                ][
+                    "temporal"
+                ].get(
+                    "summary"
+                ),
+                dict,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "temporal"
+                ][
+                    "summary"
+                ].get(
+                    "window_frames"
+                )
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "temporal"
+                ][
+                    "summary"
+                ].get(
+                    "window_sec"
+                )
+            )
         )
         for record in frame_records
     )
@@ -440,6 +927,176 @@ def run_video(
             )
         )
         for record in frame_records
+    )
+
+    frame_mouth_motion_valid = all(
+        (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "mouth_motion"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "mouth_motion"
+            ].get(
+                "available",
+                False,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_movement"
+                )
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_velocity"
+                )
+            )
+            and float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_movement"
+                ]
+            )
+            >= 0.0
+            and float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_velocity"
+                ]
+            )
+            >= 0.0
+        )
+        for record in frame_records
+    )
+
+    frame_mouth_velocity_consistent = all(
+        math.isclose(
+            float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_velocity"
+                ]
+            ),
+            float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_movement"
+                ]
+            )
+            * fps,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+        for record in frame_records
+        if (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "mouth_motion"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "mouth_motion"
+            ].get(
+                "available",
+                False,
+            )
+        )
+    )
+
+    frame_mouth_motion_nonzero_observed = any(
+        (
+            float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_movement"
+                ]
+            )
+            > 0.0
+            or float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_velocity"
+                ]
+            )
+            > 0.0
+        )
+        for record in frame_records
+        if (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "mouth_motion"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "mouth_motion"
+            ].get(
+                "available",
+                False,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_movement"
+                )
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_velocity"
+                )
+            )
+        )
     )
 
     windows_have_expected_structure = all(
@@ -548,8 +1205,41 @@ def run_video(
             blink_configuration_valid,
     }
 
-    overall_pass = all(
-        integration_checks.values()
+    numerical_checks = {
+        "frame_landmarks_valid":
+            frame_landmarks_valid,
+        "frame_quality_valid":
+            frame_quality_valid,
+        "frame_head_pose_valid":
+            frame_head_pose_valid,
+        "frame_gaze_valid":
+            frame_gaze_valid,
+        "frame_gaze_estimation_valid":
+            frame_gaze_estimation_valid,
+        "frame_emotion_valid":
+            frame_emotion_valid,
+        "frame_regions_valid":
+            frame_regions_valid,
+        "frame_temporal_numeric_valid":
+            frame_temporal_numeric_valid,
+        "frame_mouth_motion_valid":
+            frame_mouth_motion_valid,
+        "frame_mouth_velocity_consistent":
+            frame_mouth_velocity_consistent,
+        "frame_mouth_motion_nonzero_observed":
+            frame_mouth_motion_nonzero_observed,
+        "mouth_motion_numeric_matches_available":
+            mouth_motion_numeric
+            == mouth_motion_available,
+    }
+
+    overall_pass = (
+        all(
+            integration_checks.values()
+        )
+        and all(
+            numerical_checks.values()
+        )
     )
 
     summary = {
@@ -601,7 +1291,10 @@ def run_video(
         failed_checks = [
             name
             for name, passed
-            in integration_checks.items()
+            in {
+                **integration_checks,
+                **numerical_checks,
+            }.items()
             if not passed
         ]
 
@@ -617,6 +1310,342 @@ def run_video(
         summary,
     )
 
+
+
+def validate_saved_exports(
+    frame_records: list[dict],
+    frame_json_path: Path,
+    frame_csv_path: Path,
+) -> dict[str, bool]:
+    """Verify numerical values survive JSON and flattened CSV export."""
+    with frame_json_path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        saved_json_records = json.load(
+            file
+        )
+
+    frame_csv = pd.read_csv(
+        frame_csv_path
+    )
+
+    movement_column = (
+        "face_features.mouth_motion.mouth_movement"
+    )
+
+    velocity_column = (
+        "face_features.mouth_motion.mouth_velocity"
+    )
+
+    available_column = (
+        "face_features.mouth_motion.available"
+    )
+
+    json_record_count_matches = (
+        len(
+            saved_json_records
+        )
+        == len(
+            frame_records
+        )
+    )
+
+    csv_record_count_matches = (
+        len(
+            frame_csv
+        )
+        == len(
+            frame_records
+        )
+    )
+
+    csv_has_mouth_motion_columns = all(
+        column in frame_csv.columns
+        for column in (
+            available_column,
+            movement_column,
+            velocity_column,
+        )
+    )
+
+    required_numeric_columns = (
+        "confidence",
+        "orientation.pitch",
+        "orientation.yaw",
+        "orientation.roll",
+        "face_features.landmarks.count",
+        "face_features.quality.confidence",
+        "face_features.quality.brightness",
+        "face_features.quality.sharpness",
+        "face_features.quality.face_area_ratio",
+        "face_features.eyes.left_openness",
+        "face_features.eyes.right_openness",
+        "face_features.eyes.mean_openness",
+        "face_features.gaze.mean_iris_x",
+        "face_features.gaze.mean_iris_y",
+        "face_features.gaze_estimation.pitch",
+        "face_features.gaze_estimation.yaw",
+        "face_features.gaze_estimation.association_iou",
+        "face_features.mouth.mouth_openness",
+        "face_features.mouth.mouth_width",
+        "face_features.mouth.mouth_height",
+        "face_features.emotion.confidence",
+        "face_features.regions.skin_pixel_count",
+        "face_features.regions.skin_fraction",
+        "face_features.regions.association_iou",
+        "face_features.temporal.summary.window_frames",
+        "face_features.temporal.summary.window_sec",
+    )
+
+    csv_has_numeric_columns = all(
+        column in frame_csv.columns
+        for column in required_numeric_columns
+    )
+
+    csv_numeric_columns_valid = (
+        csv_has_numeric_columns
+        and all(
+            pd.to_numeric(
+                frame_csv[column],
+                errors="coerce",
+            ).notna().all()
+            for column in required_numeric_columns
+        )
+    )
+
+    json_numeric_contracts_valid = (
+        len(
+            saved_json_records
+        )
+        > 0
+        and all(
+            (
+                values_finite(
+                    record.get(
+                        "orientation",
+                        {},
+                    ),
+                    (
+                        "pitch",
+                        "yaw",
+                        "roll",
+                    ),
+                )
+                and record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "landmarks",
+                    {},
+                ).get(
+                    "count"
+                )
+                == 478
+            )
+            for record in saved_json_records
+        )
+    )
+
+    json_mouth_motion_numeric = (
+        len(
+            saved_json_records
+        )
+        > 0
+        and all(
+            (
+                isinstance(
+                    record.get(
+                        "face_features",
+                        {},
+                    ).get(
+                        "mouth_motion"
+                    ),
+                    dict,
+                )
+                and record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "available",
+                    False,
+                )
+                and finite_numeric(
+                    record[
+                        "face_features"
+                    ][
+                        "mouth_motion"
+                    ].get(
+                        "mouth_movement"
+                    )
+                )
+                and finite_numeric(
+                    record[
+                        "face_features"
+                    ][
+                        "mouth_motion"
+                    ].get(
+                        "mouth_velocity"
+                    )
+                )
+            )
+            for record in saved_json_records
+        )
+    )
+
+    if csv_has_mouth_motion_columns:
+        csv_movement = pd.to_numeric(
+            frame_csv[
+                movement_column
+            ],
+            errors="coerce",
+        )
+
+        csv_velocity = pd.to_numeric(
+            frame_csv[
+                velocity_column
+            ],
+            errors="coerce",
+        )
+
+        csv_available = frame_csv[
+            available_column
+        ].astype(
+            str
+        ).str.lower().isin(
+            {
+                "true",
+                "1",
+            }
+        )
+
+        csv_mouth_motion_numeric = (
+            bool(
+                csv_available.all()
+            )
+            and bool(
+                csv_movement.notna().all()
+            )
+            and bool(
+                csv_velocity.notna().all()
+            )
+            and bool(
+                (
+                    csv_movement
+                    >= 0.0
+                ).all()
+            )
+            and bool(
+                (
+                    csv_velocity
+                    >= 0.0
+                ).all()
+            )
+        )
+
+        csv_mouth_motion_nonzero = bool(
+            (
+                (
+                    csv_movement
+                    > 0.0
+                )
+                | (
+                    csv_velocity
+                    > 0.0
+                )
+            ).any()
+        )
+
+    else:
+        csv_mouth_motion_numeric = False
+        csv_mouth_motion_nonzero = False
+
+    json_mouth_motion_nonzero = any(
+        (
+            float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_movement"
+                ]
+            )
+            > 0.0
+            or float(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ][
+                    "mouth_velocity"
+                ]
+            )
+            > 0.0
+        )
+        for record in saved_json_records
+        if (
+            isinstance(
+                record.get(
+                    "face_features",
+                    {},
+                ).get(
+                    "mouth_motion"
+                ),
+                dict,
+            )
+            and record[
+                "face_features"
+            ][
+                "mouth_motion"
+            ].get(
+                "available",
+                False,
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_movement"
+                )
+            )
+            and finite_numeric(
+                record[
+                    "face_features"
+                ][
+                    "mouth_motion"
+                ].get(
+                    "mouth_velocity"
+                )
+            )
+        )
+    )
+
+    return {
+        "json_record_count_matches":
+            json_record_count_matches,
+        "csv_record_count_matches":
+            csv_record_count_matches,
+        "json_numeric_contracts_valid":
+            json_numeric_contracts_valid,
+        "csv_has_numeric_columns":
+            csv_has_numeric_columns,
+        "csv_numeric_columns_valid":
+            csv_numeric_columns_valid,
+        "csv_has_mouth_motion_columns":
+            csv_has_mouth_motion_columns,
+        "json_mouth_motion_numeric":
+            json_mouth_motion_numeric,
+        "csv_mouth_motion_numeric":
+            csv_mouth_motion_numeric,
+        "json_mouth_motion_nonzero_observed":
+            json_mouth_motion_nonzero,
+        "csv_mouth_motion_nonzero_observed":
+            csv_mouth_motion_nonzero,
+    }
 
 def main() -> None:
     video_paths = get_video_paths()
@@ -768,12 +1797,23 @@ def main() -> None:
         window_csv_path,
     )
 
-    overall_pass = all(
-        summary[
-            "overall_status"
-        ]
-        == "PASS"
-        for summary in video_summaries
+    saved_export_checks = validate_saved_exports(
+        frame_records,
+        frame_json_path,
+        frame_csv_path,
+    )
+
+    overall_pass = (
+        all(
+            summary[
+                "overall_status"
+            ]
+            == "PASS"
+            for summary in video_summaries
+        )
+        and all(
+            saved_export_checks.values()
+        )
     )
 
     combined_summary = {
@@ -783,22 +1823,6 @@ def main() -> None:
             video_summaries,
         "video_count":
             len(video_summaries),
-        "passed_videos":
-            sum(
-                summary[
-                    "overall_status"
-                ]
-                == "PASS"
-                for summary in video_summaries
-            ),
-        "failed_videos":
-            sum(
-                summary[
-                    "overall_status"
-                ]
-                != "PASS"
-                for summary in video_summaries
-            ),
         "total_processed_frames":
             sum(
                 summary[
@@ -850,16 +1874,24 @@ def main() -> None:
 
     print(
         "Passed videos:",
-        combined_summary[
-            "passed_videos"
-        ],
+        sum(
+            summary[
+                "overall_status"
+            ]
+            == "PASS"
+            for summary in video_summaries
+        ),
     )
 
     print(
         "Failed videos:",
-        combined_summary[
-            "failed_videos"
-        ],
+        sum(
+            summary[
+                "overall_status"
+            ]
+            != "PASS"
+            for summary in video_summaries
+        ),
     )
 
     print(
@@ -884,6 +1916,39 @@ def main() -> None:
     print(
         "Total window records:",
         len(window_records),
+    )
+
+    print(
+        "JSON mouth-motion numeric export:",
+        saved_export_checks[
+            "json_mouth_motion_numeric"
+        ],
+    )
+
+    print(
+        "CSV mouth-motion numeric export:",
+        saved_export_checks[
+            "csv_mouth_motion_numeric"
+        ],
+    )
+
+    print(
+        "CSV mouth-motion columns present:",
+        saved_export_checks[
+            "csv_has_mouth_motion_columns"
+        ],
+    )
+
+    print(
+        "Mouth-motion non-zero values exported:",
+        (
+            saved_export_checks[
+                "json_mouth_motion_nonzero_observed"
+            ]
+            and saved_export_checks[
+                "csv_mouth_motion_nonzero_observed"
+            ]
+        ),
     )
 
     print(

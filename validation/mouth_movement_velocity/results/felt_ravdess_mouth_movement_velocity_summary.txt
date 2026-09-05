@@ -1,0 +1,48 @@
+FELT/RAVDESS Mouth Movement and Velocity Evaluation
+
+Validation target: PhysioTrack MouthMovement
+Prediction input: accepted PhysioTrack mouth-openness per-frame results
+Source result: validation/mouth_openness/results/felt_ravdess_mouth_openness_per_frame.csv
+FELT dataset: datasets/FELT/raw_motion_speech
+Dataset scope: paired speech subset
+Ground-truth openness: d(62,66) / d(48,54)
+Ground-truth movement: absolute change in FELT openness between consecutive frames
+Ground-truth velocity: ground-truth movement / elapsed frame time
+PhysioTrack movement: MouthMovement output from accepted PhysioTrack openness sequence
+PhysioTrack velocity: MouthMovement output using the locked video FPS
+Initialization rule: first frame of every trial is verified as zero output and excluded from regression metrics
+Duplicate-frame rule: largest FaceRect area, FaceScore tie-breaker
+Temporal alignment: exact zero-based FELT frame order
+FPS: 29.970029970030
+Actors: 24
+Trials: 1440
+Total annotated frames: 158286
+Initialization frames: 1440
+Evaluated frame transitions: 156846
+Duplicate annotation rows resolved: 2
+
+Mouth Movement Metrics
+MAE: 0.011517
+RMSE: 0.019764
+Median absolute error: 0.005988
+Std absolute error: 0.016061
+90th percentile absolute error: 0.028694
+95th percentile absolute error: 0.041387
+Mean signed error (prediction - reference): 0.000249
+Pearson r: 0.827139
+Spearman rho: 0.669786
+Lin CCC: 0.826886
+
+Mouth Velocity Metrics
+MAE: 0.345156
+RMSE: 0.592318
+Median absolute error: 0.179446
+Std absolute error: 0.481360
+90th percentile absolute error: 0.859954
+95th percentile absolute error: 1.240356
+Mean signed error (prediction - reference): 0.007465
+Pearson r: 0.827139
+Spearman rho: 0.669786
+Lin CCC: 0.826886
+
+Runtime: 6.34 seconds

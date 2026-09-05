@@ -15,4 +15,4 @@
 | Blink Events      | Blink-count MAE per sequence |    5.6317 | blinks     |
 | Blink Events      | Blink-rate MAE               |   10.3468 | blinks/min |
 | Blink Events      | Mean blink-duration error    |    0.1025 | s          |
-| Runtime           | Processing time              |   80.56   | min        |
+| Runtime           | Processing time              |   87.3    | min        |

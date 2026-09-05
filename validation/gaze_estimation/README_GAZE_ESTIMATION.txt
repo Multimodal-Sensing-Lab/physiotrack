@@ -95,7 +95,8 @@ physiotrack/validation/gaze_estimation
 Path and Reproducibility Design
 -------------------------------
 The validation scripts use project-relative paths derived from their own
-location. A user should be able to reproduce the validation on another machine by:
+location. A user should be able to reproduce the validation on another machine
+by:
 
 1. Cloning or copying the PhysioTrack project.
 2. Installing the required environment and gaze dependency.
@@ -267,7 +268,7 @@ Per-person angular statistics recomputation: PASS
 Overall angular statistics recomputation: PASS
 
 Final Quantitative Results
------------------------------
+--------------------------
 Participants: 15
 Total annotations: 37,667
 Successful predictions: 37,629
@@ -324,9 +325,15 @@ results/mpiifacegaze_ethxgaze_audit.txt
 results/mpiifacegaze_ethxgaze_thesis_table.csv
 results/mpiifacegaze_ethxgaze_thesis_table.md
 results/figures/mpiifacegaze_ethxgaze_per_person_mae.png
+results/figures/mpiifacegaze_ethxgaze_angular_error_distribution.png
 
 The per-person figure shows the mean angular error for every participant and
 the overall mean angular error.
+
+The angular-error distribution figure shows the empirical cumulative
+distribution of 3D angular error across all 37,629 successful predictions. It
+complements the mean, median, percentile, and maximum statistics by showing the
+complete observed error distribution and retaining the high-error tail.
 
 Qualitative Evidence
 --------------------
@@ -380,15 +387,20 @@ computed from the original ground-truth and predicted gaze vectors.
 
 Qualitative Output Cleanup
 --------------------------
-Before generating new qualitative artifacts, the qualitative script deletes
-only its own output directory:
+Before generating new qualitative artifacts, the qualitative script replaces
+only the outputs it owns.
+
+The eight individual qualitative images and their manifest are written under:
 
 results/qualitative
 
-It then recreates the directory and writes the new artifacts.
+The combined qualitative contact sheet is written under:
 
-This prevents stale images or manifests from separate runs from being mixed
-with the current evidence.
+results/figures
+
+This keeps individual qualitative evidence separate from the combined
+thesis-ready figure while preventing stale outputs from separate runs from
+being mixed with the current evidence.
 
 The script never deletes or modifies MPIIFaceGaze dataset files.
 
@@ -397,7 +409,6 @@ Qualitative Outputs
 The qualitative generator produces:
 
 results/qualitative/mpiifacegaze_qualitative_manifest.csv
-results/qualitative/mpiifacegaze_qualitative_contact_sheet.png
 results/qualitative/case_01_*.png
 results/qualitative/case_02_*.png
 results/qualitative/case_03_*.png
@@ -406,6 +417,7 @@ results/qualitative/case_05_*.png
 results/qualitative/case_06_*.png
 results/qualitative/case_07_*.png
 results/qualitative/case_08_*.png
+results/figures/mpiifacegaze_qualitative_contact_sheet.png
 
 The manifest stores the exact selection percentile, participant, image path,
 ground-truth and predicted vectors, derived yaw/pitch values, angular error,
@@ -422,8 +434,8 @@ Run from the validation directory:
 cd /d <project-path>\physiotrack\validation\gaze_estimation
 
 The example path above shows the expected project layout. The Python scripts
-are resolved from the documented project structure rather than a fixed installation
-location.
+are resolved from the documented project structure rather than a fixed
+installation location.
 
 Optional syntax check:
 
@@ -442,7 +454,7 @@ Generate deterministic qualitative evidence:
 python mpiifacegaze_gaze_qualitative.py
 
 Reproducibility Check
----------------------------------
+---------------------
 Before a full run, the dataset preflight can be executed independently from
 the validation directory:
 
@@ -462,11 +474,11 @@ ETH-XGaze-based PhysioTrack GazeEstimator can be executed reproducibly on the
 full MPIIFaceGaze benchmark and achieves a mean 3D angular error of
 8.241855 degrees across 37,629 successful predictions.
 
-The evaluation reproduces the existingly obtained benchmark result while
-executing the PhysioTrack GazeEstimator component directly, using
-project-relative paths, read-only dataset handling, explicit failure
-accounting, checkpoint provenance, per-sample audit data, independent
-statistics verification, and deterministic qualitative evidence.
+The evaluation reproduces the accepted benchmark result while executing the
+PhysioTrack GazeEstimator component directly, using project-relative paths,
+read-only dataset handling, explicit failure accounting, checkpoint
+provenance, per-sample audit data, independent statistics verification, and
+deterministic qualitative evidence.
 
 The participant-level variation and the observed high-error tail are retained
 rather than hidden. The maximum error of 57.029950 degrees and all 38
@@ -496,7 +508,7 @@ Final reproducibility artifacts:
 - mpiifacegaze_ethxgaze_eval.py
 - mpiifacegaze_gaze_plot.py
 - mpiifacegaze_gaze_qualitative.py
-- README.txt
+- README_GAZE_ESTIMATION.txt
 - results/mpiifacegaze_ethxgaze_summary.txt
 - results/mpiifacegaze_ethxgaze_per_person.csv
 - results/mpiifacegaze_ethxgaze_per_sample.csv
@@ -504,12 +516,13 @@ Final reproducibility artifacts:
 - results/mpiifacegaze_ethxgaze_thesis_table.csv
 - results/mpiifacegaze_ethxgaze_thesis_table.md
 - results/figures/mpiifacegaze_ethxgaze_per_person_mae.png
+- results/figures/mpiifacegaze_ethxgaze_angular_error_distribution.png
 - results/qualitative/mpiifacegaze_qualitative_manifest.csv
-- results/qualitative/mpiifacegaze_qualitative_contact_sheet.png
 - results/qualitative/case_01_*.png through case_08_*.png
+- results/figures/mpiifacegaze_qualitative_contact_sheet.png
 
-Optional execution evidence includes screenshots of the dataset preflight and final
-quantitative console summary as validation evidence.
+Optional execution evidence includes screenshots of the dataset preflight and
+final quantitative console summary as validation evidence.
 
 Generated caches and obsolete temporary diagnostic files are not part of the
 final validation deliverables.

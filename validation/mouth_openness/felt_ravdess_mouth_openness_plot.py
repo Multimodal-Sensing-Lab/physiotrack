@@ -19,10 +19,8 @@ SUMMARY_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_summary.txt"
 OVERALL_TABLE_CSV_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_thesis_table.csv"
 PER_ACTOR_TABLE_CSV_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_per_actor_thesis_table.csv"
 
-# Legacy outputs from an earlier draft. They are not part of the accepted final layout,
-# but the plot script owns them and should remove them during clean reruns if they remain.
-LEGACY_OVERALL_TABLE_MD_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_thesis_table.md"
-LEGACY_PER_ACTOR_TABLE_MD_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_per_actor_thesis_table.md"
+OVERALL_TABLE_MD_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_thesis_table.md"
+PER_ACTOR_TABLE_MD_PATH = RESULTS_DIR / "felt_ravdess_mouth_openness_per_actor_thesis_table.md"
 
 AGREEMENT_FIGURE_PATH = FIGURES_DIR / "felt_ravdess_mouth_openness_agreement.png"
 ERROR_FIGURE_PATH = FIGURES_DIR / "felt_ravdess_mouth_openness_error_distribution.png"
@@ -34,8 +32,8 @@ OWNED_OUTPUTS = [
     AGREEMENT_FIGURE_PATH,
     ERROR_FIGURE_PATH,
     PER_ACTOR_FIGURE_PATH,
-    LEGACY_OVERALL_TABLE_MD_PATH,
-    LEGACY_PER_ACTOR_TABLE_MD_PATH,
+    OVERALL_TABLE_MD_PATH,
+    PER_ACTOR_TABLE_MD_PATH,
 ]
 
 EXPECTED_FRAMES = 158286
@@ -376,6 +374,7 @@ def create_tables(frame_table: pd.DataFrame, actor_table: pd.DataFrame) -> None:
         ]
     )
     overall_table.to_csv(OVERALL_TABLE_CSV_PATH, index=False)
+    overall_table.to_markdown(OVERALL_TABLE_MD_PATH, index=False)
 
     per_actor_table = pd.DataFrame(
         {
@@ -396,6 +395,7 @@ def create_tables(frame_table: pd.DataFrame, actor_table: pd.DataFrame) -> None:
         }
     )
     per_actor_table.to_csv(PER_ACTOR_TABLE_CSV_PATH, index=False)
+    per_actor_table.to_markdown(PER_ACTOR_TABLE_MD_PATH, index=False)
 
 
 def create_agreement_figure(frame_table: pd.DataFrame) -> None:
@@ -534,10 +534,12 @@ def main() -> None:
     print()
 
     for path in OWNED_OUTPUTS:
-        if path.exists():
-            print(f"Saved: {path}")
-        else:
-            print(f"Removed legacy or stale output: {path}")
+        if not path.exists():
+            raise RuntimeError(
+                f"Expected plot-owned output was not generated: {path}"
+            )
+
+        print(f"Saved: {path}")
 
 
 if __name__ == "__main__":

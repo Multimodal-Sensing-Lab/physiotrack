@@ -13,6 +13,11 @@ INPUT_CSV = (
     / "celebamaskhq_class_metrics.csv"
 )
 
+CONFUSION_MATRIX_CSV = (
+    RESULTS_DIR
+    / "celebamaskhq_confusion_matrix.csv"
+)
+
 SUMMARY_PATH = (
     RESULTS_DIR
     / "celebamaskhq_segmentation_summary.txt"
@@ -21,6 +26,11 @@ SUMMARY_PATH = (
 FIGURE_PATH = (
     FIGURES_DIR
     / "celebamaskhq_per_class_metrics.png"
+)
+
+CONFUSION_MATRIX_FIGURE_PATH = (
+    FIGURES_DIR
+    / "celebamaskhq_normalized_confusion_matrix.png"
 )
 
 TABLE_CSV_PATH = (
@@ -105,6 +115,73 @@ def load_metrics():
 
     return dataframe
 
+
+def load_confusion_matrix():
+    if not CONFUSION_MATRIX_CSV.exists():
+        raise FileNotFoundError(
+            "Confusion matrix file not found: "
+            f"{CONFUSION_MATRIX_CSV}"
+        )
+
+    dataframe = pd.read_csv(
+        CONFUSION_MATRIX_CSV,
+        index_col=0,
+    )
+
+    expected_classes = [
+        "background",
+        "neck",
+        "skin",
+        "cloth",
+        "l_ear",
+        "r_ear",
+        "l_brow",
+        "r_brow",
+        "l_eye",
+        "r_eye",
+        "nose",
+        "mouth",
+        "l_lip",
+        "u_lip",
+        "hair",
+        "eye_g",
+        "hat",
+        "ear_r",
+        "neck_l",
+    ]
+
+    if dataframe.index.tolist() != expected_classes:
+        raise ValueError(
+            "Unexpected CelebAMask-HQ ground-truth class order "
+            "in confusion matrix CSV."
+        )
+
+    if dataframe.columns.tolist() != expected_classes:
+        raise ValueError(
+            "Unexpected CelebAMask-HQ predicted class order "
+            "in confusion matrix CSV."
+        )
+
+    dataframe = dataframe.apply(
+        pd.to_numeric,
+        errors="raise",
+    )
+
+    if (dataframe.to_numpy() < 0).any():
+        raise ValueError(
+            "Confusion matrix contains negative pixel counts."
+        )
+
+    row_sums = dataframe.sum(
+        axis=1
+    )
+
+    if (row_sums <= 0).any():
+        raise ValueError(
+            "Confusion matrix contains an empty ground-truth class row."
+        )
+
+    return dataframe
 
 def load_summary_metrics():
     if not SUMMARY_PATH.exists():
@@ -323,6 +400,87 @@ def create_figure(dataframe):
     )
 
 
+def create_confusion_matrix_figure(dataframe):
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    row_sums = dataframe.sum(
+        axis=1
+    )
+
+    normalized = dataframe.div(
+        row_sums,
+        axis=0,
+    ) * 100.0
+
+    labels = normalized.columns.tolist()
+
+    figure, axis = plt.subplots(
+        figsize=(12, 10)
+    )
+
+    image = axis.imshow(
+        normalized.to_numpy(),
+        aspect="auto",
+        vmin=0.0,
+        vmax=100.0,
+    )
+
+    axis.set_title(
+        "CelebAMask-HQ Normalized Confusion Matrix"
+    )
+
+    axis.set_xlabel(
+        "Predicted class"
+    )
+
+    axis.set_ylabel(
+        "Ground-truth class"
+    )
+
+    axis.set_xticks(
+        range(len(labels))
+    )
+
+    axis.set_xticklabels(
+        labels,
+        rotation=45,
+        ha="right",
+    )
+
+    axis.set_yticks(
+        range(len(labels))
+    )
+
+    axis.set_yticklabels(
+        labels
+    )
+
+    colorbar = figure.colorbar(
+        image,
+        ax=axis,
+        fraction=0.046,
+        pad=0.04,
+    )
+
+    colorbar.set_label(
+        "Row-normalized pixels (%)"
+    )
+
+    figure.tight_layout()
+
+    figure.savefig(
+        CONFUSION_MATRIX_FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        figure
+    )
+
 def create_markdown_table(table):
     markdown_lines = [
         "| Class | IoU (%) | Dice (%) |",
@@ -435,12 +593,20 @@ def create_summary_table(
 def main():
     dataframe = load_metrics()
 
+    confusion_matrix = (
+        load_confusion_matrix()
+    )
+
     summary_metrics = (
         load_summary_metrics()
     )
 
     create_figure(
         dataframe
+    )
+
+    create_confusion_matrix_figure(
+        confusion_matrix
     )
 
     class_table = (
@@ -484,6 +650,11 @@ def main():
     print()
     print(
         f"Saved figure: {FIGURE_PATH}"
+    )
+
+    print(
+        "Saved normalized confusion matrix figure: "
+        f"{CONFUSION_MATRIX_FIGURE_PATH}"
     )
 
     print(

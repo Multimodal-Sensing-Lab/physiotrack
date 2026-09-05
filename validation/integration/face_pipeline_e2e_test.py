@@ -359,6 +359,197 @@ def module_available(value: Any) -> bool:
     return True
 
 
+
+def finite_number(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+
+    if not isinstance(
+        value,
+        (
+            int,
+            float,
+            np.generic,
+        ),
+    ):
+        return False
+
+    return bool(
+        np.isfinite(
+            float(value)
+        )
+    )
+
+
+def summarize_mouth_motion_records(
+    records: list[dict[str, Any]],
+    fps: float,
+) -> dict[str, Any]:
+    available_samples = 0
+    finite_samples = 0
+    initialization_samples = 0
+    nonzero_samples = 0
+    max_movement = 0.0
+    max_velocity = 0.0
+    first_sample_by_track = {}
+
+    for record in records:
+        features = record.get(
+            "face_features",
+            {},
+        )
+
+        if not isinstance(
+            features,
+            dict,
+        ):
+            continue
+
+        mouth_motion = features.get(
+            "mouth_motion"
+        )
+
+        if not isinstance(
+            mouth_motion,
+            dict,
+        ):
+            continue
+
+        if not mouth_motion.get(
+            "available",
+            False,
+        ):
+            continue
+
+        available_samples += 1
+
+        movement = mouth_motion.get(
+            "mouth_movement"
+        )
+
+        velocity = mouth_motion.get(
+            "mouth_velocity"
+        )
+
+        if not finite_number(
+            movement
+        ) or not finite_number(
+            velocity
+        ):
+            raise RuntimeError(
+                "Mouth-motion output contains non-finite numerical values."
+            )
+
+        movement = float(
+            movement
+        )
+
+        velocity = float(
+            velocity
+        )
+
+        if (
+            movement < 0.0
+            or velocity < 0.0
+        ):
+            raise RuntimeError(
+                "Mouth-motion output contains negative movement or velocity."
+            )
+
+        finite_samples += 1
+        max_movement = max(
+            max_movement,
+            movement,
+        )
+        max_velocity = max(
+            max_velocity,
+            velocity,
+        )
+
+        track_id = record.get(
+            "track_id"
+        )
+
+        track_key = str(
+            track_id
+        )
+
+        if track_key not in first_sample_by_track:
+            first_sample_by_track[
+                track_key
+            ] = (
+                movement,
+                velocity,
+            )
+
+            initialization_samples += 1
+
+            if not (
+                np.isclose(
+                    movement,
+                    0.0,
+                    rtol=0.0,
+                    atol=1e-12,
+                )
+                and np.isclose(
+                    velocity,
+                    0.0,
+                    rtol=0.0,
+                    atol=1e-12,
+                )
+            ):
+                raise RuntimeError(
+                    "The first mouth-motion sample for a tracked person "
+                    "must initialize to zero movement and velocity."
+                )
+
+        if (
+            movement > 1e-12
+            or velocity > 1e-12
+        ):
+            nonzero_samples += 1
+
+            if not np.isclose(
+                velocity,
+                movement * fps,
+                rtol=1e-9,
+                atol=1e-10,
+            ):
+                raise RuntimeError(
+                    "Mouth velocity is inconsistent with mouth movement "
+                    "and video FPS for a non-zero temporal sample."
+                )
+
+    if available_samples <= 0:
+        raise RuntimeError(
+            "No available mouth-motion samples were observed."
+        )
+
+    if finite_samples != available_samples:
+        raise RuntimeError(
+            "Mouth-motion availability and finite-value counts differ."
+        )
+
+    if nonzero_samples <= 0:
+        raise RuntimeError(
+            "Mouth motion never produced a non-zero temporal value."
+        )
+
+    return {
+        "available_samples":
+            available_samples,
+        "finite_samples":
+            finite_samples,
+        "initialization_samples":
+            initialization_samples,
+        "nonzero_samples":
+            nonzero_samples,
+        "max_mouth_movement":
+            max_movement,
+        "max_mouth_velocity":
+            max_velocity,
+    }
+
 def get_faces(prediction: Any) -> list[Any]:
     if prediction is None:
         return []
@@ -695,6 +886,13 @@ def run_pipeline(
                 count,
         }
 
+    mouth_motion_summary = (
+        summarize_mouth_motion_records(
+            records,
+            fps,
+        )
+    )
+
     summary = {
         "video":
             video_label(
@@ -716,6 +914,8 @@ def run_pipeline(
             total_faces,
         "modules":
             module_summary,
+        "mouth_motion_numerical":
+            mouth_motion_summary,
     }
 
     return records, summary
@@ -758,6 +958,14 @@ def failed_run_summary(
             0,
         "modules":
             module_summary,
+        "mouth_motion_numerical": {
+            "available_samples": 0,
+            "finite_samples": 0,
+            "initialization_samples": 0,
+            "nonzero_samples": 0,
+            "max_mouth_movement": None,
+            "max_mouth_velocity": None,
+        },
         "failure_reason":
             reason,
     }
@@ -831,6 +1039,23 @@ def save_results(
         for row in frame_rows
         for key in row
     }
+
+    required_mouth_motion_fields = {
+        "mouth_motion_available",
+        "mouth_motion_mouth_movement",
+        "mouth_motion_mouth_velocity",
+    }
+
+    missing_mouth_motion_fields = sorted(
+        required_mouth_motion_fields
+        - all_fieldnames
+    )
+
+    if missing_mouth_motion_fields:
+        raise RuntimeError(
+            "Frame CSV is missing required mouth-motion numerical fields: "
+            f"{missing_mouth_motion_fields}"
+        )
 
     feature_fieldnames = sorted(
         field
@@ -1053,6 +1278,35 @@ def print_summary(
             ],
         )
 
+        for label, summary in (
+            (
+                "Disabled run",
+                disabled,
+            ),
+            (
+                "Enabled run",
+                enabled,
+            ),
+        ):
+            mouth_motion = summary.get(
+                "mouth_motion_numerical",
+                {},
+            )
+
+            print(
+                f"{label} - mouth-motion finite samples:",
+                mouth_motion.get(
+                    "finite_samples"
+                ),
+            )
+
+            print(
+                f"{label} - mouth-motion non-zero samples:",
+                mouth_motion.get(
+                    "nonzero_samples"
+                ),
+            )
+
         print()
 
         print(
@@ -1135,6 +1389,54 @@ def validate_integration_summaries(
                 f"{summary['video']} | "
                 f"{summary['run']}: "
                 "no faces were detected."
+            )
+
+    for summary in (
+        disabled,
+        enabled,
+    ):
+        mouth_motion = summary.get(
+            "mouth_motion_numerical",
+            {},
+        )
+
+        if (
+            mouth_motion.get(
+                "available_samples",
+                0,
+            )
+            <= 0
+            or mouth_motion.get(
+                "finite_samples",
+                0,
+            )
+            != mouth_motion.get(
+                "available_samples",
+                -1,
+            )
+        ):
+            raise RuntimeError(
+                f"{summary['video']} | {summary['run']}: "
+                "mouth-motion numerical outputs were not fully available "
+                "and finite."
+            )
+
+        if mouth_motion.get(
+            "initialization_samples",
+            0,
+        ) <= 0:
+            raise RuntimeError(
+                f"{summary['video']} | {summary['run']}: "
+                "no mouth-motion initialization sample was verified."
+            )
+
+        if mouth_motion.get(
+            "nonzero_samples",
+            0,
+        ) <= 0:
+            raise RuntimeError(
+                f"{summary['video']} | {summary['run']}: "
+                "mouth movement and velocity never became non-zero."
             )
 
     if (

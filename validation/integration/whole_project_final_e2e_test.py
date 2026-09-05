@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import shutil
 from pathlib import Path
 from typing import Any
@@ -378,6 +379,396 @@ def finite_numeric(value: Any) -> bool:
         return False
 
 
+def finite_values(
+    values: list[Any],
+) -> bool:
+    return all(
+        finite_numeric(value)
+        for value in values
+    )
+
+
+def statistic_block_valid(
+    value: Any,
+) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    required = (
+        "mean",
+        "std",
+        "min",
+        "max",
+    )
+
+    if not all(
+        key in value
+        for key in required
+    ):
+        return False
+
+    if not finite_values(
+        [
+            value[key]
+            for key in required
+        ]
+    ):
+        return False
+
+    mean = float(value["mean"])
+    std = float(value["std"])
+    minimum = float(value["min"])
+    maximum = float(value["max"])
+
+    return (
+        std >= 0.0
+        and minimum <= maximum
+        and mean >= minimum - 1e-12
+        and mean <= maximum + 1e-12
+    )
+
+
+def numerical_contract_valid(
+    track_id: Any,
+    box: Any,
+    head_pose: Any,
+    features: dict[str, Any],
+    fps: float,
+) -> bool:
+    if not (
+        isinstance(box, (list, tuple, np.ndarray))
+        and len(box) == 4
+        and finite_values(list(box))
+        and float(box[2]) >= float(box[0])
+        and float(box[3]) >= float(box[1])
+    ):
+        return False
+
+    landmarks = features.get("landmarks")
+
+    if not (
+        isinstance(landmarks, dict)
+        and landmarks.get("available", False)
+        and landmarks.get("count") == 478
+    ):
+        return False
+
+    quality = features.get("quality")
+
+    if not (
+        isinstance(quality, dict)
+        and quality.get("available", False)
+        and finite_values(
+            [
+                quality.get("confidence"),
+                quality.get("brightness"),
+                quality.get("sharpness"),
+                quality.get("face_area_ratio"),
+            ]
+        )
+        and 0.0 <= float(quality["confidence"]) <= 1.0
+        and 0.0 <= float(quality["brightness"]) <= 1.0
+        and float(quality["sharpness"]) >= 0.0
+        and 0.0 <= float(quality["face_area_ratio"]) <= 1.0
+    ):
+        return False
+
+    if not (
+        isinstance(head_pose, dict)
+        and finite_values(
+            [
+                head_pose.get("pitch"),
+                head_pose.get("yaw"),
+                head_pose.get("roll"),
+            ]
+        )
+    ):
+        return False
+
+    eyes = features.get("eyes")
+
+    if not (
+        isinstance(eyes, dict)
+        and eyes.get("available", False)
+        and finite_values(
+            [
+                eyes.get("left_openness"),
+                eyes.get("right_openness"),
+                eyes.get("mean_openness"),
+            ]
+        )
+        and float(eyes["left_openness"]) >= 0.0
+        and float(eyes["right_openness"]) >= 0.0
+        and float(eyes["mean_openness"]) >= 0.0
+        and math.isclose(
+            float(eyes["mean_openness"]),
+            (
+                float(eyes["left_openness"])
+                + float(eyes["right_openness"])
+            )
+            / 2.0,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        return False
+
+    blink = features.get("blink")
+
+    if not (
+        isinstance(blink, dict)
+        and blink.get("available", False)
+        and blink.get("eye_state") in {"open", "closed"}
+        and isinstance(blink.get("blink"), bool)
+        and finite_numeric(blink.get("blink_count"))
+        and float(blink["blink_count"]) >= 0.0
+        and (
+            blink.get("blink_rate") is None
+            or (
+                finite_numeric(blink.get("blink_rate"))
+                and float(blink["blink_rate"]) >= 0.0
+            )
+        )
+        and (
+            blink.get("blink_duration") is None
+            or (
+                finite_numeric(blink.get("blink_duration"))
+                and float(blink["blink_duration"]) >= 0.0
+            )
+        )
+    ):
+        return False
+
+    gaze = features.get("gaze")
+
+    if not (
+        isinstance(gaze, dict)
+        and gaze.get("available", False)
+        and finite_values(
+            [
+                gaze.get("right_iris_x"),
+                gaze.get("right_iris_y"),
+                gaze.get("left_iris_x"),
+                gaze.get("left_iris_y"),
+                gaze.get("mean_iris_x"),
+                gaze.get("mean_iris_y"),
+            ]
+        )
+        and math.isclose(
+            float(gaze["mean_iris_x"]),
+            (
+                float(gaze["right_iris_x"])
+                + float(gaze["left_iris_x"])
+            )
+            / 2.0,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+        and math.isclose(
+            float(gaze["mean_iris_y"]),
+            (
+                float(gaze["right_iris_y"])
+                + float(gaze["left_iris_y"])
+            )
+            / 2.0,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        return False
+
+    gaze_estimation = features.get("gaze_estimation")
+
+    if not isinstance(gaze_estimation, dict):
+        return False
+
+    gaze_vector = gaze_estimation.get("gaze_vector")
+
+    if not (
+        gaze_estimation.get("available", False)
+        and isinstance(gaze_vector, (list, tuple, np.ndarray))
+        and len(gaze_vector) == 3
+        and finite_values(list(gaze_vector))
+        and finite_values(
+            [
+                gaze_estimation.get("pitch"),
+                gaze_estimation.get("yaw"),
+                gaze_estimation.get("association_iou"),
+            ]
+        )
+        and math.isclose(
+            float(
+                np.linalg.norm(
+                    np.asarray(
+                        gaze_vector,
+                        dtype=float,
+                    )
+                )
+            ),
+            1.0,
+            rel_tol=0.0,
+            abs_tol=1e-6,
+        )
+        and 0.0
+        <= float(gaze_estimation["association_iou"])
+        <= 1.0
+    ):
+        return False
+
+    mouth = features.get("mouth")
+
+    if not (
+        isinstance(mouth, dict)
+        and mouth.get("available", False)
+        and finite_values(
+            [
+                mouth.get("mouth_openness"),
+                mouth.get("mouth_width"),
+                mouth.get("mouth_height"),
+            ]
+        )
+        and float(mouth["mouth_width"]) > 0.0
+        and float(mouth["mouth_height"]) >= 0.0
+        and float(mouth["mouth_openness"]) >= 0.0
+        and math.isclose(
+            float(mouth["mouth_openness"]),
+            float(mouth["mouth_height"])
+            / float(mouth["mouth_width"]),
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        return False
+
+    emotion = features.get("emotion")
+
+    if not isinstance(emotion, dict):
+        return False
+
+    scores = emotion.get("scores")
+    emotion_label = emotion.get("emotion")
+
+    if not (
+        emotion.get("available", False)
+        and isinstance(scores, dict)
+        and len(scores) > 0
+        and all(
+            finite_numeric(value)
+            and float(value) >= 0.0
+            for value in scores.values()
+        )
+        and finite_numeric(emotion.get("confidence"))
+        and math.isclose(
+            sum(float(value) for value in scores.values()),
+            1.0,
+            rel_tol=0.0,
+            abs_tol=1e-5,
+        )
+        and emotion_label in scores
+        and emotion_label == max(scores, key=scores.get)
+        and math.isclose(
+            float(emotion["confidence"]),
+            float(scores[emotion_label]),
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        return False
+
+    regions = features.get("regions")
+
+    if not isinstance(regions, dict):
+        return False
+
+    pixel_counts = regions.get("pixel_counts")
+
+    if not (
+        regions.get("available", False)
+        and isinstance(pixel_counts, dict)
+        and len(pixel_counts) > 0
+        and all(
+            finite_numeric(value)
+            and float(value) >= 0.0
+            for value in pixel_counts.values()
+        )
+        and finite_values(
+            [
+                regions.get("skin_pixel_count"),
+                regions.get("skin_fraction"),
+                regions.get("association_iou"),
+            ]
+        )
+        and float(regions["skin_pixel_count"]) >= 0.0
+        and 0.0 <= float(regions["skin_fraction"]) <= 1.0
+        and 0.0 <= float(regions["association_iou"]) <= 1.0
+        and (
+            "skin" not in pixel_counts
+            or math.isclose(
+                float(regions["skin_pixel_count"]),
+                float(pixel_counts["skin"]),
+                rel_tol=0.0,
+                abs_tol=1e-9,
+            )
+        )
+    ):
+        return False
+
+    temporal = features.get("temporal")
+
+    if not isinstance(temporal, dict):
+        return False
+
+    temporal_summary = temporal.get("summary")
+
+    if not (
+        temporal.get("available", False)
+        and isinstance(temporal_summary, dict)
+        and temporal_summary.get("person_id") == track_id
+        and finite_numeric(temporal_summary.get("window_frames"))
+        and float(temporal_summary["window_frames"]) >= 1.0
+        and finite_numeric(temporal_summary.get("window_sec"))
+        and math.isclose(
+            float(temporal_summary["window_sec"]),
+            float(temporal_summary["window_frames"]) / fps,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        )
+    ):
+        return False
+
+    temporal_blocks = [
+        temporal_summary.get("head_pose", {}).get("yaw"),
+        temporal_summary.get("head_pose", {}).get("pitch"),
+        temporal_summary.get("head_pose", {}).get("roll"),
+        temporal_summary.get("eyes", {}).get("mean_openness"),
+        temporal_summary.get("gaze", {}).get("mean_iris_x"),
+        temporal_summary.get("gaze", {}).get("mean_iris_y"),
+        temporal_summary.get("mouth", {}).get("openness"),
+        temporal_summary.get("mouth", {}).get("movement"),
+        temporal_summary.get("quality", {}).get("brightness"),
+        temporal_summary.get("quality", {}).get("sharpness"),
+        temporal_summary.get("quality", {}).get("face_area_ratio"),
+    ]
+
+    if not all(
+        statistic_block_valid(block)
+        for block in temporal_blocks
+    ):
+        return False
+
+    blink_summary = temporal_summary.get("blink")
+    emotion_summary = temporal_summary.get("emotion")
+
+    return (
+        isinstance(blink_summary, dict)
+        and finite_numeric(blink_summary.get("events"))
+        and float(blink_summary["events"]) >= 0.0
+        and isinstance(emotion_summary, dict)
+        and isinstance(emotion_summary.get("dominant"), str)
+        and len(emotion_summary["dominant"]) > 0
+    )
+
+
 def get_faces(prediction: Any) -> list[Any]:
     if prediction is None:
         return []
@@ -533,6 +924,22 @@ def failed_video_summary(
             "matches_available_mouth_samples":
                 False,
         },
+        "mouth_motion": {
+            "available_samples":
+                0,
+            "finite_samples":
+                0,
+            "nonzero_samples":
+                0,
+            "matches_available_samples":
+                False,
+            "velocity_consistent_with_movement_and_fps":
+                False,
+            "person_ids":
+                [],
+            "initialization":
+                {},
+        },
         "failure_reason":
             reason,
         "overall_status":
@@ -654,7 +1061,18 @@ def run_video(
     valid_eye_openness_samples = 0
     valid_mouth_openness_samples = 0
 
+    mouth_motion_available_samples = 0
+    valid_mouth_motion_samples = 0
+    nonzero_mouth_motion_samples = 0
+    mouth_velocity_consistent = True
+    mouth_motion_person_ids: set[Any] = set()
+    mouth_motion_initialization: dict[
+        Any,
+        dict[str, Any],
+    ] = {}
+
     processing_error = None
+    numerical_contracts_valid = True
 
     try:
         while True:
@@ -844,6 +1262,131 @@ def run_video(
                 ):
                     valid_mouth_openness_samples += 1
 
+                mouth_motion_value = values[
+                    "mouth_motion"
+                ]
+
+                if (
+                    isinstance(
+                        mouth_motion_value,
+                        dict,
+                    )
+                    and mouth_motion_value.get(
+                        "available",
+                        False,
+                    )
+                ):
+                    mouth_motion_available_samples += 1
+
+                    movement = mouth_motion_value.get(
+                        "mouth_movement"
+                    )
+
+                    velocity = mouth_motion_value.get(
+                        "mouth_velocity"
+                    )
+
+                    values_are_valid = (
+                        finite_numeric(
+                            movement
+                        )
+                        and finite_numeric(
+                            velocity
+                        )
+                        and float(
+                            movement
+                        )
+                        >= 0.0
+                        and float(
+                            velocity
+                        )
+                        >= 0.0
+                    )
+
+                    if values_are_valid:
+                        valid_mouth_motion_samples += 1
+
+                        if track_id is not None:
+                            mouth_motion_person_ids.add(
+                                track_id
+                            )
+
+                        if track_id not in mouth_motion_initialization:
+                            mouth_motion_initialization[
+                                track_id
+                            ] = {
+                                "frame_index":
+                                    processed_frames,
+                                "movement":
+                                    float(
+                                        movement
+                                    ),
+                                "velocity":
+                                    float(
+                                        velocity
+                                    ),
+                                "is_zero":
+                                    (
+                                        math.isclose(
+                                            float(
+                                                movement
+                                            ),
+                                            0.0,
+                                            rel_tol=0.0,
+                                            abs_tol=1e-12,
+                                        )
+                                        and math.isclose(
+                                            float(
+                                                velocity
+                                            ),
+                                            0.0,
+                                            rel_tol=0.0,
+                                            abs_tol=1e-12,
+                                        )
+                                    ),
+                            }
+
+                        if (
+                            float(
+                                movement
+                            )
+                            > 0.0
+                            or float(
+                                velocity
+                            )
+                            > 0.0
+                        ):
+                            nonzero_mouth_motion_samples += 1
+
+                        mouth_velocity_consistent = (
+                            mouth_velocity_consistent
+                            and math.isclose(
+                                float(
+                                    velocity
+                                ),
+                                float(
+                                    movement
+                                )
+                                * fps,
+                                rel_tol=0.0,
+                                abs_tol=1e-9,
+                            )
+                        )
+
+                    else:
+                        mouth_velocity_consistent = False
+
+                numerical_contracts_valid = (
+                    numerical_contracts_valid
+                    and numerical_contract_valid(
+                        track_id=track_id,
+                        box=get_box(face),
+                        head_pose=head_pose,
+                        features=features,
+                        fps=fps,
+                    )
+                )
+
                 records.append(
                     {
                         "video":
@@ -1010,6 +1553,44 @@ def run_video(
         ]
     )
 
+    mouth_motion_values_valid = (
+        mouth_motion_available_samples > 0
+        and valid_mouth_motion_samples
+        == mouth_motion_available_samples
+        and mouth_motion_available_samples
+        == success_counts[
+            "mouth_motion"
+        ]
+    )
+
+    mouth_motion_nonzero_observed = (
+        nonzero_mouth_motion_samples > 0
+    )
+
+    mouth_motion_initialization_valid = (
+        len(
+            mouth_motion_initialization
+        )
+        > 0
+        and all(
+            item[
+                "is_zero"
+            ]
+            for item in mouth_motion_initialization.values()
+        )
+    )
+
+    mouth_motion_tracking_ids_valid = (
+        len(
+            mouth_motion_person_ids
+        )
+        > 0
+        and all(
+            person_id is not None
+            for person_id in mouth_motion_person_ids
+        )
+    )
+
     failed_checks = []
 
     if processing_error is not None:
@@ -1060,6 +1641,36 @@ def run_video(
     if not mouth_openness_values_valid:
         failed_checks.append(
             "mouth_openness_values_invalid"
+        )
+
+    if not mouth_motion_values_valid:
+        failed_checks.append(
+            "mouth_motion_values_invalid"
+        )
+
+    if not mouth_motion_nonzero_observed:
+        failed_checks.append(
+            "mouth_motion_never_nonzero"
+        )
+
+    if not mouth_velocity_consistent:
+        failed_checks.append(
+            "mouth_velocity_inconsistent_with_movement_and_fps"
+        )
+
+    if not mouth_motion_initialization_valid:
+        failed_checks.append(
+            "mouth_motion_initialization_invalid"
+        )
+
+    if not mouth_motion_tracking_ids_valid:
+        failed_checks.append(
+            "mouth_motion_tracking_ids_invalid"
+        )
+
+    if not numerical_contracts_valid:
+        failed_checks.append(
+            "numerical_contracts_invalid"
         )
 
     overall_pass = (
@@ -1137,6 +1748,45 @@ def run_video(
                 valid_mouth_openness_samples,
             "matches_available_mouth_samples":
                 mouth_openness_values_valid,
+        },
+        "mouth_motion": {
+            "available_samples":
+                mouth_motion_available_samples,
+            "finite_samples":
+                valid_mouth_motion_samples,
+            "nonzero_samples":
+                nonzero_mouth_motion_samples,
+            "matches_available_samples":
+                mouth_motion_values_valid,
+            "velocity_consistent_with_movement_and_fps":
+                mouth_velocity_consistent,
+            "person_ids":
+                sorted(
+                    [
+                        str(
+                            to_jsonable(
+                                value
+                            )
+                        )
+                        for value in mouth_motion_person_ids
+                    ]
+                ),
+            "initialization":
+                {
+                    str(
+                        to_jsonable(
+                            key
+                        )
+                    ):
+                        to_jsonable(
+                            value
+                        )
+                    for key, value in mouth_motion_initialization.items()
+                },
+            "initialization_valid":
+                mouth_motion_initialization_valid,
+            "tracking_ids_valid":
+                mouth_motion_tracking_ids_valid,
         },
         "overall_status":
             (
@@ -1259,6 +1909,52 @@ def main() -> None:
         )
 
         print(
+            "Mouth-motion available samples:",
+            summary[
+                "mouth_motion"
+            ][
+                "available_samples"
+            ],
+        )
+
+        print(
+            "Mouth-motion finite samples:",
+            summary[
+                "mouth_motion"
+            ][
+                "finite_samples"
+            ],
+        )
+
+        print(
+            "Mouth-motion non-zero samples:",
+            summary[
+                "mouth_motion"
+            ][
+                "nonzero_samples"
+            ],
+        )
+
+        print(
+            "Mouth-velocity consistency:",
+            summary[
+                "mouth_motion"
+            ][
+                "velocity_consistent_with_movement_and_fps"
+            ],
+        )
+
+        print(
+            "Mouth-motion initialization valid:",
+            summary[
+                "mouth_motion"
+            ].get(
+                "initialization_valid",
+                False,
+            ),
+        )
+
+        print(
             "Status:",
             summary[
                 "overall_status"
@@ -1322,6 +2018,62 @@ def main() -> None:
                 ]
                 for summary in video_summaries
             ),
+        "mouth_motion": {
+            "available_samples":
+                sum(
+                    summary[
+                        "mouth_motion"
+                    ][
+                        "available_samples"
+                    ]
+                    for summary in video_summaries
+                ),
+            "finite_samples":
+                sum(
+                    summary[
+                        "mouth_motion"
+                    ][
+                        "finite_samples"
+                    ]
+                    for summary in video_summaries
+                ),
+            "nonzero_samples":
+                sum(
+                    summary[
+                        "mouth_motion"
+                    ][
+                        "nonzero_samples"
+                    ]
+                    for summary in video_summaries
+                ),
+            "all_videos_velocity_consistent":
+                all(
+                    summary[
+                        "mouth_motion"
+                    ][
+                        "velocity_consistent_with_movement_and_fps"
+                    ]
+                    for summary in video_summaries
+                    if summary[
+                        "overall_status"
+                    ]
+                    == "PASS"
+                ),
+            "all_videos_initialization_valid":
+                all(
+                    summary[
+                        "mouth_motion"
+                    ].get(
+                        "initialization_valid",
+                        False,
+                    )
+                    for summary in video_summaries
+                    if summary[
+                        "overall_status"
+                    ]
+                    == "PASS"
+                ),
+        },
         "overall_status":
             (
                 "PASS"
@@ -1349,35 +2101,6 @@ def main() -> None:
         OUTPUT_DIR
         / "whole_project_e2e_modules.csv"
     )
-
-    with detailed_json_path.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            {
-                "summary":
-                    combined_summary,
-                "videos":
-                    video_summaries,
-                "frames":
-                    all_records,
-            },
-            file,
-            indent=2,
-            ensure_ascii=False,
-        )
-
-    with summary_json_path.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            combined_summary,
-            file,
-            indent=2,
-            ensure_ascii=False,
-        )
 
     frame_rows = [
         make_frame_csv_row(
@@ -1442,6 +2165,164 @@ def main() -> None:
             writer.writerow(
                 row
             )
+
+    movement_column = (
+        "mouth_motion_mouth_movement"
+    )
+
+    velocity_column = (
+        "mouth_motion_mouth_velocity"
+    )
+
+    mouth_available_column = (
+        "mouth_motion_available"
+    )
+
+    required_mouth_motion_columns = {
+        movement_column,
+        velocity_column,
+        mouth_available_column,
+    }
+
+    frame_csv_mouth_motion_columns_present = (
+        required_mouth_motion_columns
+        <= set(
+            frame_fieldnames
+        )
+    )
+
+    if frame_csv_mouth_motion_columns_present:
+        exported_movement_values = [
+            row.get(
+                movement_column
+            )
+            for row in frame_rows
+            if row.get(
+                mouth_available_column
+            )
+        ]
+
+        exported_velocity_values = [
+            row.get(
+                velocity_column
+            )
+            for row in frame_rows
+            if row.get(
+                mouth_available_column
+            )
+        ]
+
+        frame_csv_mouth_motion_numeric = (
+            len(
+                exported_movement_values
+            )
+            > 0
+            and len(
+                exported_movement_values
+            )
+            == len(
+                exported_velocity_values
+            )
+            and all(
+                finite_numeric(
+                    value
+                )
+                and float(
+                    value
+                )
+                >= 0.0
+                for value in exported_movement_values
+            )
+            and all(
+                finite_numeric(
+                    value
+                )
+                and float(
+                    value
+                )
+                >= 0.0
+                for value in exported_velocity_values
+            )
+        )
+
+        frame_csv_mouth_motion_nonzero = any(
+            (
+                float(
+                    movement
+                )
+                > 0.0
+                or float(
+                    velocity
+                )
+                > 0.0
+            )
+            for movement, velocity in zip(
+                exported_movement_values,
+                exported_velocity_values,
+            )
+        )
+
+    else:
+        frame_csv_mouth_motion_numeric = False
+        frame_csv_mouth_motion_nonzero = False
+
+    combined_summary[
+        "mouth_motion"
+    ][
+        "frame_csv_columns_present"
+    ] = frame_csv_mouth_motion_columns_present
+
+    combined_summary[
+        "mouth_motion"
+    ][
+        "frame_csv_numeric"
+    ] = frame_csv_mouth_motion_numeric
+
+    combined_summary[
+        "mouth_motion"
+    ][
+        "frame_csv_nonzero_observed"
+    ] = frame_csv_mouth_motion_nonzero
+
+    if not (
+        frame_csv_mouth_motion_columns_present
+        and frame_csv_mouth_motion_numeric
+        and frame_csv_mouth_motion_nonzero
+    ):
+        combined_summary[
+            "overall_status"
+        ] = "FAIL"
+
+        overall_pass = False
+
+    with summary_json_path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            combined_summary,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    with detailed_json_path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            {
+                "summary":
+                    combined_summary,
+                "videos":
+                    video_summaries,
+                "frames":
+                    all_records,
+            },
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
 
     with modules_csv_path.open(
         "w",
@@ -1550,6 +2431,60 @@ def main() -> None:
         "Total face samples:",
         combined_summary[
             "total_face_samples"
+        ],
+    )
+
+    print(
+        "Mouth-motion available samples:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "available_samples"
+        ],
+    )
+
+    print(
+        "Mouth-motion finite samples:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "finite_samples"
+        ],
+    )
+
+    print(
+        "Mouth-motion non-zero samples:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "nonzero_samples"
+        ],
+    )
+
+    print(
+        "Mouth-motion CSV columns present:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "frame_csv_columns_present"
+        ],
+    )
+
+    print(
+        "Mouth-motion CSV numeric:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "frame_csv_numeric"
+        ],
+    )
+
+    print(
+        "Mouth-motion CSV non-zero observed:",
+        combined_summary[
+            "mouth_motion"
+        ][
+            "frame_csv_nonzero_observed"
         ],
     )
 

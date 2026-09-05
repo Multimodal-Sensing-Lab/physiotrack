@@ -20,6 +20,36 @@
         1,
         2
       ],
+      "mouth_motion_person_ids": [
+        1,
+        2
+      ],
+      "mouth_motion_numeric_counts": {
+        "2": 344,
+        "1": 344
+      },
+      "mouth_motion_nonzero_counts": {
+        "2": 343,
+        "1": 343
+      },
+      "mouth_motion_initialization": {
+        "2": {
+          "frame_index": 0,
+          "movement": 0.0,
+          "velocity": 0.0,
+          "is_zero": true
+        },
+        "1": {
+          "frame_index": 0,
+          "movement": 0.0,
+          "velocity": 0.0,
+          "is_zero": true
+        }
+      },
+      "mouth_motion_velocity_consistency": {
+        "2": true,
+        "1": true
+      },
       "status": "PASS"
     }
   ],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -30,6 +31,9 @@ OUTPUT_DIR = (
     / "results"
     / "runtime_smoke"
 )
+
+
+MOTION_ZERO_TOLERANCE = 1e-12
 
 
 def get_video_paths() -> list[Path]:
@@ -63,11 +67,47 @@ def video_label(
     ).replace("\\", "/")
 
 
+def validate_mouth_motion_dependency() -> dict[str, str]:
+    config = FaceAnalysisConfig(
+        mouth=False,
+        mouth_motion=True,
+    )
+
+    try:
+        config.validate()
+    except ValueError as exc:
+        expected_message = (
+            "mouth_motion requires mouth=True"
+        )
+
+        if expected_message not in str(exc):
+            raise RuntimeError(
+                "Unexpected mouth-motion dependency error: "
+                f"{exc}"
+            ) from exc
+
+        print(
+            "Mouth-motion dependency validation: PASS"
+        )
+
+        return {
+            "case": "mouth_motion_requires_mouth",
+            "status": "PASS",
+            "expected_error": expected_message,
+        }
+
+    raise RuntimeError(
+        "mouth_motion=True with mouth=False did not raise ValueError"
+    )
+
+
 def run_case(
     video_path: Path,
     name: str,
     gaze_enabled: bool,
     gaze_estimation_enabled: bool,
+    mouth_enabled: bool,
+    mouth_motion_enabled: bool,
 ) -> dict[str, int | str | bool]:
     capture = cv2.VideoCapture(str(video_path))
 
@@ -100,8 +140,8 @@ def run_case(
         blink=True,
         gaze=gaze_enabled,
         gaze_estimation=gaze_estimation_enabled,
-        mouth=True,
-        mouth_motion=True,
+        mouth=mouth_enabled,
+        mouth_motion=mouth_motion_enabled,
         emotion=True,
         regions=True,
         temporal=True,
@@ -120,6 +160,11 @@ def run_case(
     faces_seen = 0
     old_gaze_available = 0
     new_gaze_available = 0
+    mouth_available = 0
+    mouth_motion_available = 0
+    mouth_motion_numeric = 0
+    mouth_motion_nonzero = 0
+    first_motion_by_person = {}
 
     try:
         for _ in range(5):
@@ -147,6 +192,14 @@ def run_case(
                     "gaze_estimation"
                 )
 
+                mouth = features.get(
+                    "mouth"
+                )
+
+                mouth_motion = features.get(
+                    "mouth_motion"
+                )
+
                 if (
                     isinstance(old_gaze, dict)
                     and old_gaze.get(
@@ -164,6 +217,94 @@ def run_case(
                     )
                 ):
                     new_gaze_available += 1
+
+                if (
+                    isinstance(mouth, dict)
+                    and mouth.get(
+                        "available",
+                        False,
+                    )
+                ):
+                    mouth_available += 1
+
+                if not isinstance(
+                    mouth_motion,
+                    dict,
+                ):
+                    raise RuntimeError(
+                        f"{name}: mouth_motion feature is missing"
+                    )
+
+                movement = mouth_motion.get(
+                    "mouth_movement"
+                )
+
+                velocity = mouth_motion.get(
+                    "mouth_velocity"
+                )
+
+                if mouth_motion.get(
+                    "available",
+                    False,
+                ):
+                    mouth_motion_available += 1
+
+                    if (
+                        movement is None
+                        or velocity is None
+                    ):
+                        raise RuntimeError(
+                            f"{name}: available mouth motion has missing values"
+                        )
+
+                    movement = float(
+                        movement
+                    )
+
+                    velocity = float(
+                        velocity
+                    )
+
+                    if (
+                        not math.isfinite(
+                            movement
+                        )
+                        or not math.isfinite(
+                            velocity
+                        )
+                    ):
+                        raise RuntimeError(
+                            f"{name}: mouth motion produced non-finite values"
+                        )
+
+                    mouth_motion_numeric += 1
+
+                    if (
+                        abs(movement)
+                        > MOTION_ZERO_TOLERANCE
+                        or abs(velocity)
+                        > MOTION_ZERO_TOLERANCE
+                    ):
+                        mouth_motion_nonzero += 1
+
+                    person_id = face.id
+
+                    if person_id not in first_motion_by_person:
+                        first_motion_by_person[
+                            person_id
+                        ] = (
+                            movement,
+                            velocity,
+                        )
+
+                else:
+                    if (
+                        movement is not None
+                        or velocity is not None
+                    ):
+                        raise RuntimeError(
+                            f"{name}: unavailable mouth motion contains numerical values"
+                        )
 
             processed_frames += 1
 
@@ -218,22 +359,90 @@ def run_case(
                 f"{name}: gaze estimation disabled but produced output"
             )
 
+    if mouth_enabled:
+        if mouth_available == 0:
+            raise RuntimeError(
+                f"{name}: mouth enabled but unavailable"
+            )
+    else:
+        if mouth_available != 0:
+            raise RuntimeError(
+                f"{name}: mouth disabled but produced output"
+            )
+
+    if mouth_motion_enabled:
+        if mouth_motion_available == 0:
+            raise RuntimeError(
+                f"{name}: mouth motion enabled but unavailable"
+            )
+
+        if (
+            mouth_motion_numeric
+            != mouth_motion_available
+        ):
+            raise RuntimeError(
+                f"{name}: mouth-motion numerical accounting mismatch"
+            )
+
+        if not first_motion_by_person:
+            raise RuntimeError(
+                f"{name}: no mouth-motion initialization values observed"
+            )
+
+        for person_id, (
+            movement,
+            velocity,
+        ) in first_motion_by_person.items():
+            if (
+                abs(movement)
+                > MOTION_ZERO_TOLERANCE
+                or abs(velocity)
+                > MOTION_ZERO_TOLERANCE
+            ):
+                raise RuntimeError(
+                    f"{name}: person {person_id} mouth-motion initialization "
+                    "is not zero"
+                )
+    else:
+        if mouth_motion_available != 0:
+            raise RuntimeError(
+                f"{name}: mouth motion disabled but produced available output"
+            )
+
+        if mouth_motion_numeric != 0:
+            raise RuntimeError(
+                f"{name}: mouth motion disabled but produced numerical output"
+            )
+
     print(
         f"{name}: PASS | "
         f"frames={processed_frames} | "
         f"faces={faces_seen} | "
         f"old_gaze_available={old_gaze_available} | "
-        f"gaze_estimation_available={new_gaze_available}"
+        f"gaze_estimation_available={new_gaze_available} | "
+        f"mouth_available={mouth_available} | "
+        f"mouth_motion_available={mouth_motion_available} | "
+        f"mouth_motion_numeric={mouth_motion_numeric} | "
+        f"mouth_motion_nonzero={mouth_motion_nonzero}"
     )
 
     return {
         "case": name,
         "gaze_enabled": gaze_enabled,
         "gaze_estimation_enabled": gaze_estimation_enabled,
+        "mouth_enabled": mouth_enabled,
+        "mouth_motion_enabled": mouth_motion_enabled,
         "processed_frames": processed_frames,
         "faces_seen": faces_seen,
         "old_gaze_available": old_gaze_available,
         "gaze_estimation_available": new_gaze_available,
+        "mouth_available": mouth_available,
+        "mouth_motion_available": mouth_motion_available,
+        "mouth_motion_numeric": mouth_motion_numeric,
+        "mouth_motion_nonzero": mouth_motion_nonzero,
+        "mouth_motion_initialized_persons": len(
+            first_motion_by_person
+        ),
         "status": "PASS",
     }
 
@@ -242,6 +451,8 @@ def failed_case_result(
     name: str,
     gaze_enabled: bool,
     gaze_estimation_enabled: bool,
+    mouth_enabled: bool,
+    mouth_motion_enabled: bool,
     reason: str,
 ) -> dict[str, int | str | bool | None]:
     return {
@@ -251,6 +462,10 @@ def failed_case_result(
             gaze_enabled,
         "gaze_estimation_enabled":
             gaze_estimation_enabled,
+        "mouth_enabled":
+            mouth_enabled,
+        "mouth_motion_enabled":
+            mouth_motion_enabled,
         "processed_frames":
             None,
         "faces_seen":
@@ -258,6 +473,16 @@ def failed_case_result(
         "old_gaze_available":
             None,
         "gaze_estimation_available":
+            None,
+        "mouth_available":
+            None,
+        "mouth_motion_available":
+            None,
+        "mouth_motion_numeric":
+            None,
+        "mouth_motion_nonzero":
+            None,
+        "mouth_motion_initialized_persons":
             None,
         "failure_reason":
             reason,
@@ -285,26 +510,52 @@ def main() -> None:
         "Import GazeEstimator: PASS"
     )
 
+    dependency_result = (
+        validate_mouth_motion_dependency()
+    )
+
     cases = [
         (
             "both_disabled",
             False,
             False,
+            True,
+            True,
         ),
         (
             "old_gaze_only",
             True,
             False,
+            True,
+            True,
         ),
         (
             "gaze_estimation_only",
             False,
+            True,
+            True,
             True,
         ),
         (
             "both_enabled",
             True,
             True,
+            True,
+            True,
+        ),
+        (
+            "mouth_without_motion",
+            False,
+            False,
+            True,
+            False,
+        ),
+        (
+            "mouth_and_motion_disabled",
+            False,
+            False,
+            False,
+            False,
         ),
     ]
 
@@ -322,6 +573,8 @@ def main() -> None:
             name,
             gaze_enabled,
             gaze_estimation_enabled,
+            mouth_enabled,
+            mouth_motion_enabled,
         ) in cases:
             try:
                 case_result = run_case(
@@ -330,6 +583,9 @@ def main() -> None:
                     gaze_enabled=gaze_enabled,
                     gaze_estimation_enabled=
                         gaze_estimation_enabled,
+                    mouth_enabled=mouth_enabled,
+                    mouth_motion_enabled=
+                        mouth_motion_enabled,
                 )
 
             except Exception as exc:
@@ -338,6 +594,9 @@ def main() -> None:
                     gaze_enabled=gaze_enabled,
                     gaze_estimation_enabled=
                         gaze_estimation_enabled,
+                    mouth_enabled=mouth_enabled,
+                    mouth_motion_enabled=
+                        mouth_motion_enabled,
                     reason=str(exc),
                 )
 
@@ -375,12 +634,18 @@ def main() -> None:
             }
         )
 
-    overall_pass = all(
-        result[
+    overall_pass = (
+        dependency_result[
             "status"
         ]
         == "PASS"
-        for result in video_results
+        and all(
+            result[
+                "status"
+            ]
+            == "PASS"
+            for result in video_results
+        )
     )
 
     summary_path = (
@@ -396,6 +661,8 @@ def main() -> None:
             {
                 "test_type":
                     "runtime_smoke",
+                "mouth_motion_dependency":
+                    dependency_result,
                 "videos":
                     video_results,
                 "video_count":

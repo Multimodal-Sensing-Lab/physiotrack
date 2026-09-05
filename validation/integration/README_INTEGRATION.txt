@@ -195,17 +195,27 @@ localized and interpreted correctly.
    Verifies runtime feature configuration and coexistence of the two gaze
    mechanisms.
 
-   The test runs four configurations:
+   The test runs six configurations:
 
    - both_disabled
    - old_gaze_only
    - gaze_estimation_only
    - both_enabled
+   - mouth_without_motion
+   - mouth_and_motion_disabled
+
+   It also verifies the dependency contract:
+
+   - mouth_motion_requires_mouth
 
    This establishes that the existing landmark-based gaze descriptor and the
    learned GazeEstimator are independent optional features. Enabling one must
    not implicitly enable the other, and both must be able to operate
    simultaneously.
+
+   The mouth-related cases verify that MouthOpenness can operate without
+   MouthMotion, that both can be disabled together, and that MouthMotion cannot
+   be enabled when MouthOpenness is disabled.
 
    The smoke test uses five frames per configuration. It is deliberately short
    because the objective is configuration-contract verification rather than
@@ -247,6 +257,9 @@ localized and interpreted correctly.
    - Observation of both gaze mechanisms
    - Finite Eye Openness values in available eye records
    - Finite Mouth Openness values in available mouth records
+   - Finite MouthMotion movement and velocity values when available
+   - Numerical consistency of MouthMotion movement and velocity with their
+     frame-to-frame definitions and video timing
    - Finite eye and mouth temporal/window summaries
    - Use of the validated blink configuration
    - Expected temporal/window structure
@@ -270,6 +283,9 @@ localized and interpreted correctly.
    - Gaze-estimation output observed for at least two tracked persons
    - Consistency between face instances and frame/window exports
    - Availability of the configured analysis components
+   - Per-person MouthMotion initialization and subsequent temporal updates
+   - Numerical MouthMotion movement/velocity consistency within each tracked
+     identity using the video's measured FPS
    - Explicit recording of gaze-estimation failures
    - Persistent per-video PASS/FAIL summaries, including media that fail before
      frame-level records can be produced
@@ -309,6 +325,9 @@ localized and interpreted correctly.
    - Use of the validated blink configuration
    - Finite Eye Openness values for all available eye samples
    - Finite Mouth Openness values for all available mouth samples
+   - Finite MouthMotion movement and velocity values
+   - Numerical MouthMotion consistency with frame-to-frame mouth-openness
+     change and the video's measured FPS
    - Numerical preservation of the integrated measurements and descriptors
    - Overall per-video and aggregate integration PASS/FAIL status
 
@@ -331,7 +350,9 @@ localized and interpreted correctly.
    - Numerical export of static facial measurements and descriptors
    - Explicit NOT_APPLICABLE handling for tracking, blink, mouth motion, and
      temporal aggregation
-   - Absence of fabricated temporal outputs
+   - Absence of fabricated temporal outputs, including no synthetic person ID,
+     blink event, blink duration/rate, mouth movement/velocity, or temporal
+     summary
    - Per-image PASS/FAIL accounting while continuing after individual image
      failures
 
@@ -381,6 +402,16 @@ The integration tests follow the following principles:
 12. Integration exports preserve real numerical measurements, descriptors, and
     temporal summaries where available. Boolean availability fields are
     auxiliary status indicators rather than substitutes for numerical output.
+
+13. MouthMotion is validated as a temporal numerical output. For video,
+    movement and velocity are checked from sequential mouth-openness values
+    using the measured video timing and maintained separately for each tracked
+    person. The initial temporal sample is expected to represent initialization
+    rather than fabricated motion.
+
+14. Emotion output is treated here as an integrated and operational pipeline
+    output. Integration availability is not a scientific benchmark validation
+    of emotion-recognition accuracy.
 
 Running the Integration Validation
 ----------------------------------
@@ -433,40 +464,52 @@ Runtime configuration smoke test
 Test video:
 face_blink_pose.mp4
 
+Each configuration processed 5 frames and 5 detected faces.
+
 Cases:
+
 both_disabled
-    Processed frames: 5
-    Faces: 5
-    Landmark-based gaze available: 0
-    Learned gaze estimation available: 0
+    Landmark-based gaze: disabled
+    Learned gaze estimation: disabled
     Status: PASS
 
 old_gaze_only
-    Processed frames: 5
-    Faces: 5
-    Landmark-based gaze available: 5
-    Learned gaze estimation available: 0
+    Landmark-based gaze: enabled
+    Learned gaze estimation: disabled
     Status: PASS
 
 gaze_estimation_only
-    Processed frames: 5
-    Faces: 5
-    Landmark-based gaze available: 0
-    Learned gaze estimation available: 5
+    Landmark-based gaze: disabled
+    Learned gaze estimation: enabled
     Status: PASS
 
 both_enabled
-    Processed frames: 5
-    Faces: 5
-    Landmark-based gaze available: 5
-    Learned gaze estimation available: 5
+    Landmark-based gaze: enabled
+    Learned gaze estimation: enabled
+    Status: PASS
+
+mouth_without_motion
+    MouthOpenness: enabled
+    MouthMotion: disabled
+    Status: PASS
+
+mouth_and_motion_disabled
+    MouthOpenness: disabled
+    MouthMotion: disabled
+    Status: PASS
+
+Dependency contract:
+mouth_motion_requires_mouth
+    Enabling MouthMotion while MouthOpenness is disabled is rejected as
+    required.
     Status: PASS
 
 Overall runtime smoke status:
 PASS
 
 This confirms independent configuration and simultaneous operation of the two
-gaze mechanisms.
+gaze mechanisms, correct MouthOpenness/MouthMotion feature configuration, and
+the required MouthMotion dependency on MouthOpenness.
 
 Single-person end-to-end integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -486,6 +529,12 @@ Gaze-estimation-enabled run:
 Processed frames: 429
 Total face samples: 429
 gaze_estimation: PASS, 429/429
+
+Combined frame-result table:
+858 rows x 156 columns
+
+Module-summary table:
+14 rows x 8 columns
 
 The remaining configured modules passed in both runs.
 
@@ -514,8 +563,14 @@ Detected faces:
 Frame records:
 429
 
+Frame export shape:
+429 rows x 124 columns
+
 Window records:
 429
+
+Window export shape:
+429 rows x 52 columns
 
 Existing landmark-based gaze available:
 429
@@ -546,6 +601,9 @@ True
 
 Frame Mouth Openness values are finite:
 True
+
+Frame MouthMotion movement/velocity numerical checks:
+PASS
 
 Window Eye Openness summaries are finite:
 True
@@ -605,6 +663,21 @@ Window records:
 Gaze-estimation failures:
 0
 
+Gaze-estimation failure CSV:
+Valid header-only CSV with columns:
+video, frame_index, timestamp, person_id, box, confidence, association_iou
+
+MouthMotion initialization:
+Person 1: movement=0, velocity=0 on the first sample
+Person 2: movement=0, velocity=0 on the first sample
+
+Subsequent MouthMotion samples:
+343 temporal updates for Person 1
+343 temporal updates for Person 2
+
+MouthMotion movement/velocity consistency:
+PASS at 25.0 FPS with per-person temporal state preserved independently
+
 Both tracked persons were present throughout the evaluated video. The
 configured modules were available for 344/344 person-frames for each identity
 in this fixture. Learned gaze estimation was therefore available for 688/688
@@ -650,7 +723,8 @@ Export-count consistency:
 PASS
 
 The complete configured pipeline produced the expected frame-level and
-temporal records across the entire video.
+temporal records across the entire video, including real numerical facial
+measurements and temporal outputs.
 
 Overall analysis status:
 PASS
@@ -731,6 +805,18 @@ Finite Eye Openness samples:
 Finite Mouth Openness samples:
 1127/1127 available mouth samples
 
+Finite MouthMotion samples:
+1127/1127 face samples
+
+Non-initial MouthMotion samples:
+1126/1127
+
+MouthMotion movement/velocity consistency:
+PASS using the measured 59.94005994005994 FPS
+
+Temporal numerical consistency:
+PASS
+
 Overall status:
 PASS
 
@@ -774,7 +860,25 @@ images because they require temporal sequence input:
 - temporal
 
 All 23 detected face records contained the expected static numerical outputs.
-Temporal summaries were absent as required.
+
+Static numerical checks included finite EyeOpenness, gaze descriptors,
+learned gaze-estimation vectors, MouthOpenness, and normalized emotion
+probabilities where the corresponding module was available.
+
+Temporal-only outputs were absent or explicitly neutral as required:
+
+- person_id: null
+- blink availability: false
+- blink event: false
+- blink count: 0
+- blink duration/rate: null
+- mouth-motion availability: false
+- movement: null
+- velocity: null
+- temporal availability: false
+- temporal summary: null
+
+No temporal quantity was fabricated from an independent static image.
 
 Overall status:
 PASS
@@ -845,12 +949,16 @@ The results establish the following system-level properties:
   single-person analysis outputs.
 - Per-frame and temporal exports preserve the expected analysis structure and
   numerical facial measurements.
+- MouthMotion exports preserve real numerical movement and velocity values,
+  use measured video timing, and maintain independent temporal state per
+  tracked identity.
 - Learned gaze estimation is available for both tracked identities in the
   multi-person fixture without recorded gaze-estimation failure.
 - The complete configured pipeline processes the full whole-project fixture
   with consistent frame, face, tracking, module, and export accounting.
 - Static-image analysis preserves applicable numerical facial outputs while
-  correctly omitting temporal-only outputs.
+  correctly omitting temporal-only outputs rather than synthesizing tracking,
+  blink, mouth-motion, or temporal values.
 - The validated blink configuration (threshold 0.22, minimum 3 closed frames)
   is used by the complete video integration pipeline.
 - Batch processing preserves media-level PASS/FAIL accounting and is designed
@@ -860,6 +968,11 @@ The results establish the following system-level properties:
 These conclusions concern software integration and execution behavior. They do
 not imply that every module has 100% predictive accuracy. Predictive accuracy
 must be interpreted from the separate component-level benchmark validations.
+
+Where a component has not yet received its own scientific benchmark
+validation, integration results support only the statement that the component
+is integrated and operational, not that its predictive accuracy has been
+scientifically established.
 
 Evaluation Scope and Limitations
 --------------------------------

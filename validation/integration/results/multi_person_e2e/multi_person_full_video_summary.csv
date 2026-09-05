@@ -1,2 +1,2 @@
-video,fps,reported_frame_count,processed_frames,total_faces,person_ids,person_frame_counts,multi_face_frames,gaze_estimation_person_ids,status,failure_reason
-test_data/multi_person/multi_person2.mp4,25.0,344,344,688,"[1, 2]","{""2"": 344, ""1"": 344}",344,"[1, 2]",PASS,
+video,fps,reported_frame_count,processed_frames,total_faces,person_ids,person_frame_counts,multi_face_frames,gaze_estimation_person_ids,mouth_motion_person_ids,mouth_motion_numeric_counts,mouth_motion_nonzero_counts,mouth_motion_initialization,mouth_motion_velocity_consistency,status,failure_reason
+test_data/multi_person/multi_person2.mp4,25.0,344,344,688,"[1, 2]","{""2"": 344, ""1"": 344}",344,"[1, 2]","[1, 2]","{""2"": 344, ""1"": 344}","{""2"": 343, ""1"": 343}","{""2"": {""frame_index"": 0, ""movement"": 0.0, ""velocity"": 0.0, ""is_zero"": true}, ""1"": {""frame_index"": 0, ""movement"": 0.0, ""velocity"": 0.0, ""is_zero"": true}}","{""2"": true, ""1"": true}",PASS,

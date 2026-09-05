@@ -289,6 +289,487 @@ def validate_static_values(
     }
 
 
+def static_contracts_valid(
+    face: Any,
+    values: dict[str, Any],
+) -> bool:
+    landmarks = values.get(
+        "landmarks"
+    )
+    quality = values.get(
+        "quality"
+    )
+    head_pose = values.get(
+        "head_pose"
+    )
+    eyes = values.get(
+        "eyes"
+    )
+    gaze = values.get(
+        "gaze"
+    )
+    gaze_estimation = values.get(
+        "gaze_estimation"
+    )
+    mouth = values.get(
+        "mouth"
+    )
+    emotion = values.get(
+        "emotion"
+    )
+    regions = values.get(
+        "regions"
+    )
+
+    if not finite_numeric(
+        face.confidence
+    ):
+        return False
+
+    box = face.box
+
+    if not isinstance(
+        box,
+        (list, tuple, np.ndarray),
+    ) or len(box) != 4:
+        return False
+
+    if not all(
+        finite_numeric(value)
+        for value in box
+    ):
+        return False
+
+    if not isinstance(landmarks, dict):
+        return False
+
+    if landmarks.get(
+        "count"
+    ) != 478:
+        return False
+
+    if not isinstance(quality, dict):
+        return False
+
+    for key in (
+        "confidence",
+        "brightness",
+        "sharpness",
+        "face_area_ratio",
+    ):
+        if not finite_numeric(
+            quality.get(key)
+        ):
+            return False
+
+    if not math.isclose(
+        float(quality["confidence"]),
+        float(face.confidence),
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not 0.0 <= float(
+        quality["brightness"]
+    ) <= 1.0:
+        return False
+
+    if float(
+        quality["sharpness"]
+    ) < 0.0:
+        return False
+
+    if not 0.0 <= float(
+        quality["face_area_ratio"]
+    ) <= 1.0:
+        return False
+
+    if not isinstance(head_pose, dict):
+        return False
+
+    if not all(
+        finite_numeric(
+            head_pose.get(key)
+        )
+        for key in (
+            "pitch",
+            "yaw",
+            "roll",
+        )
+    ):
+        return False
+
+    if not isinstance(eyes, dict):
+        return False
+
+    eye_values = [
+        eyes.get(
+            "left_openness"
+        ),
+        eyes.get(
+            "right_openness"
+        ),
+        eyes.get(
+            "mean_openness"
+        ),
+    ]
+
+    if not all(
+        finite_numeric(value)
+        for value in eye_values
+    ):
+        return False
+
+    expected_eye_mean = (
+        float(eye_values[0])
+        + float(eye_values[1])
+    ) / 2.0
+
+    if not math.isclose(
+        float(eye_values[2]),
+        expected_eye_mean,
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not isinstance(gaze, dict):
+        return False
+
+    for key in (
+        "right_iris_x",
+        "right_iris_y",
+        "left_iris_x",
+        "left_iris_y",
+        "mean_iris_x",
+        "mean_iris_y",
+    ):
+        if not finite_numeric(
+            gaze.get(key)
+        ):
+            return False
+
+    expected_gaze_x = (
+        float(gaze["right_iris_x"])
+        + float(gaze["left_iris_x"])
+    ) / 2.0
+
+    expected_gaze_y = (
+        float(gaze["right_iris_y"])
+        + float(gaze["left_iris_y"])
+    ) / 2.0
+
+    if not math.isclose(
+        float(gaze["mean_iris_x"]),
+        expected_gaze_x,
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not math.isclose(
+        float(gaze["mean_iris_y"]),
+        expected_gaze_y,
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not isinstance(
+        gaze_estimation,
+        dict,
+    ):
+        return False
+
+    gaze_vector = gaze_estimation.get(
+        "gaze_vector"
+    )
+
+    if not isinstance(
+        gaze_vector,
+        (list, tuple, np.ndarray),
+    ) or len(gaze_vector) != 3:
+        return False
+
+    if not all(
+        finite_numeric(value)
+        for value in gaze_vector
+    ):
+        return False
+
+    vector_norm = math.sqrt(
+        sum(
+            float(value) ** 2
+            for value in gaze_vector
+        )
+    )
+
+    if not math.isclose(
+        vector_norm,
+        1.0,
+        rel_tol=1e-6,
+        abs_tol=1e-6,
+    ):
+        return False
+
+    for key in (
+        "pitch",
+        "yaw",
+        "association_iou",
+    ):
+        if not finite_numeric(
+            gaze_estimation.get(key)
+        ):
+            return False
+
+    if not 0.0 <= float(
+        gaze_estimation["association_iou"]
+    ) <= 1.0:
+        return False
+
+    if not isinstance(mouth, dict):
+        return False
+
+    for key in (
+        "mouth_openness",
+        "mouth_width",
+        "mouth_height",
+    ):
+        if not finite_numeric(
+            mouth.get(key)
+        ):
+            return False
+
+    mouth_width = float(
+        mouth["mouth_width"]
+    )
+
+    if mouth_width <= 0.0:
+        return False
+
+    expected_mouth_openness = (
+        float(mouth["mouth_height"])
+        / mouth_width
+    )
+
+    if not math.isclose(
+        float(mouth["mouth_openness"]),
+        expected_mouth_openness,
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not isinstance(emotion, dict):
+        return False
+
+    emotion_label = emotion.get(
+        "emotion"
+    )
+    emotion_scores = emotion.get(
+        "scores"
+    )
+
+    if emotion_label not in EMOTION_LABELS:
+        return False
+
+    if not isinstance(
+        emotion_scores,
+        dict,
+    ):
+        return False
+
+    if set(
+        emotion_scores
+    ) != set(EMOTION_LABELS):
+        return False
+
+    if not all(
+        finite_numeric(value)
+        and float(value) >= 0.0
+        for value in emotion_scores.values()
+    ):
+        return False
+
+    score_sum = sum(
+        float(value)
+        for value in emotion_scores.values()
+    )
+
+    if not math.isclose(
+        score_sum,
+        1.0,
+        rel_tol=1e-6,
+        abs_tol=1e-6,
+    ):
+        return False
+
+    dominant_label = max(
+        emotion_scores,
+        key=emotion_scores.get,
+    )
+
+    if dominant_label != emotion_label:
+        return False
+
+    if not finite_numeric(
+        emotion.get(
+            "confidence"
+        )
+    ):
+        return False
+
+    if not math.isclose(
+        float(emotion["confidence"]),
+        float(emotion_scores[emotion_label]),
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        return False
+
+    if not isinstance(regions, dict):
+        return False
+
+    pixel_counts = regions.get(
+        "pixel_counts"
+    )
+
+    if not isinstance(
+        pixel_counts,
+        dict,
+    ) or not pixel_counts:
+        return False
+
+    if not all(
+        finite_numeric(value)
+        and float(value) >= 0.0
+        for value in pixel_counts.values()
+    ):
+        return False
+
+    for key in (
+        "skin_pixel_count",
+        "skin_fraction",
+        "association_iou",
+    ):
+        if not finite_numeric(
+            regions.get(key)
+        ):
+            return False
+
+    if float(
+        regions["skin_pixel_count"]
+    ) < 0.0:
+        return False
+
+    if not 0.0 <= float(
+        regions["skin_fraction"]
+    ) <= 1.0:
+        return False
+
+    if not 0.0 <= float(
+        regions["association_iou"]
+    ) <= 1.0:
+        return False
+
+    return True
+
+
+def temporal_outputs_absent_for_face(
+    face: Any,
+    features: dict[str, Any],
+) -> bool:
+    if face.id is not None:
+        return False
+
+    blink = features.get(
+        "blink"
+    )
+
+    if isinstance(blink, dict):
+        if blink.get(
+            "available",
+            False,
+        ):
+            return False
+
+        if blink.get(
+            "eye_state"
+        ) not in (
+            None,
+            "unknown",
+        ):
+            return False
+
+        if blink.get(
+            "blink",
+            False,
+        ):
+            return False
+
+        if blink.get(
+            "blink_count",
+            0,
+        ) not in (
+            None,
+            0,
+        ):
+            return False
+
+        if blink.get(
+            "blink_duration"
+        ) is not None:
+            return False
+
+        if blink.get(
+            "blink_rate"
+        ) is not None:
+            return False
+
+    mouth_motion = features.get(
+        "mouth_motion"
+    )
+
+    if isinstance(
+        mouth_motion,
+        dict,
+    ):
+        if mouth_motion.get(
+            "available",
+            False,
+        ):
+            return False
+
+        if mouth_motion.get(
+            "mouth_movement"
+        ) is not None:
+            return False
+
+        if mouth_motion.get(
+            "mouth_velocity"
+        ) is not None:
+            return False
+
+    temporal = features.get(
+        "temporal"
+    )
+
+    if isinstance(temporal, dict):
+        if temporal.get(
+            "available",
+            False,
+        ):
+            return False
+
+        if temporal.get(
+            "summary"
+        ) is not None:
+            return False
+
+    return True
+
+
 def module_status(
     successful: int,
     total: int,
@@ -758,6 +1239,7 @@ def run_image(
 
     valid_eye_openness_samples = 0
     valid_mouth_openness_samples = 0
+    all_static_contracts_valid = True
 
     for (
         face_index,
@@ -845,6 +1327,12 @@ def run_image(
                 values
             )
         )
+
+        if not static_contracts_valid(
+            face,
+            values,
+        ):
+            all_static_contracts_valid = False
 
         if static_value_checks[
             "eye_openness_finite"
@@ -956,41 +1444,21 @@ def run_image(
     )
 
     temporal_outputs_absent = all(
-        (
-            not features.get(
-                module,
-                {}
-            ).get(
-                "available",
-                False,
-            )
-            if isinstance(
-                features.get(
-                    module,
-                    {},
-                ),
-                dict,
-            )
-            else True
-        )
-        for face in faces
-        for features in [
+        temporal_outputs_absent_for_face(
+            face,
             (
                 face.face_features
                 if face.face_features is not None
                 else {}
-            )
-        ]
-        for module in (
-            "blink",
-            "mouth_motion",
-            "temporal",
+            ),
         )
+        for face in faces
     )
 
     overall_pass = (
         len(faces) > 0
         and all_static_modules_complete
+        and all_static_contracts_valid
         and eye_openness_values_valid
         and mouth_openness_values_valid
         and temporal_outputs_absent
@@ -1040,6 +1508,11 @@ def run_image(
     if not all_static_modules_complete:
         failed_checks.append(
             "one_or_more_static_modules_not_complete"
+        )
+
+    if not all_static_contracts_valid:
+        failed_checks.append(
+            "one_or_more_static_numerical_contracts_invalid"
         )
 
     if not eye_openness_values_valid:

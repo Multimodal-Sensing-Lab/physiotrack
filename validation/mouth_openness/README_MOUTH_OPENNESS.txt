@@ -29,8 +29,8 @@ felt_ravdess_mouth_openness_eval.py
 
 felt_ravdess_mouth_openness_plot.py
     Recomputes and verifies the stored quantitative metrics, generates the
-    thesis-oriented result tables, and creates quantitative figures from the
-    saved benchmark outputs.
+    thesis-oriented CSV and Markdown result tables, and creates quantitative
+    figures from the saved benchmark outputs.
 
 felt_ravdess_mouth_openness_qualitative.py
     Selects deterministic benchmark examples from the accepted quantitative
@@ -239,7 +239,21 @@ opening.
 
 Quantitative Figures
 --------------------
-The plotting script generates three complementary figures:
+The plotting script generates two thesis-ready table formats and three
+complementary quantitative figures.
+
+Generated thesis tables:
+
+felt_ravdess_mouth_openness_thesis_table.csv
+felt_ravdess_mouth_openness_thesis_table.md
+    Overall benchmark metrics, including primary-reference and face-box
+    sensitivity results.
+
+felt_ravdess_mouth_openness_per_actor_thesis_table.csv
+felt_ravdess_mouth_openness_per_actor_thesis_table.md
+    Per-actor benchmark metrics for all 24 actors.
+
+Quantitative figures:
 
 felt_ravdess_mouth_openness_agreement.png
     Density-based agreement plot comparing FELT reference values with
@@ -288,6 +302,34 @@ The combined qualitative figure is stored as:
 
 results/figures/felt_ravdess_mouth_openness_qualitative_examples.png
 
+Output Ownership
+----------------
+The evaluator owns only benchmark-result outputs:
+
+- results/felt_ravdess_mouth_openness_per_frame.csv
+- results/felt_ravdess_mouth_openness_per_actor.csv
+- results/felt_ravdess_mouth_openness_summary.txt
+
+The plotting script owns only derived tables and quantitative figures:
+
+- results/felt_ravdess_mouth_openness_thesis_table.csv
+- results/felt_ravdess_mouth_openness_thesis_table.md
+- results/felt_ravdess_mouth_openness_per_actor_thesis_table.csv
+- results/felt_ravdess_mouth_openness_per_actor_thesis_table.md
+- results/figures/felt_ravdess_mouth_openness_agreement.png
+- results/figures/felt_ravdess_mouth_openness_error_distribution.png
+- results/figures/felt_ravdess_mouth_openness_per_actor.png
+
+The qualitative script owns only qualitative outputs:
+
+- results/qualitative/felt_ravdess_mouth_openness_qualitative_selection.csv
+- results/qualitative/annotated_images/
+- results/figures/felt_ravdess_mouth_openness_qualitative_examples.png
+
+Each script cleans only the outputs that it owns. The Markdown thesis tables
+are final plot-owned outputs and are regenerated together with their matching
+CSV tables during a clean plot rerun.
+
 Run Order
 ---------
 Run the scripts from the repository root using the project environment:
@@ -316,7 +358,9 @@ validation/mouth_openness/
     |-- felt_ravdess_mouth_openness_per_actor.csv
     |-- felt_ravdess_mouth_openness_summary.txt
     |-- felt_ravdess_mouth_openness_thesis_table.csv
+    |-- felt_ravdess_mouth_openness_thesis_table.md
     |-- felt_ravdess_mouth_openness_per_actor_thesis_table.csv
+    |-- felt_ravdess_mouth_openness_per_actor_thesis_table.md
     |-- figures/
     |   |-- felt_ravdess_mouth_openness_agreement.png
     |   |-- felt_ravdess_mouth_openness_error_distribution.png
@@ -345,8 +389,11 @@ Face landmarker SHA256:
 
 The quantitative metrics are recomputed from the detailed per-frame CSV before
 plot generation, and the plotting script checks consistency with both the
-summary and per-actor result files. This provides an independent consistency
-check between detailed outputs, aggregate metrics, tables, and figures.
+summary and per-actor result files. The CSV and Markdown thesis tables are
+generated from the same verified in-memory tables, so their contents represent
+the same accepted quantitative results. This provides an independent
+consistency check between detailed outputs, aggregate metrics, tables, and
+figures.
 
 Methodological Qualifications
 -----------------------------
@@ -393,3 +440,28 @@ The scientifically appropriate description is:
 
 controlled continuous mouth-openness validation of PhysioTrack FaceLandmarks
 and MouthOpenness on the paired FELT/RAVDESS speech subset.
+
+Final Files to Preserve
+-----------------------
+Final reproducibility artifacts:
+
+- felt_ravdess_mouth_openness_eval.py
+- felt_ravdess_mouth_openness_plot.py
+- felt_ravdess_mouth_openness_qualitative.py
+- README_MOUTH_OPENNESS.txt
+- results/felt_ravdess_mouth_openness_per_frame.csv
+- results/felt_ravdess_mouth_openness_per_actor.csv
+- results/felt_ravdess_mouth_openness_summary.txt
+- results/felt_ravdess_mouth_openness_thesis_table.csv
+- results/felt_ravdess_mouth_openness_thesis_table.md
+- results/felt_ravdess_mouth_openness_per_actor_thesis_table.csv
+- results/felt_ravdess_mouth_openness_per_actor_thesis_table.md
+- results/figures/felt_ravdess_mouth_openness_agreement.png
+- results/figures/felt_ravdess_mouth_openness_error_distribution.png
+- results/figures/felt_ravdess_mouth_openness_per_actor.png
+- results/qualitative/felt_ravdess_mouth_openness_qualitative_selection.csv
+- results/qualitative/annotated_images/
+- results/figures/felt_ravdess_mouth_openness_qualitative_examples.png
+
+Generated caches and obsolete temporary diagnostic files are not part of the
+final validation deliverables.

@@ -19,8 +19,9 @@ DATASET_ROOT = WORKSPACE_ROOT / "datasets" / "MPIIFaceGaze" / "Data"
 RESULTS_DIR = SCRIPT_DIR / "results"
 PER_SAMPLE_CSV_PATH = RESULTS_DIR / "mpiifacegaze_ethxgaze_per_sample.csv"
 QUALITATIVE_DIR = RESULTS_DIR / "qualitative"
+FIGURES_DIR = RESULTS_DIR / "figures"
 MANIFEST_PATH = QUALITATIVE_DIR / "mpiifacegaze_qualitative_manifest.csv"
-CONTACT_SHEET_PATH = QUALITATIVE_DIR / "mpiifacegaze_qualitative_contact_sheet.png"
+CONTACT_SHEET_PATH = FIGURES_DIR / "mpiifacegaze_qualitative_contact_sheet.png"
 
 CASE_COUNT = 8
 TARGET_PERCENTILES = [5, 25, 50, 75, 90, 95, 99, 100]
@@ -413,6 +414,10 @@ def main() -> None:
     selections = select_cases(successful)
 
     clean_output_directory(QUALITATIVE_DIR)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    if CONTACT_SHEET_PATH.exists():
+        CONTACT_SHEET_PATH.unlink()
 
     manifest_rows = []
     rendered_paths = []

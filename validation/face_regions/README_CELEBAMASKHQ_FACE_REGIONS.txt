@@ -8,7 +8,7 @@ segmentation validation used for the PhysioTrack thesis project.
 
 The validation evaluates the PhysioTrack FaceRegions component on the
 CelebAMask-HQ benchmark and generates the final numerical results, summary
-tables, and per-class performance figure.
+tables, per-class performance figure, and normalized confusion-matrix figure.
 
 Dataset
 -------
@@ -78,8 +78,9 @@ Required files:
 
 2. celebamaskhq_segmentation_plot.py
 
-   Reads the generated evaluation results and creates the final thesis tables
-   and per-class IoU/Dice figure.
+   Reads the generated evaluation results and creates the final thesis tables,
+   per-class IoU/Dice performance figure, and row-normalized confusion-matrix
+   figure.
 
 3. list_eval_partition.txt
 
@@ -230,7 +231,7 @@ python celebamaskhq_segmentation_eval.py
 The complete CPU evaluation can take several hours.
 
 After the evaluator finishes successfully, generate the final tables and
-figure:
+quantitative figures:
 
 python celebamaskhq_segmentation_plot.py
 
@@ -262,6 +263,13 @@ celebamaskhq_summary_table.md
 
 results/figures/celebamaskhq_per_class_metrics.png
     Per-class IoU and Dice performance figure.
+
+results/figures/celebamaskhq_normalized_confusion_matrix.png
+    Row-normalized 19 x 19 confusion-matrix visualization derived from
+    celebamaskhq_confusion_matrix.csv. Each ground-truth class forms one row,
+    and the pixel counts in each row are normalized to percentages summing to
+    100%, making class-specific prediction patterns and confusions directly
+    comparable across classes.
 
 
 Qualitative Benchmark Evidence
@@ -352,7 +360,8 @@ results/figures/celebamaskhq_qualitative_examples.png
 
 The qualitative generator owns and may replace only its own qualitative
 outputs. It does not delete or modify the quantitative CSV files,
-confusion matrix, summary, thesis tables, or per-class performance figure.
+confusion matrix, summary, thesis tables, per-class performance figure, or
+normalized confusion-matrix figure.
 
 Quantitative Results
 ------------------------
@@ -418,7 +427,7 @@ Execution time is hardware- and environment-dependent and is not expected to
 match across machines. The segmentation metrics are the reproducibility target.
 
 Internal Consistency Verification
--------------------
+---------------------------------
 The evaluation outputs were checked for internal consistency.
 
 The validation completed all 2,824 test images without inference failures.
@@ -428,7 +437,8 @@ The accumulated confusion matrix contains exactly:
 2,824 x 512 x 512 = 740,294,656 pixels
 
 The overall and per-class metrics recomputed directly from the confusion matrix
-match the generated class-metrics CSV, text summary, thesis tables, and figure.
+match the generated class-metrics CSV, text summary, thesis tables, per-class
+performance figure, and normalized confusion-matrix figure.
 
 Interpretation
 --------------
@@ -465,6 +475,5 @@ To reproduce the validation on another machine:
 6. Run celebamaskhq_segmentation_plot.py.
 7. Run celebamaskhq_segmentation_qualitative.py.
 8. Compare the generated quantitative files with the reported metrics above
-   and inspect the generated qualitative evidence under results/qualitative/
-   and results/figures/.
-
+   and inspect the generated quantitative and qualitative evidence under
+   results/figures/ and results/qualitative/.

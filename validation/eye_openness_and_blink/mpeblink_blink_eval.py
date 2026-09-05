@@ -48,23 +48,6 @@ TEST_SEQUENCE_RESULTS_PATH = (
     / "mpeblink_test_sequence_results.csv"
 )
 
-TEST_TABLE_CSV_PATH = (
-    RESULTS_DIR
-    / "mpeblink_test_thesis_table.csv"
-)
-
-TEST_TABLE_MD_PATH = (
-    RESULTS_DIR
-    / "mpeblink_test_thesis_table.md"
-)
-
-TEST_FIGURE_PATH = (
-    RESULTS_DIR
-    / "figures"
-    / "mpeblink_eye_blink_metrics.png"
-)
-
-
 SELECTED_THRESHOLD = 0.22
 SELECTED_MIN_CLOSED_FRAMES = 3
 
@@ -108,13 +91,10 @@ def clean_calibration_outputs():
 
 
 def clean_test_outputs():
-    """Remove stale final-test and derived quantitative outputs."""
+    """Remove only final-test outputs owned by this evaluator."""
     paths = [
         TEST_SUMMARY_PATH,
         TEST_SEQUENCE_RESULTS_PATH,
-        TEST_TABLE_CSV_PATH,
-        TEST_TABLE_MD_PATH,
-        TEST_FIGURE_PATH,
     ]
 
     for path in paths:
@@ -1905,13 +1885,6 @@ def run_validation_calibration():
     )
 
 
-def generate_final_tables_and_figure():
-    """Regenerate the thesis tables and quantitative figure from final results."""
-    from mpeblink_blink_plot import main as plot_main
-
-    plot_main()
-
-
 def run_final_test():
     """Run the final test split with the frozen validation-selected parameters."""
     clean_test_outputs()
@@ -2060,13 +2033,6 @@ def run_final_test():
     print(
         sequence_path
     )
-
-    print(
-        "\nGenerating thesis tables and quantitative figure..."
-    )
-
-    generate_final_tables_and_figure()
-
 
 def parse_args():
     """Parse evaluator execution mode."""

@@ -36,6 +36,11 @@ FIGURE_PATH = (
     / "mpiifacegaze_ethxgaze_per_person_mae.png"
 )
 
+ERROR_DISTRIBUTION_FIGURE_PATH = (
+    FIGURES_DIR
+    / "mpiifacegaze_ethxgaze_angular_error_distribution.png"
+)
+
 TABLE_CSV_PATH = (
     RESULTS_DIR
     / "mpiifacegaze_ethxgaze_thesis_table.csv"
@@ -171,6 +176,101 @@ def assert_close(
             f"{label} mismatch: "
             f"actual={actual}, expected={expected}"
         )
+
+
+def create_error_distribution_figure(
+    errors: np.ndarray,
+) -> None:
+    """Create an empirical CDF of successful-sample angular errors."""
+    if (
+        errors.ndim != 1
+        or len(errors) == 0
+    ):
+        raise ValueError(
+            "Angular-error distribution requires a non-empty 1D array."
+        )
+
+    if not np.all(
+        np.isfinite(
+            errors
+        )
+    ):
+        raise ValueError(
+            "Angular-error distribution contains non-finite values."
+        )
+
+    if np.any(
+        errors < 0.0
+    ):
+        raise ValueError(
+            "Angular-error distribution contains negative values."
+        )
+
+    sorted_errors = np.sort(
+        errors.astype(
+            float
+        )
+    )
+
+    cumulative_percent = (
+        np.arange(
+            1,
+            len(sorted_errors) + 1,
+            dtype=float,
+        )
+        / len(sorted_errors)
+        * 100.0
+    )
+
+    figure, axis = plt.subplots(
+        figsize=(
+            10,
+            6,
+        )
+    )
+
+    axis.plot(
+        sorted_errors,
+        cumulative_percent,
+        linewidth=2.0,
+    )
+
+    axis.set_xlabel(
+        "Angular Error (degrees)"
+    )
+
+    axis.set_ylabel(
+        "Cumulative Successful Samples (%)"
+    )
+
+    axis.set_title(
+        "MPIIFaceGaze Angular-Error Distribution"
+    )
+
+    axis.set_xlim(
+        left=0.0
+    )
+
+    axis.set_ylim(
+        0.0,
+        100.0,
+    )
+
+    axis.grid(
+        alpha=0.25
+    )
+
+    figure.tight_layout()
+
+    figure.savefig(
+        ERROR_DISTRIBUTION_FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        figure
+    )
 
 
 def main() -> None:
@@ -710,6 +810,10 @@ def main() -> None:
 
     plt.close()
 
+    create_error_distribution_figure(
+        errors
+    )
+
     table = per_person[
         [
             "participant",
@@ -860,6 +964,11 @@ def main() -> None:
 
     print(
         f"Saved figure: {FIGURE_PATH}"
+    )
+
+    print(
+        "Saved angular-error distribution figure: "
+        f"{ERROR_DISTRIBUTION_FIGURE_PATH}"
     )
 
     print(
