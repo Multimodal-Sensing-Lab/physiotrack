@@ -1,5 +1,9 @@
 from pathlib import Path
+import atexit
 import csv
+import os
+import shutil
+import tempfile
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,10 +74,121 @@ def compute_ced(
     return ced
 
 
+
+def validate_input(
+    df,
+):
+    """Validate accepted evaluator results before generating CED outputs."""
+    required_columns = {
+        "split",
+        "status",
+        "nme_percent",
+    }
+    missing = required_columns - set(df.columns)
+    if missing:
+        raise RuntimeError(
+            "Evaluator result is missing required columns: "
+            + ", ".join(sorted(missing))
+        )
+    if len(df) != 600:
+        raise RuntimeError(
+            f"Expected 600 evaluator rows, found {len(df)}."
+        )
+
+
+def validate_staged_outputs(
+    output_csv,
+    output_figure,
+):
+    """Validate newly generated CED outputs before final replacement."""
+    if not output_csv.is_file():
+        raise RuntimeError("Staged CED CSV was not created.")
+    if not output_figure.is_file():
+        raise RuntimeError("Staged CED figure was not created.")
+    ced = pd.read_csv(output_csv)
+    expected_columns = [
+        "NME_threshold_percent",
+        "Indoor_fraction",
+        "Outdoor_fraction",
+        "Overall_fraction",
+    ]
+    if list(ced.columns) != expected_columns:
+        raise RuntimeError("Staged CED CSV schema is incorrect.")
+    if len(ced) != NUM_THRESHOLDS:
+        raise RuntimeError("Staged CED CSV has an incorrect threshold count.")
+    expected_thresholds = np.linspace(0.0, MAX_NME_PERCENT, NUM_THRESHOLDS)
+    thresholds = ced["NME_threshold_percent"].to_numpy(dtype=float)
+    if not np.allclose(thresholds, expected_thresholds, rtol=0.0, atol=1e-12):
+        raise RuntimeError("Staged CED threshold grid is incorrect.")
+    for column in ("Indoor_fraction", "Outdoor_fraction", "Overall_fraction"):
+        values = ced[column].to_numpy(dtype=float)
+        if np.any(values < 0.0) or np.any(values > 1.0):
+            raise RuntimeError(f"Staged CED values are outside [0, 1] in {column}.")
+        if np.any(np.diff(values) < -1e-12):
+            raise RuntimeError(f"Staged CED curve is not monotonic in {column}.")
+    figure = plt.imread(output_figure)
+    if figure.ndim < 2 or figure.shape[0] <= 0 or figure.shape[1] <= 0:
+        raise RuntimeError("Staged CED figure is unreadable.")
+
+
+def replace_owned_outputs(
+    staged_csv, staged_figure, final_csv, final_figure, staging_dir,
+):
+    """Replace only plot-owned outputs with rollback on commit failure."""
+    pairs = [(staged_csv, final_csv), (staged_figure, final_figure)]
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups = []
+    installed = []
+    try:
+        for _, final_path in pairs:
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+        for staged_path, final_path in pairs:
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists():
+                os.replace(backup_path, final_path)
+        raise
+
+
 def main():
+    global OUTPUT_CSV
+    global OUTPUT_FIGURE
+
     df = pd.read_csv(
         INPUT_CSV
     )
+
+    validate_input(
+        df
+    )
+
+    final_output_csv = OUTPUT_CSV
+    final_output_figure = OUTPUT_FIGURE
+
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".300w_landmark_plot_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    atexit.register(
+        shutil.rmtree,
+        staging_dir,
+        ignore_errors=True,
+    )
+
+    OUTPUT_CSV = staging_dir / final_output_csv.name
+    OUTPUT_FIGURE = staging_dir / final_output_figure.name
 
     thresholds = np.linspace(
         0.0,
@@ -247,6 +362,21 @@ def main():
         )
 
     print("\nSaved:")
+    print("\nValidating staged outputs...")
+
+    try:
+        validate_staged_outputs(OUTPUT_CSV, OUTPUT_FIGURE)
+        replace_owned_outputs(
+            OUTPUT_CSV, OUTPUT_FIGURE,
+            final_output_csv, final_output_figure, staging_dir,
+        )
+    finally:
+        OUTPUT_CSV = final_output_csv
+        OUTPUT_FIGURE = final_output_figure
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
+
+    print("\nCommitted final plot outputs:")
     print(OUTPUT_FIGURE)
     print(OUTPUT_CSV)
 

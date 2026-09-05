@@ -2,6 +2,7 @@ from pathlib import Path
 import csv
 import os
 import shutil
+import tempfile
 
 import cv2
 import numpy as np
@@ -47,6 +48,11 @@ SUMMARY_FIGURE = (
     FIGURES_DIR
     / "300w_landmark_qualitative_examples.png"
 )
+
+FINAL_QUALITATIVE_DIR = QUALITATIVE_DIR
+FINAL_ANNOTATED_DIR = ANNOTATED_DIR
+FINAL_SELECTION_CSV = SELECTION_CSV
+FINAL_SUMMARY_FIGURE = SUMMARY_FIGURE
 
 DATASETS = {
     "Indoor": DATASET_ROOT / "01_Indoor",
@@ -1956,7 +1962,10 @@ def save_annotated_images(
                     f"{float(row['prominence']):.6f}"
                 ),
                 "annotated_image": str(
-                    output_path.relative_to(
+                    (
+                        FINAL_ANNOTATED_DIR
+                        / output_path.name
+                    ).relative_to(
                         VALIDATION_DIR
                     )
                 ).replace(
@@ -2016,10 +2025,12 @@ def create_summary_figure(
 
     for row in rows:
         image_path = (
-            VALIDATION_DIR
-            / row[
-                "annotated_image"
-            ]
+            ANNOTATED_DIR
+            / Path(
+                row[
+                    "annotated_image"
+                ]
+            ).name
         )
 
         image = cv2.imread(
@@ -2268,7 +2279,184 @@ def print_preflight(
     )
 
 
+
+def validate_staged_qualitative_outputs():
+    """Validate newly generated qualitative artifacts before final replacement."""
+    if not QUALITATIVE_DIR.is_dir():
+        raise RuntimeError(
+            "Staged qualitative directory was not created."
+        )
+
+    if not ANNOTATED_DIR.is_dir():
+        raise RuntimeError(
+            "Staged annotated-image directory was not created."
+        )
+
+    annotated = sorted(
+        ANNOTATED_DIR.glob(
+            "*.png"
+        )
+    )
+
+    if len(annotated) != 8:
+        raise RuntimeError(
+            "Expected exactly eight staged annotated images."
+        )
+
+    for path in annotated:
+        image = cv2.imread(
+            str(path)
+        )
+
+        if image is None:
+            raise RuntimeError(
+                f"Could not read staged qualitative image: {path}"
+            )
+
+        if (
+            image.shape[1] != OUTPUT_WIDTH
+            or image.shape[0] != OUTPUT_HEIGHT
+        ):
+            raise RuntimeError(
+                "Staged qualitative image has unexpected dimensions: "
+                f"{path.name}"
+            )
+
+    if not SELECTION_CSV.is_file():
+        raise RuntimeError(
+            "Staged qualitative selection CSV was not created."
+        )
+
+    selection = pd.read_csv(
+        SELECTION_CSV
+    )
+
+    expected_columns = [
+        "role",
+        "selection",
+        "split",
+        "image",
+        "accepted_status",
+        "verified_status",
+        "accepted_nme_percent",
+        "verified_nme_percent",
+        "mean_pixel_error",
+        "interocular_px",
+        "face_area_ratio",
+        "center_score",
+        "prominence",
+        "annotated_image",
+    ]
+
+    if list(selection.columns) != expected_columns:
+        raise RuntimeError(
+            "Staged qualitative selection CSV schema is incorrect."
+        )
+
+    if len(selection) != 8:
+        raise RuntimeError(
+            "Expected exactly eight staged qualitative selection rows."
+        )
+
+    if selection["role"].duplicated().any():
+        raise RuntimeError(
+            "Staged qualitative selection contains duplicate roles."
+        )
+
+    for _, row in selection.iterrows():
+        path = (
+            ANNOTATED_DIR
+            / Path(
+                str(row["annotated_image"])
+            ).name
+        )
+
+        if not path.is_file():
+            raise RuntimeError(
+                "Staged qualitative selection references a missing image: "
+                f"{path.name}"
+            )
+
+        if str(row["accepted_status"]) != str(row["verified_status"]):
+            raise RuntimeError(
+                "Staged qualitative verification status does not match "
+                "the accepted quantitative status."
+            )
+
+        if str(row["verified_status"]) == "ok":
+            accepted_nme = float(row["accepted_nme_percent"])
+            verified_nme = float(row["verified_nme_percent"])
+            if abs(accepted_nme - verified_nme) > NME_TOLERANCE_PERCENT:
+                raise RuntimeError(
+                    "Staged qualitative NME does not match the accepted "
+                    "quantitative value."
+                )
+
+    if not SUMMARY_FIGURE.is_file():
+        raise RuntimeError(
+            "Staged qualitative summary figure was not created."
+        )
+
+    figure = cv2.imread(
+        str(SUMMARY_FIGURE)
+    )
+
+    if figure is None:
+        raise RuntimeError(
+            "Staged qualitative summary figure is unreadable."
+        )
+
+
+def replace_owned_qualitative_outputs(
+    staging_dir,
+):
+    """Replace qualitative-owned outputs with rollback on commit failure."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_qualitative = backup_dir / FINAL_QUALITATIVE_DIR.name
+    backup_figure = backup_dir / FINAL_SUMMARY_FIGURE.name
+    qualitative_backed_up = False
+    figure_backed_up = False
+    qualitative_installed = False
+    figure_installed = False
+
+    try:
+        if FINAL_QUALITATIVE_DIR.exists():
+            os.replace(FINAL_QUALITATIVE_DIR, backup_qualitative)
+            qualitative_backed_up = True
+
+        if FINAL_SUMMARY_FIGURE.exists():
+            os.replace(FINAL_SUMMARY_FIGURE, backup_figure)
+            figure_backed_up = True
+
+        os.replace(QUALITATIVE_DIR, FINAL_QUALITATIVE_DIR)
+        qualitative_installed = True
+
+        os.replace(SUMMARY_FIGURE, FINAL_SUMMARY_FIGURE)
+        figure_installed = True
+
+    except Exception:
+        if figure_installed and FINAL_SUMMARY_FIGURE.exists():
+            FINAL_SUMMARY_FIGURE.unlink()
+
+        if qualitative_installed and FINAL_QUALITATIVE_DIR.exists():
+            shutil.rmtree(FINAL_QUALITATIVE_DIR)
+
+        if figure_backed_up and backup_figure.exists():
+            os.replace(backup_figure, FINAL_SUMMARY_FIGURE)
+
+        if qualitative_backed_up and backup_qualitative.exists():
+            os.replace(backup_qualitative, FINAL_QUALITATIVE_DIR)
+
+        raise
+
+
 def main():
+    global QUALITATIVE_DIR
+    global ANNOTATED_DIR
+    global SELECTION_CSV
+    global SUMMARY_FIGURE
+
     verify_dataset()
 
     (
@@ -2290,19 +2478,52 @@ def main():
         benchmark,
     )
 
-    clean_previous_qualitative_outputs()
-
-    rows = save_annotated_images(
-        verified
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".300w_landmark_qualitative_",
+            dir=RESULTS_DIR,
+        )
     )
 
-    write_selection_csv(
-        rows
-    )
+    QUALITATIVE_DIR = staging_dir / "qualitative"
+    ANNOTATED_DIR = QUALITATIVE_DIR / "annotated_images"
+    SELECTION_CSV = QUALITATIVE_DIR / FINAL_SELECTION_CSV.name
+    staged_figures_dir = staging_dir / "figures"
+    SUMMARY_FIGURE = staged_figures_dir / FINAL_SUMMARY_FIGURE.name
 
-    create_summary_figure(
-        rows
-    )
+    try:
+        clean_previous_qualitative_outputs()
+
+        rows = save_annotated_images(
+            verified
+        )
+
+        write_selection_csv(
+            rows
+        )
+
+        create_summary_figure(
+            rows
+        )
+
+        print(
+            "\nValidating staged qualitative outputs..."
+        )
+
+        validate_staged_qualitative_outputs()
+
+        replace_owned_qualitative_outputs(
+            staging_dir
+        )
+
+    finally:
+        QUALITATIVE_DIR = FINAL_QUALITATIVE_DIR
+        ANNOTATED_DIR = FINAL_ANNOTATED_DIR
+        SELECTION_CSV = FINAL_SELECTION_CSV
+        SUMMARY_FIGURE = FINAL_SUMMARY_FIGURE
+
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
 
     print(
         "\n==========================================="
@@ -2342,6 +2563,10 @@ def main():
 
     print(
         "\nAccepted quantitative artifacts were not modified."
+    )
+
+    print(
+        "Committed final qualitative outputs."
     )
 
 

@@ -1,0 +1,50 @@
+{
+  "component": "Face Landmarks",
+  "execution_type": "isolated_component_execution",
+  "dataset": "300-W evaluation set",
+  "dataset_root": "datasets/300W",
+  "input_face_box": "GT-derived 68-point landmark bounding box with 20% padding",
+  "ground_truth_use": "Ground-truth annotations are used only to define the controlled face input box and dataset coverage; this script does not compute landmark accuracy metrics.",
+  "pipeline": "PhysioTrack FaceAnalysis",
+  "target_component": "FaceLandmarks",
+  "model": "face_landmarker.task",
+  "device": "cpu",
+  "tracking_enabled": false,
+  "unrelated_components_disabled": true,
+  "expected_total_images": 600,
+  "processed_images": 600,
+  "images_with_landmarks": 588,
+  "images_without_landmarks": 12,
+  "execution_failed_images": 0,
+  "expected_landmarks_per_successful_image": 478,
+  "native_landmark_observations": 281064,
+  "out_of_frame_landmark_observations": 74,
+  "result_rows": 281076,
+  "splits": {
+    "Indoor": {
+      "expected_images": 300,
+      "processed_images": 300,
+      "images_with_landmarks": 292,
+      "images_without_landmarks": 8,
+      "execution_failed_images": 0,
+      "native_landmark_observations": 139576,
+      "rows": 139584,
+      "out_of_frame_landmark_observations": 51
+    },
+    "Outdoor": {
+      "expected_images": 300,
+      "processed_images": 300,
+      "images_with_landmarks": 296,
+      "images_without_landmarks": 4,
+      "execution_failed_images": 0,
+      "native_landmark_observations": 141488,
+      "rows": 141492,
+      "out_of_frame_landmark_observations": 23
+    }
+  },
+  "runtime_seconds": 40.19905519999975,
+  "runtime_minutes": 0.6699842533333291,
+  "images_per_second": 14.925723925969379,
+  "status": "PASS",
+  "interpretation": "This output is software execution evidence for the real PhysioTrack Face Landmarks component. It is not a replacement for the accepted 300-W NME benchmark."
+}

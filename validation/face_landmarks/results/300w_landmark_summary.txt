@@ -49,8 +49,8 @@ Median NME: 4.3178%
 Std NME: 1.8048%
 
 Runtime:
-Total runtime: 60.34 seconds
-Processing speed: 9.94 images/s
+Total runtime: 65.60 seconds
+Processing speed: 9.15 images/s
 
 Generated outputs:
 Detailed results CSV: results/300w_landmark_results.csv

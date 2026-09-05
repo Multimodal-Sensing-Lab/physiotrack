@@ -1,6 +1,9 @@
 from pathlib import Path
+import atexit
 import csv
 import os
+import shutil
+import tempfile
 import time
 
 import cv2
@@ -443,8 +446,295 @@ def summarize_split(
     }
 
 
+
+def validate_staged_outputs(
+    results_csv,
+    summary_txt,
+):
+    """Validate newly generated evaluator outputs before final replacement."""
+    if not results_csv.is_file():
+        raise RuntimeError(
+            "Staged landmark result CSV was not created."
+        )
+
+    if not summary_txt.is_file():
+        raise RuntimeError(
+            "Staged landmark summary was not created."
+        )
+
+    with open(
+        results_csv,
+        "r",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        reader = csv.DictReader(
+            file
+        )
+
+        expected_fields = [
+            "split",
+            "image",
+            "status",
+            "nme",
+            "nme_percent",
+            "mean_pixel_error",
+            "interocular_px",
+        ]
+
+        if reader.fieldnames != expected_fields:
+            raise RuntimeError(
+                "Staged landmark result CSV schema is incorrect."
+            )
+
+        rows = list(
+            reader
+        )
+
+    if len(rows) != 600:
+        raise RuntimeError(
+            f"Expected 600 staged result rows, found {len(rows)}."
+        )
+
+    keys = set()
+
+    for row in rows:
+        split = row[
+            "split"
+        ]
+
+        image = row[
+            "image"
+        ]
+
+        if split not in {
+            "Indoor",
+            "Outdoor",
+        }:
+            raise RuntimeError(
+                f"Unexpected split in staged results: {split}"
+            )
+
+        key = (
+            split,
+            image,
+        )
+
+        if key in keys:
+            raise RuntimeError(
+                "Duplicate image record found in staged results: "
+                f"{split}/{image}"
+            )
+
+        keys.add(
+            key
+        )
+
+        status = row[
+            "status"
+        ]
+
+        if status == "ok":
+            for field in (
+                "nme",
+                "nme_percent",
+                "mean_pixel_error",
+                "interocular_px",
+            ):
+                value = float(
+                    row[
+                        field
+                    ]
+                )
+
+                if not np.isfinite(
+                    value
+                ):
+                    raise RuntimeError(
+                        "Successful staged result contains a non-finite "
+                        f"{field} value."
+                    )
+
+            if float(
+                row[
+                    "interocular_px"
+                ]
+            ) <= 0.0:
+                raise RuntimeError(
+                    "Successful staged result has non-positive inter-ocular distance."
+                )
+
+        elif status == "failed_detection":
+            for field in (
+                "nme",
+                "nme_percent",
+                "mean_pixel_error",
+                "interocular_px",
+            ):
+                value = row[
+                    field
+                ].strip()
+
+                if value and value.lower() != "nan":
+                    raise RuntimeError(
+                        "Failed-detection staged row contains an unexpected "
+                        f"{field} value."
+                    )
+
+        else:
+            raise RuntimeError(
+                f"Unexpected staged landmark status: {status}"
+            )
+
+    split_counts = {
+        split: sum(
+            1
+            for row in rows
+            if row[
+                "split"
+            ] == split
+        )
+        for split in (
+            "Indoor",
+            "Outdoor",
+        )
+    }
+
+    if split_counts != {
+        "Indoor": 300,
+        "Outdoor": 300,
+    }:
+        raise RuntimeError(
+            "Staged landmark split counts are incorrect."
+        )
+
+    summary_text = summary_txt.read_text(
+        encoding="utf-8"
+    )
+
+    for token in (
+        "Total images: 600",
+        "51-point landmark evaluation",
+        "Normalization: inter-ocular distance",
+        "OVERALL",
+    ):
+        if token not in summary_text:
+            raise RuntimeError(
+                "Staged landmark summary is incomplete: "
+                f"missing {token!r}."
+            )
+
+
+def replace_owned_outputs(
+    staged_results_csv,
+    staged_summary_txt,
+    final_results_csv,
+    final_summary_txt,
+    staging_dir,
+):
+    """Replace only evaluator-owned outputs with rollback on commit failure."""
+    pairs = [
+        (
+            staged_results_csv,
+            final_results_csv,
+        ),
+        (
+            staged_summary_txt,
+            final_summary_txt,
+        ),
+    ]
+
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    backups = []
+    installed = []
+
+    try:
+        for _, final_path in pairs:
+            if final_path.exists():
+                backup_path = (
+                    backup_dir
+                    / final_path.name
+                )
+
+                os.replace(
+                    final_path,
+                    backup_path,
+                )
+
+                backups.append(
+                    (
+                        backup_path,
+                        final_path,
+                    )
+                )
+
+        for staged_path, final_path in pairs:
+            os.replace(
+                staged_path,
+                final_path,
+            )
+
+            installed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+
+        for backup_path, final_path in reversed(
+            backups
+        ):
+            if backup_path.exists():
+                os.replace(
+                    backup_path,
+                    final_path,
+                )
+
+        raise
+
+
 def main():
+    global RESULTS_CSV
+    global SUMMARY_TXT
+
     verify_dataset()
+
+    final_results_csv = RESULTS_CSV
+    final_summary_txt = SUMMARY_TXT
+
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".300w_landmark_eval_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    atexit.register(
+        shutil.rmtree,
+        staging_dir,
+        ignore_errors=True,
+    )
+
+    RESULTS_CSV = (
+        staging_dir
+        / final_results_csv.name
+    )
+
+    SUMMARY_TXT = (
+        staging_dir
+        / final_summary_txt.name
+    )
 
     model_path = resolve_model_path()
 
@@ -936,7 +1226,37 @@ def main():
             "results/figures/300w_landmark_ced.png\n"
         )
 
-    print("\nSaved:")
+    print("\nValidating staged outputs...")
+
+    try:
+        validate_staged_outputs(
+            RESULTS_CSV,
+            SUMMARY_TXT,
+        )
+
+        replace_owned_outputs(
+            RESULTS_CSV,
+            SUMMARY_TXT,
+            final_results_csv,
+            final_summary_txt,
+            staging_dir,
+        )
+
+    finally:
+        RESULTS_CSV = (
+            final_results_csv
+        )
+
+        SUMMARY_TXT = (
+            final_summary_txt
+        )
+
+        if staging_dir.exists():
+            shutil.rmtree(
+                staging_dir
+            )
+
+    print("\nCommitted final evaluator outputs:")
     print(RESULTS_CSV)
     print(SUMMARY_TXT)
 
