@@ -1,6 +1,8 @@
 from pathlib import Path
 import csv
+import os
 import shutil
+import tempfile
 
 import cv2
 import numpy as np
@@ -1962,6 +1964,7 @@ def render_qualitative_image(
 
 def create_combined_figure(
     selections,
+    output_path,
 ):
     """Create a compact 2 x 4 target-face summary figure."""
     tile_width = 480
@@ -2085,26 +2088,27 @@ def create_combined_figure(
             GT_COLOR,
         )
 
-    FIGURES_DIR.mkdir(
+    output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
     if not cv2.imwrite(
         str(
-            COMBINED_FIGURE_PATH
+            output_path
         ),
         canvas,
     ):
         raise RuntimeError(
             f"Could not save combined "
             f"qualitative figure: "
-            f"{COMBINED_FIGURE_PATH}"
+            f"{output_path}"
         )
 
 
 def save_selection_csv(
     selections,
+    output_path=SELECTION_CSV_PATH,
 ):
     fieldnames = [
         "role",
@@ -2126,7 +2130,7 @@ def save_selection_csv(
         "annotated_image",
     ]
 
-    with SELECTION_CSV_PATH.open(
+    with output_path.open(
         "w",
         newline="",
         encoding="utf-8",
@@ -2219,121 +2223,458 @@ def save_selection_csv(
             )
 
 
-def clean_previous_qualitative_outputs():
-    """Remove only outputs owned by this qualitative generator."""
-    if QUALITATIVE_DIR.exists():
-        shutil.rmtree(
-            QUALITATIVE_DIR
+def validate_staged_qualitative_outputs(
+    staged_qualitative_dir,
+    staged_selection_csv,
+    staged_combined_figure,
+    selections,
+):
+    """Validate staged qualitative evidence before replacing final outputs."""
+    expected_roles = [
+        selection["role"]
+        for selection in selections
+    ]
+
+    expected_face_ids = [
+        int(selection["face_id"])
+        for selection in selections
+    ]
+
+    if len(expected_roles) != 8:
+        raise RuntimeError(
+            f"Expected 8 qualitative cases, found {len(expected_roles)}."
         )
 
-    if COMBINED_FIGURE_PATH.exists():
-        COMBINED_FIGURE_PATH.unlink()
+    if len(set(expected_roles)) != len(expected_roles):
+        raise RuntimeError(
+            "Qualitative case roles are not unique."
+        )
 
+    if len(set(expected_face_ids)) != len(expected_face_ids):
+        raise RuntimeError(
+            "Qualitative face IDs are not unique."
+        )
 
-def main():
-    accepted_summary = (
-        load_accepted_summary()
+    if not staged_selection_csv.is_file():
+        raise RuntimeError(
+            "Staged qualitative selection CSV is missing."
+        )
+
+    data = pd.read_csv(
+        staged_selection_csv
     )
 
-    _, successful = (
-        load_accepted_results()
+    required_columns = [
+        "role",
+        "face_id",
+        "filepath",
+        "face_area_ratio",
+        "center_score",
+        "prominence",
+        "gt_yaw",
+        "gt_pitch",
+        "gt_roll",
+        "pred_yaw",
+        "pred_pitch",
+        "pred_roll",
+        "yaw_error",
+        "pitch_error",
+        "roll_error",
+        "mean_axis_error",
+        "annotated_image",
+    ]
+
+    if data.columns.tolist() != required_columns:
+        raise RuntimeError(
+            "Staged qualitative selection CSV schema is incorrect."
+        )
+
+    if data["role"].tolist() != expected_roles:
+        raise RuntimeError(
+            "Staged qualitative case order or roles changed unexpectedly."
+        )
+
+    if data["face_id"].astype(int).tolist() != expected_face_ids:
+        raise RuntimeError(
+            "Staged qualitative face IDs do not match the verified selections."
+        )
+
+    numeric_columns = [
+        "face_area_ratio",
+        "center_score",
+        "prominence",
+        "gt_yaw",
+        "gt_pitch",
+        "gt_roll",
+        "pred_yaw",
+        "pred_pitch",
+        "pred_roll",
+        "yaw_error",
+        "pitch_error",
+        "roll_error",
+        "mean_axis_error",
+    ]
+
+    numeric_values = data[
+        numeric_columns
+    ].to_numpy(
+        dtype=float
     )
 
-    annotation_lookup = (
-        build_annotation_lookup()
+    if not np.all(np.isfinite(numeric_values)):
+        raise RuntimeError(
+            "Staged qualitative selection CSV contains non-finite values."
+        )
+
+    for row_index, selection in enumerate(
+        selections
+    ):
+        rerun = selection["rerun"]
+
+        expected_values = {
+            "face_area_ratio": float(
+                selection["face_area_ratio"]
+            ),
+            "center_score": float(
+                selection["center_score"]
+            ),
+            "prominence": float(
+                selection["prominence"]
+            ),
+            "gt_yaw": float(
+                rerun["gt_yaw"]
+            ),
+            "gt_pitch": float(
+                rerun["gt_pitch"]
+            ),
+            "gt_roll": float(
+                rerun["gt_roll"]
+            ),
+            "pred_yaw": float(
+                rerun["pred_yaw"]
+            ),
+            "pred_pitch": float(
+                rerun["pred_pitch"]
+            ),
+            "pred_roll": float(
+                rerun["pred_roll"]
+            ),
+            "yaw_error": float(
+                rerun["yaw_error"]
+            ),
+            "pitch_error": float(
+                rerun["pitch_error"]
+            ),
+            "roll_error": float(
+                rerun["roll_error"]
+            ),
+            "mean_axis_error": float(
+                (
+                    rerun["yaw_error"]
+                    + rerun["pitch_error"]
+                    + rerun["roll_error"]
+                )
+                / 3.0
+            ),
+        }
+
+        for column, expected_value in expected_values.items():
+            actual_value = float(
+                data.iloc[row_index][column]
+            )
+
+            if not np.isclose(
+                actual_value,
+                expected_value,
+                rtol=0.0,
+                atol=1e-10,
+            ):
+                raise RuntimeError(
+                    f"Staged qualitative value mismatch for "
+                    f"{selection['role']}, {column}."
+                )
+
+    annotated_dir = (
+        staged_qualitative_dir
+        / "annotated_images"
     )
 
-    accepted_by_face = (
-        successful
-        .set_index(
-            "face_id"
+    expected_names = [
+        f"{role}_face_{face_id}.png"
+        for role, face_id in zip(
+            expected_roles,
+            expected_face_ids,
+        )
+    ]
+
+    actual_names = sorted(
+        path.name
+        for path in annotated_dir.glob(
+            "*.png"
         )
     )
 
-    rankings = (
-        ranked_candidate_ids(
-            successful
-        )
-    )
-
-    selections = (
-        select_qualitative_cases(
-            rankings,
-            accepted_by_face,
-            annotation_lookup,
-        )
-    )
-
-    print(
-        "Selected qualitative cases:"
-    )
-
-    for selection in selections:
-        accepted_row = selection[
-            "accepted_row"
-        ]
-
-        print(
-            f"- {selection['role']}: "
-            f"face_id={selection['face_id']}, "
-            f"filepath={selection['filepath']}, "
-            f"accepted mean axis error="
-            f"{float(accepted_row['mean_axis_error']):.4f} deg, "
-            f"face area="
-            f"{selection['face_area_ratio'] * 100.0:.2f}%"
+    if actual_names != sorted(expected_names):
+        raise RuntimeError(
+            "Staged annotated qualitative image set is incomplete or unexpected."
         )
 
-    print()
-    print(
-        "Rerunning selected faces and "
-        "verifying accepted per-face results..."
-    )
+    for image_name in expected_names:
+        image_path = (
+            annotated_dir
+            / image_name
+        )
 
-    rerun_and_verify(
-        selections,
-        annotation_lookup,
-    )
-
-    print(
-        "Per-face quantitative verification: PASS"
-    )
-
-    # All selection and numerical verification complete before previous
-    # qualitative evidence is replaced.
-    clean_previous_qualitative_outputs()
-
-    ANNOTATED_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    FIGURES_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    for selection in selections:
-        output_path = (
-            ANNOTATED_DIR
-            / (
-                f"{selection['role']}_"
-                f"face_{selection['face_id']}.png"
+        image = cv2.imread(
+            str(
+                image_path
             )
         )
 
-        render_qualitative_image(
-            selection,
-            accepted_summary,
-            output_path,
+        if image is None or image.size == 0:
+            raise RuntimeError(
+                f"Staged annotated image could not be read: {image_path}"
+            )
+
+        if image.shape[:2] != (
+            1080,
+            1920,
+        ):
+            raise RuntimeError(
+                f"Staged annotated image has unexpected dimensions: "
+                f"{image_path}, {image.shape[:2]}"
+            )
+
+    combined = cv2.imread(
+        str(
+            staged_combined_figure
+        )
+    )
+
+    if combined is None or combined.size == 0:
+        raise RuntimeError(
+            "Staged combined qualitative figure could not be read."
         )
 
-    save_selection_csv(
-        selections
+    if combined.shape[:2] != (
+        1080,
+        1920,
+    ):
+        raise RuntimeError(
+            "Staged combined qualitative figure has unexpected dimensions."
+        )
+
+
+def replace_owned_qualitative_outputs(
+    staging_root,
+    staged_qualitative_dir,
+    staged_combined_figure,
+):
+    """Replace only qualitative-script-owned outputs with rollback protection."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    backup_dir = staging_root / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    qualitative_backup = backup_dir / "qualitative"
+    figure_backup = backup_dir / COMBINED_FIGURE_PATH.name
+
+    qualitative_installed = False
+    figure_installed = False
+
+    try:
+        if QUALITATIVE_DIR.exists():
+            os.replace(QUALITATIVE_DIR, qualitative_backup)
+
+        if COMBINED_FIGURE_PATH.exists():
+            os.replace(COMBINED_FIGURE_PATH, figure_backup)
+
+        os.replace(staged_qualitative_dir, QUALITATIVE_DIR)
+        qualitative_installed = True
+
+        os.replace(staged_combined_figure, COMBINED_FIGURE_PATH)
+        figure_installed = True
+
+    except Exception:
+        if figure_installed and COMBINED_FIGURE_PATH.exists():
+            COMBINED_FIGURE_PATH.unlink()
+
+        if qualitative_installed and QUALITATIVE_DIR.exists():
+            shutil.rmtree(QUALITATIVE_DIR)
+
+        if qualitative_backup.exists():
+            os.replace(qualitative_backup, QUALITATIVE_DIR)
+
+        if figure_backup.exists():
+            os.replace(figure_backup, COMBINED_FIGURE_PATH)
+
+        raise
+
+
+def main():
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
-    create_combined_figure(
-        selections
+    staging_root = Path(
+        tempfile.mkdtemp(
+            prefix=".aflw_head_pose_qualitative_",
+            dir=RESULTS_DIR,
+        )
     )
+
+    staged_qualitative_dir = (
+        staging_root
+        / "qualitative"
+    )
+
+    staged_annotated_dir = (
+        staged_qualitative_dir
+        / "annotated_images"
+    )
+
+    staged_selection_csv = (
+        staged_qualitative_dir
+        / SELECTION_CSV_PATH.name
+    )
+
+    staged_combined_figure = (
+        staging_root
+        / COMBINED_FIGURE_PATH.name
+    )
+
+    staged_annotated_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    print(
+        "Staging directory:",
+        staging_root,
+    )
+
+    try:
+        accepted_summary = (
+            load_accepted_summary()
+        )
+
+        _, successful = (
+            load_accepted_results()
+        )
+
+        annotation_lookup = (
+            build_annotation_lookup()
+        )
+
+        accepted_by_face = (
+            successful
+            .set_index(
+                "face_id"
+            )
+        )
+
+        rankings = (
+            ranked_candidate_ids(
+                successful
+            )
+        )
+
+        selections = (
+            select_qualitative_cases(
+                rankings,
+                accepted_by_face,
+                annotation_lookup,
+            )
+        )
+
+        print(
+            "Selected qualitative cases:"
+        )
+
+        for selection in selections:
+            accepted_row = selection[
+                "accepted_row"
+            ]
+
+            print(
+                f"- {selection['role']}: "
+                f"face_id={selection['face_id']}, "
+                f"filepath={selection['filepath']}, "
+                f"accepted mean axis error="
+                f"{float(accepted_row['mean_axis_error']):.4f} deg, "
+                f"face area="
+                f"{selection['face_area_ratio'] * 100.0:.2f}%"
+            )
+
+        print()
+        print(
+            "Rerunning selected faces and "
+            "verifying accepted per-face results..."
+        )
+
+        rerun_and_verify(
+            selections,
+            annotation_lookup,
+        )
+
+        print(
+            "Per-face quantitative verification: PASS"
+        )
+
+        for selection in selections:
+            output_path = (
+                staged_annotated_dir
+                / (
+                    f"{selection['role']}_"
+                    f"face_{selection['face_id']}.png"
+                )
+            )
+
+            render_qualitative_image(
+                selection,
+                accepted_summary,
+                output_path,
+            )
+
+        save_selection_csv(
+            selections,
+            staged_selection_csv,
+        )
+
+        create_combined_figure(
+            selections,
+            staged_combined_figure,
+        )
+
+        print()
+        print(
+            "Validating staged qualitative outputs..."
+        )
+
+        validate_staged_qualitative_outputs(
+            staged_qualitative_dir,
+            staged_selection_csv,
+            staged_combined_figure,
+            selections,
+        )
+
+        replace_owned_qualitative_outputs(
+            staging_root,
+            staged_qualitative_dir,
+            staged_combined_figure,
+        )
+
+        print(
+            "Committed final qualitative outputs."
+        )
+
+
+    finally:
+        if staging_root.exists():
+            shutil.rmtree(staging_root)
+
 
     print()
     print(

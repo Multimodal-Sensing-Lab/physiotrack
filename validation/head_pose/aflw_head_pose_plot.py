@@ -1,4 +1,7 @@
 from pathlib import Path
+import os
+import shutil
+import tempfile
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -109,7 +112,12 @@ def calculate_metrics(data):
     return table, overall_metrics
 
 
-def save_thesis_table(table, overall_metrics):
+def save_thesis_table(
+    table,
+    overall_metrics,
+    csv_path=THESIS_TABLE_CSV,
+    md_path=THESIS_TABLE_MD,
+):
     """Save thesis-ready head-pose summary tables."""
     output = table.copy()
 
@@ -143,9 +151,9 @@ def save_thesis_table(table, overall_metrics):
 
     output = pd.concat([output, overall_row], ignore_index=True)
 
-    output.to_csv(THESIS_TABLE_CSV, index=False)
+    output.to_csv(csv_path, index=False)
 
-    with open(THESIS_TABLE_MD, "w", encoding="utf-8") as file:
+    with open(md_path, "w", encoding="utf-8") as file:
         file.write(
             "| Axis | MAE (degrees) | "
             "Median absolute error (degrees) | "
@@ -164,10 +172,8 @@ def save_thesis_table(table, overall_metrics):
     return output
 
 
-def create_figure(table):
+def create_figure(table, output_path=FIGURE_PATH):
     """Create a thesis-ready head-pose error figure."""
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-
     axes = table["Axis"].tolist()
     mae = table["MAE (degrees)"].to_numpy(dtype=float)
     median = table["Median absolute error (degrees)"].to_numpy(dtype=float)
@@ -199,15 +205,16 @@ def create_figure(table):
     axis.grid(axis="y", alpha=0.25)
 
     figure.tight_layout()
-    figure.savefig(FIGURE_PATH, dpi=300, bbox_inches="tight")
+    figure.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close(figure)
 
 
 
-def create_distribution_figure(data):
+def create_distribution_figure(
+    data,
+    output_path=DISTRIBUTION_FIGURE_PATH,
+):
     """Create an empirical CDF of absolute angular errors by pose axis."""
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-
     axis_columns = {
         "Yaw": "yaw_error",
         "Pitch": "pitch_error",
@@ -243,18 +250,212 @@ def create_distribution_figure(data):
 
     figure.tight_layout()
     figure.savefig(
-        DISTRIBUTION_FIGURE_PATH,
+        output_path,
         dpi=300,
         bbox_inches="tight",
     )
     plt.close(figure)
 
+
+def validate_staged_plot_outputs(
+    table_csv,
+    table_md,
+    figure_path,
+    distribution_path,
+    successful,
+):
+    """Validate staged tables and figures before replacing final outputs."""
+    expected_table, expected_overall = calculate_metrics(successful)
+
+    staged_table = pd.read_csv(table_csv)
+
+    expected_columns = [
+        "Axis",
+        "MAE (degrees)",
+        "Median absolute error (degrees)",
+        "Std. absolute error (degrees)",
+    ]
+
+    if staged_table.columns.tolist() != expected_columns:
+        raise RuntimeError(
+            "Staged thesis table columns do not match the expected schema."
+        )
+
+    if staged_table["Axis"].tolist() != [
+        "Yaw",
+        "Pitch",
+        "Roll",
+        "Overall",
+    ]:
+        raise RuntimeError(
+            "Staged thesis table axis order is incorrect."
+        )
+
+    expected_output = expected_table.copy()
+    numeric_columns = expected_columns[1:]
+    expected_output[numeric_columns] = expected_output[numeric_columns].round(4)
+    expected_output = pd.concat(
+        [
+            expected_output,
+            pd.DataFrame(
+                [
+                    {
+                        "Axis": "Overall",
+                        "MAE (degrees)": round(
+                            expected_overall["MAE (degrees)"],
+                            4,
+                        ),
+                        "Median absolute error (degrees)": round(
+                            expected_overall[
+                                "Median absolute error (degrees)"
+                            ],
+                            4,
+                        ),
+                        "Std. absolute error (degrees)": round(
+                            expected_overall[
+                                "Std. absolute error (degrees)"
+                            ],
+                            4,
+                        ),
+                    }
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    if staged_table["Axis"].tolist() != expected_output["Axis"].tolist():
+        raise RuntimeError(
+            "Staged thesis table labels are inconsistent with recomputed metrics."
+        )
+
+    if not np.allclose(
+        staged_table[numeric_columns].to_numpy(dtype=float),
+        expected_output[numeric_columns].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=5e-5,
+    ):
+        raise RuntimeError(
+            "Staged thesis table values are inconsistent with the evaluator CSV."
+        )
+
+    markdown = table_md.read_text(encoding="utf-8")
+    for _, row in expected_output.iterrows():
+        expected_line = (
+            f"| {row['Axis']} | "
+            f"{row['MAE (degrees)']:.4f} | "
+            f"{row['Median absolute error (degrees)']:.4f} | "
+            f"{row['Std. absolute error (degrees)']:.4f} |"
+        )
+
+        if expected_line not in markdown:
+            raise RuntimeError(
+                "Staged Markdown thesis table is inconsistent with the CSV."
+            )
+
+    for image_path in [figure_path, distribution_path]:
+        if not image_path.is_file() or image_path.stat().st_size <= 0:
+            raise RuntimeError(
+                f"Staged figure is missing or empty: {image_path}"
+            )
+
+        image = plt.imread(image_path)
+        if image.size == 0 or not np.all(np.isfinite(image)):
+            raise RuntimeError(
+                f"Staged figure could not be validated: {image_path}"
+            )
+
+
+def replace_owned_outputs(staging_dir):
+    """Replace only plot-script-owned outputs with rollback protection."""
+    final_paths = [
+        THESIS_TABLE_CSV,
+        THESIS_TABLE_MD,
+        FIGURE_PATH,
+        DISTRIBUTION_FIGURE_PATH,
+    ]
+    staged_paths = [
+        staging_dir / THESIS_TABLE_CSV.name,
+        staging_dir / THESIS_TABLE_MD.name,
+        staging_dir / FIGURE_PATH.name,
+        staging_dir / DISTRIBUTION_FIGURE_PATH.name,
+    ]
+
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backups = []
+    installed = []
+
+    try:
+        for final_path in final_paths:
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+
+        for staged_path, final_path in zip(staged_paths, final_paths):
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists():
+                os.replace(backup_path, final_path)
+
+        raise
+
+
 def main():
     all_rows, successful = load_successful_results()
     table, overall_metrics = calculate_metrics(successful)
-    output_table = save_thesis_table(table, overall_metrics)
-    create_figure(table)
-    create_distribution_figure(successful)
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".aflw_head_pose_plot_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    staged_table_csv = staging_dir / THESIS_TABLE_CSV.name
+    staged_table_md = staging_dir / THESIS_TABLE_MD.name
+    staged_figure = staging_dir / FIGURE_PATH.name
+    staged_distribution = staging_dir / DISTRIBUTION_FIGURE_PATH.name
+
+    print("Staging directory:", staging_dir)
+
+    try:
+        output_table = save_thesis_table(
+            table,
+            overall_metrics,
+            staged_table_csv,
+            staged_table_md,
+        )
+        create_figure(table, staged_figure)
+        create_distribution_figure(successful, staged_distribution)
+
+        print("Validating staged plot outputs...")
+        validate_staged_plot_outputs(
+            staged_table_csv,
+            staged_table_md,
+            staged_figure,
+            staged_distribution,
+            successful,
+        )
+
+        replace_owned_outputs(staging_dir)
+        print("Committed final plot and table outputs.")
+
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
 
     print("Evaluation rows:", len(all_rows))
     print("Successful samples:", len(successful))

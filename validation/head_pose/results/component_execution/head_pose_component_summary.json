@@ -1,0 +1,29 @@
+{
+  "component": "Head Pose",
+  "execution_type": "isolated_component_execution",
+  "dataset": "AFLW",
+  "dataset_root": "datasets/AFLW",
+  "pipeline": "PhysioTrack FaceAnalysis",
+  "target_component": "FaceOrientation",
+  "backend": "6DRepNet360",
+  "device": "cpu",
+  "input_face_box": "AFLW ground-truth face rectangle",
+  "primary_protocol": "|yaw| <= 90 degrees, |pitch| < 90 degrees, |roll| <= 90 degrees",
+  "ground_truth_use": "AFLW pose annotations are used only to select the same primary-protocol population as the accepted scientific benchmark. No angular accuracy metric is computed here.",
+  "tracking_enabled": false,
+  "unrelated_components_disabled": true,
+  "expected_primary_protocol_records": 23408,
+  "processed_primary_protocol_records": 23408,
+  "successful_component_outputs": 23407,
+  "input_failures": 1,
+  "component_execution_failures": 0,
+  "status_counts": {
+    "OK": 23407,
+    "IMAGE_READ_FAILED": 1
+  },
+  "runtime_seconds": 2200.931604600002,
+  "runtime_minutes": 36.68219341000004,
+  "records_per_second": 10.635496328498666,
+  "status": "PASS_WITH_INPUT_FAILURES",
+  "interpretation": "This is software execution evidence for the real PhysioTrack FaceOrientation component through FaceAnalysis. It does not replace the accepted AFLW angular-accuracy benchmark."
+}

@@ -1,7 +1,10 @@
 from pathlib import Path
 import argparse
 import csv
+import os
+import shutil
 import sqlite3
+import tempfile
 import time
 
 import cv2
@@ -61,8 +64,8 @@ def validate_dataset_layout():
         raise FileNotFoundError(
             "AFLW dataset layout is incomplete. Missing required paths:\n"
             f"{formatted}\n\n"
-            "See validation/head_pose/README.md for the required AFLW "
-            "archive extraction and directory layout."
+            "See validation/head_pose/README_AFLW_HEAD_POSE.txt for the "
+            "required AFLW archive extraction and directory layout."
         )
 
     connection = sqlite3.connect(
@@ -383,7 +386,7 @@ def summarize_errors(rows):
     }
 
 
-def save_results(rows):
+def save_results(rows, output_path=RESULTS_CSV):
     """Save per-face evaluation results."""
     fieldnames = [
         "face_id",
@@ -401,125 +404,25 @@ def save_results(rows):
         "roll_error",
     ]
 
-    with open(RESULTS_CSV, "w", newline="", encoding="utf-8") as file:
+    with open(output_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
 
-def parse_args():
-    """Parse optional reproducibility/preflight arguments."""
-    parser = argparse.ArgumentParser(
-        description="Evaluate PhysioTrack head pose on AFLW."
-    )
-    parser.add_argument(
-        "--preflight-only",
-        action="store_true",
-        help=(
-            "Validate the AFLW layout and database accounting, then exit "
-            "without loading the model or running inference."
-        ),
-    )
-    return parser.parse_args()
-
-
-def main():
-    args = parse_args()
-
-    validate_dataset_layout()
-    database_accounting = load_database_accounting()
-    annotations = load_annotations()
-
-    if len(annotations) != database_accounting["joined_records"]:
-        raise RuntimeError(
-            "AFLW annotation query count changed between preflight and load."
-        )
-
-    print("AFLW dataset preflight: PASS")
-    print("Dataset root:", DATASET_ROOT)
-    print(
-        "FacePose records in database:",
-        database_accounting["face_pose_records"],
-    )
-    print("Joined evaluation records:", len(annotations))
-    print(
-        "Primary protocol:",
-        "controlled coarse-pose evaluation within "
-        "|yaw| <= 90, |pitch| < 90, |roll| <= 90 degrees",
-    )
-    print("Device:", DEVICE)
-
-    if args.preflight_only:
-        print("Preflight-only mode: no model inference was run.")
-        return
-
-    estimator = FaceOrientation(device=DEVICE, verbose=False)
-
-    rows = []
-    start_time = time.perf_counter()
-
-    for index, row in enumerate(annotations, start=1):
-        result = evaluate_sample(row, estimator)
-        rows.append(result)
-
-        if index % 500 == 0:
-            print(f"Processed {index}/{len(annotations)} records")
-
-    elapsed = time.perf_counter() - start_time
-
-    save_results(rows)
-
-    status_counts = {}
-    for row in rows:
-        status = row["status"]
-        status_counts[status] = status_counts.get(status, 0) + 1
-
-    summary = summarize_errors(rows)
-
-    eligible_samples = sum(
-        1 for row in rows if row["protocol_eligible"]
-    )
-    failed_eligible_samples = eligible_samples - summary["successful"]
-
-    success_rate = (
-        summary["successful"] / eligible_samples * 100.0
-        if eligible_samples > 0
-        else 0.0
-    )
-
-    print("\n=== AFLW Head Pose Validation ===\n")
-    print(
-        "Database FacePose records:",
-        database_accounting["face_pose_records"],
-    )
-    print("Joined evaluation records:", len(annotations))
-    print("Primary-protocol eligible samples:", eligible_samples)
-
-    for status, count in sorted(status_counts.items()):
-        print(f"{status}: {count}")
-
-    print("\nPrimary evaluation results:")
-    print(f"Successful predictions: {summary['successful']}")
-    print(f"Failed eligible samples: {failed_eligible_samples}")
-    print(f"Success rate: {success_rate:.4f}%")
-    print(f"Yaw MAE: {summary['yaw_mae']:.4f} degrees")
-    print(f"Pitch MAE: {summary['pitch_mae']:.4f} degrees")
-    print(f"Roll MAE: {summary['roll_mae']:.4f} degrees")
-    print(f"Overall MAE: {summary['overall_mae']:.4f} degrees")
-
-    print("\nMedian absolute error:")
-    print(f"Yaw: {summary['yaw_median']:.4f} degrees")
-    print(f"Pitch: {summary['pitch_median']:.4f} degrees")
-    print(f"Roll: {summary['roll_median']:.4f} degrees")
-
-    print("\nStandard deviation of absolute error:")
-    print(f"Yaw: {summary['yaw_std']:.4f} degrees")
-    print(f"Pitch: {summary['pitch_std']:.4f} degrees")
-    print(f"Roll: {summary['roll_std']:.4f} degrees")
-
-    print(f"\nRuntime: {elapsed / 60.0:.2f} minutes")
-
-    with open(SUMMARY_TXT, "w", encoding="utf-8") as file:
+def save_summary(
+    output_path,
+    database_accounting,
+    annotations,
+    status_counts,
+    summary,
+    eligible_samples,
+    failed_eligible_samples,
+    success_rate,
+    elapsed,
+):
+    """Save the textual scientific record for the completed evaluation."""
+    with open(output_path, "w", encoding="utf-8") as file:
         file.write("AFLW Head Pose Validation\n\n")
 
         file.write("Dataset:\n")
@@ -603,6 +506,473 @@ def main():
 
         file.write("\nRuntime:\n")
         file.write(f"{elapsed / 60.0:.2f} minutes\n")
+
+
+def validate_staged_evaluator_outputs(
+    results_path,
+    summary_path,
+    database_accounting,
+):
+    """Validate staged scientific outputs before replacing accepted evidence."""
+    expected_columns = [
+        "face_id",
+        "filepath",
+        "protocol_eligible",
+        "status",
+        "gt_yaw",
+        "gt_pitch",
+        "gt_roll",
+        "pred_yaw",
+        "pred_pitch",
+        "pred_roll",
+        "yaw_error",
+        "pitch_error",
+        "roll_error",
+    ]
+
+    with open(
+        results_path,
+        "r",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        reader = csv.DictReader(file)
+
+        if reader.fieldnames != expected_columns:
+            raise RuntimeError(
+                "Staged evaluator CSV schema does not match the accepted "
+                "AFLW result schema."
+            )
+
+        rows = list(reader)
+
+    if len(rows) != database_accounting["joined_records"]:
+        raise RuntimeError(
+            "Staged evaluator CSV row count does not match the AFLW join."
+        )
+
+    if len(rows) != 24384:
+        raise RuntimeError(
+            f"Expected 24384 joined AFLW rows, found {len(rows)}."
+        )
+
+    face_ids = [
+        int(
+            row["face_id"]
+        )
+        for row in rows
+    ]
+
+    if len(face_ids) != len(set(face_ids)):
+        raise RuntimeError(
+            "Staged evaluator CSV contains duplicate face IDs."
+        )
+
+    status_counts = {}
+    successful = []
+    eligible_count = 0
+    outside_count = 0
+
+    for row in rows:
+        gt_values = np.asarray(
+            [
+                float(row["gt_yaw"]),
+                float(row["gt_pitch"]),
+                float(row["gt_roll"]),
+            ],
+            dtype=float,
+        )
+
+        if not np.all(np.isfinite(gt_values)):
+            raise RuntimeError(
+                f"Face {row['face_id']} contains non-finite ground-truth pose."
+            )
+
+        recomputed_eligible = is_primary_protocol_sample(
+            gt_values[0],
+            gt_values[1],
+            gt_values[2],
+        )
+
+        eligible = row["protocol_eligible"].strip().lower() in {
+            "true",
+            "1",
+        }
+
+        if eligible != recomputed_eligible:
+            raise RuntimeError(
+                f"Face {row['face_id']} has inconsistent protocol eligibility."
+            )
+
+        if eligible:
+            eligible_count += 1
+        else:
+            outside_count += 1
+
+        status = row["status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+        if status == "outside_primary_range":
+            if eligible:
+                raise RuntimeError(
+                    f"Face {row['face_id']} is marked outside the primary "
+                    "range but is protocol-eligible."
+                )
+
+            continue
+
+        if not eligible:
+            raise RuntimeError(
+                f"Face {row['face_id']} has status {status!r} outside the "
+                "primary protocol."
+            )
+
+        if status != "ok":
+            continue
+
+        values = np.asarray(
+            [
+                float(row["pred_yaw"]),
+                float(row["pred_pitch"]),
+                float(row["pred_roll"]),
+                float(row["yaw_error"]),
+                float(row["pitch_error"]),
+                float(row["roll_error"]),
+            ],
+            dtype=float,
+        )
+
+        if not np.all(np.isfinite(values)):
+            raise RuntimeError(
+                f"Face {row['face_id']} contains non-finite prediction data."
+            )
+
+        pred_yaw, pred_pitch, pred_roll = values[:3]
+        stored_errors = values[3:6]
+
+        recomputed_errors = np.asarray(
+            [
+                angular_error_degrees(
+                    pred_yaw,
+                    gt_values[0],
+                ),
+                angular_error_degrees(
+                    pred_pitch,
+                    gt_values[1],
+                ),
+                angular_error_degrees(
+                    pred_roll,
+                    gt_values[2],
+                ),
+            ],
+            dtype=float,
+        )
+
+        if not np.allclose(
+            stored_errors,
+            recomputed_errors,
+            rtol=0.0,
+            atol=1e-10,
+        ):
+            raise RuntimeError(
+                f"Face {row['face_id']} contains an inconsistent angular error."
+            )
+
+        successful.append(
+            {
+                "status": "ok",
+                "yaw_error": float(stored_errors[0]),
+                "pitch_error": float(stored_errors[1]),
+                "roll_error": float(stored_errors[2]),
+            }
+        )
+
+    expected_status_counts = {
+        "image_read_failed": 1,
+        "ok": 23407,
+        "outside_primary_range": 976,
+    }
+
+    if status_counts != expected_status_counts:
+        raise RuntimeError(
+            "Staged evaluator status accounting differs from the accepted "
+            "AFLW protocol population. "
+            f"Expected {expected_status_counts}, found {status_counts}. "
+            "Final outputs will not be committed."
+        )
+
+    if eligible_count != 23408:
+        raise RuntimeError(
+            f"Expected 23408 primary-protocol samples, found {eligible_count}."
+        )
+
+    if outside_count != 976:
+        raise RuntimeError(
+            f"Expected 976 outside-primary-range samples, found {outside_count}."
+        )
+
+    failed_rows = [
+        row
+        for row in rows
+        if row["status"] == "image_read_failed"
+    ]
+
+    if len(failed_rows) != 1:
+        raise RuntimeError(
+            "Expected exactly one AFLW image-read failure."
+        )
+
+    failed_row = failed_rows[0]
+
+    if (
+        int(failed_row["face_id"]) != 47825
+        or failed_row["filepath"] != "2/image09437.jpg"
+    ):
+        raise RuntimeError(
+            "The staged image-read failure does not match the accepted "
+            "AFLW dataset failure."
+        )
+
+    if len(successful) != 23407:
+        raise RuntimeError(
+            f"Expected 23407 successful predictions, found {len(successful)}."
+        )
+
+    summary = summarize_errors(successful)
+    failed_eligible = eligible_count - summary["successful"]
+    success_rate = summary["successful"] / eligible_count * 100.0
+
+    summary_text = summary_path.read_text(
+        encoding="utf-8"
+    )
+
+    required_lines = [
+        "FacePose records in database: 24396",
+        "Joined evaluation records: 24384",
+        "Primary-protocol eligible samples: 23408",
+        "image_read_failed: 1",
+        "ok: 23407",
+        "outside_primary_range: 976",
+        f"Successful predictions: {summary['successful']}",
+        f"Failed eligible samples: {failed_eligible}",
+        f"Success rate: {success_rate:.4f}%",
+        f"Yaw MAE: {summary['yaw_mae']:.4f} degrees",
+        f"Pitch MAE: {summary['pitch_mae']:.4f} degrees",
+        f"Roll MAE: {summary['roll_mae']:.4f} degrees",
+        f"Overall MAE: {summary['overall_mae']:.4f} degrees",
+        f"Yaw: {summary['yaw_median']:.4f} degrees",
+        f"Pitch: {summary['pitch_median']:.4f} degrees",
+        f"Roll: {summary['roll_median']:.4f} degrees",
+        f"Yaw: {summary['yaw_std']:.4f} degrees",
+        f"Pitch: {summary['pitch_std']:.4f} degrees",
+        f"Roll: {summary['roll_std']:.4f} degrees",
+    ]
+
+    missing_lines = [
+        line
+        for line in required_lines
+        if line not in summary_text
+    ]
+
+    if missing_lines:
+        raise RuntimeError(
+            "Staged evaluator summary is inconsistent with the staged CSV: "
+            + "; ".join(missing_lines)
+        )
+
+
+def replace_owned_outputs(staging_dir):
+    """Replace only evaluator-owned outputs with rollback protection."""
+    final_paths = [
+        RESULTS_CSV,
+        SUMMARY_TXT,
+    ]
+    staged_paths = [
+        staging_dir / RESULTS_CSV.name,
+        staging_dir / SUMMARY_TXT.name,
+    ]
+
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backups = []
+    installed = []
+
+    try:
+        for final_path in final_paths:
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+
+        for staged_path, final_path in zip(staged_paths, final_paths):
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists():
+                os.replace(backup_path, final_path)
+
+        raise
+
+
+
+def parse_args():
+    """Parse optional reproducibility/preflight arguments."""
+    parser = argparse.ArgumentParser(
+        description="Evaluate PhysioTrack head pose on AFLW."
+    )
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help=(
+            "Validate the AFLW layout and database accounting, then exit "
+            "without loading the model or running inference."
+        ),
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    validate_dataset_layout()
+    database_accounting = load_database_accounting()
+    annotations = load_annotations()
+
+    if len(annotations) != database_accounting["joined_records"]:
+        raise RuntimeError(
+            "AFLW annotation query count changed between preflight and load."
+        )
+
+    print("AFLW dataset preflight: PASS")
+    print("Dataset root:", DATASET_ROOT)
+    print(
+        "FacePose records in database:",
+        database_accounting["face_pose_records"],
+    )
+    print("Joined evaluation records:", len(annotations))
+    print(
+        "Primary protocol:",
+        "controlled coarse-pose evaluation within "
+        "|yaw| <= 90, |pitch| < 90, |roll| <= 90 degrees",
+    )
+    print("Device:", DEVICE)
+
+    if args.preflight_only:
+        print("Preflight-only mode: no model inference was run.")
+        return
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".aflw_head_pose_eval_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    staged_results = staging_dir / RESULTS_CSV.name
+    staged_summary = staging_dir / SUMMARY_TXT.name
+
+    print("Staging directory:", staging_dir)
+
+    try:
+        estimator = FaceOrientation(device=DEVICE, verbose=False)
+
+        rows = []
+        start_time = time.perf_counter()
+
+        for index, row in enumerate(annotations, start=1):
+            result = evaluate_sample(row, estimator)
+            rows.append(result)
+
+            if index % 500 == 0:
+                print(f"Processed {index}/{len(annotations)} records")
+
+        elapsed = time.perf_counter() - start_time
+
+        status_counts = {}
+        for row in rows:
+            status = row["status"]
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        summary = summarize_errors(rows)
+
+        eligible_samples = sum(
+            1 for row in rows if row["protocol_eligible"]
+        )
+        failed_eligible_samples = eligible_samples - summary["successful"]
+
+        success_rate = (
+            summary["successful"] / eligible_samples * 100.0
+            if eligible_samples > 0
+            else 0.0
+        )
+
+        print("\n=== AFLW Head Pose Validation ===\n")
+        print(
+            "Database FacePose records:",
+            database_accounting["face_pose_records"],
+        )
+        print("Joined evaluation records:", len(annotations))
+        print("Primary-protocol eligible samples:", eligible_samples)
+
+        for status, count in sorted(status_counts.items()):
+            print(f"{status}: {count}")
+
+        print("\nPrimary evaluation results:")
+        print(f"Successful predictions: {summary['successful']}")
+        print(f"Failed eligible samples: {failed_eligible_samples}")
+        print(f"Success rate: {success_rate:.4f}%")
+        print(f"Yaw MAE: {summary['yaw_mae']:.4f} degrees")
+        print(f"Pitch MAE: {summary['pitch_mae']:.4f} degrees")
+        print(f"Roll MAE: {summary['roll_mae']:.4f} degrees")
+        print(f"Overall MAE: {summary['overall_mae']:.4f} degrees")
+
+        print("\nMedian absolute error:")
+        print(f"Yaw: {summary['yaw_median']:.4f} degrees")
+        print(f"Pitch: {summary['pitch_median']:.4f} degrees")
+        print(f"Roll: {summary['roll_median']:.4f} degrees")
+
+        print("\nStandard deviation of absolute error:")
+        print(f"Yaw: {summary['yaw_std']:.4f} degrees")
+        print(f"Pitch: {summary['pitch_std']:.4f} degrees")
+        print(f"Roll: {summary['roll_std']:.4f} degrees")
+
+        print(f"\nRuntime: {elapsed / 60.0:.2f} minutes")
+
+        save_results(rows, staged_results)
+        save_summary(
+            staged_summary,
+            database_accounting,
+            annotations,
+            status_counts,
+            summary,
+            eligible_samples,
+            failed_eligible_samples,
+            success_rate,
+            elapsed,
+        )
+
+        print("\nValidating staged evaluator outputs...")
+        validate_staged_evaluator_outputs(
+            staged_results,
+            staged_summary,
+            database_accounting,
+        )
+
+        replace_owned_outputs(staging_dir)
+
+        print("Committed final evaluator outputs.")
+
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
 
     print("\nSaved:")
     print(RESULTS_CSV)

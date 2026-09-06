@@ -202,6 +202,13 @@ results/
     |-- aflw_head_pose_error_metrics.png
     `-- aflw_head_pose_error_distribution.png
 
+The isolated component-execution script creates:
+
+results/
+`-- component_execution/
+    |-- head_pose_component_results.csv
+    `-- head_pose_component_summary.json
+
 results/figures/aflw_head_pose_error_metrics.png
     Bar-chart summary of per-axis MAE and median absolute angular error.
 
@@ -303,6 +310,88 @@ The qualitative generator owns and may replace only its own qualitative outputs.
 It does not delete or modify the quantitative result CSV, summary, thesis table,
 or either quantitative head-pose figure.
 
+Isolated PhysioTrack component execution
+----------------------------------------
+A dedicated component-execution script is included to verify that the real
+PhysioTrack FaceOrientation component operates correctly through the project
+FaceAnalysis pipeline:
+
+head_pose_component_test.py
+
+This execution test is separate from the AFLW accuracy benchmark. It does not
+calculate MAE, median error, standard deviation, or any other angular-accuracy
+metric. Its purpose is to run the real project component on the same accepted
+primary-protocol AFLW population and export the actual numerical Head Pose
+outputs produced by PhysioTrack.
+
+The test uses:
+
+- PhysioTrack FaceAnalysis as the project pipeline.
+- FaceOrientation as the target component.
+- 6DRepNet360 as the Head Pose backend.
+- CPU inference.
+- AFLW ground-truth face rectangles as controlled face inputs.
+- Tracking disabled.
+- Unrelated face-analysis components disabled.
+- The same 23,408 primary-protocol AFLW records used by the quantitative
+  benchmark.
+
+AFLW pose annotations are used only to select the same primary-protocol
+population. They are not used to calculate a second set of accuracy metrics in
+this component-execution test.
+
+Before a full execution, the script supports two preliminary checks.
+
+Preflight only:
+
+python head_pose_component_test.py --preflight-only
+
+This verifies the AFLW dataset layout, database accounting, primary-protocol
+population, and isolated FaceAnalysis configuration without loading the model
+or running inference.
+
+Smoke test:
+
+python head_pose_component_test.py --smoke-test --smoke-count 3
+
+The smoke test runs a small number of real FaceAnalysis/FaceOrientation
+inferences and writes no final result files.
+
+Full isolated execution:
+
+python head_pose_component_test.py
+
+The full execution writes:
+
+results/component_execution/head_pose_component_results.csv
+    One structured row for every primary-protocol AFLW record. Successful rows
+    contain the face ID, source image path, controlled face rectangle, yaw,
+    pitch, roll, execution status, and failure information.
+
+results/component_execution/head_pose_component_summary.json
+    Component-execution configuration, population accounting, status counts,
+    runtime, throughput, and overall execution status.
+
+Final isolated execution accounting:
+
+Primary-protocol records: 23,408
+Successful component outputs: 23,407
+Input failures: 1
+Component execution failures: 0
+OK: 23,407
+IMAGE_READ_FAILED: 1
+Overall status: PASS_WITH_INPUT_FAILURES
+
+The single input failure is the same unavailable AFLW image encountered by the
+quantitative evaluator. No PhysioTrack component-execution failures were
+observed.
+
+For all 23,407 successful records, the isolated execution reproduced the same
+FaceOrientation yaw, pitch, and roll outputs used by the quantitative
+evaluation. The component-execution table therefore provides structured
+numerical evidence that the real PhysioTrack Head Pose component is operating
+through the project pipeline as documented.
+
 Validation results
 ------------------
 Successful predictions: 23,407 / 23,408 eligible samples
@@ -328,7 +417,7 @@ MAE 12.8537 degrees
 Median absolute error 6.6887 degrees
 Std. absolute error 22.6988 degrees
 
-Reported CPU runtime: 49.95 minutes.
+Reported CPU runtime for the documented evaluation run: 58.96 minutes.
 
 Interpretation and limitations
 ------------------------------
@@ -354,13 +443,19 @@ For reproducible execution:
 1. Obtain AFLW from the official source.
 2. Arrange the required database and image archives exactly as documented above.
 3. Use the documented project environment and dependencies.
-4. Run the evaluator from validation/head_pose.
-5. Verify the generated CSV and summary.
-6. Generate the thesis table and both quantitative figures from the accepted
-   quantitative CSV.
-7. Run aflw_head_pose_qualitative.py.
-8. Inspect the individual qualitative figures, selection CSV, combined
-   qualitative summary figure, and both quantitative figures.
+4. Run the evaluator preflight and then the full evaluator from
+   validation/head_pose.
+5. Verify the generated quantitative CSV and summary.
+6. Generate the thesis table and both quantitative figures from the quantitative
+   CSV.
+7. Run aflw_head_pose_qualitative.py and inspect the individual qualitative
+   figures, selection CSV, and combined qualitative summary figure.
+8. Run the isolated component preflight and smoke test.
+9. Run head_pose_component_test.py and inspect the structured component
+   results CSV and component summary JSON.
+10. Preserve the quantitative results, figures, qualitative evidence, and
+    isolated component-execution outputs as the reproducible validation
+    artifacts for this component.
 
 Equivalent dataset, model, dependency, and device settings should produce
 scientifically equivalent results. Runtime may vary between systems.
