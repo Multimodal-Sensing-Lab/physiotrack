@@ -5,8 +5,8 @@ Official test split size: 2824
 Evaluated images: 2824
 Successful images: 2824
 Failed images: 0
-Elapsed time: 13793.32 s
-Throughput: 0.2047 images/s
+Elapsed time: 11206.81 s
+Throughput: 0.2520 images/s
 
 Evaluation protocol:
 - Dataset: CelebAMask-HQ

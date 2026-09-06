@@ -1,6 +1,8 @@
 from pathlib import Path
 import csv
+import os
 import shutil
+import tempfile
 
 import cv2
 import numpy as np
@@ -1036,7 +1038,7 @@ def clean_previous_qualitative_outputs():
         COMBINED_FIGURE_PATH.unlink()
 
 
-def main():
+def run_qualitative_generation():
     accepted_summary = load_accepted_summary()
     test_indices = load_test_hq_indices()
 
@@ -1136,6 +1138,104 @@ def main():
     print(
         f"Combined figure: {COMBINED_FIGURE_PATH}"
     )
+
+
+
+def validate_staged_qualitative_outputs():
+    """Validate newly generated qualitative artifacts before final replacement."""
+    if not QUALITATIVE_DIR.is_dir() or not ANNOTATED_DIR.is_dir():
+        raise RuntimeError("Staged qualitative directories were not created.")
+
+    images = sorted(ANNOTATED_DIR.glob("*.png"))
+    if len(images) != 8:
+        raise RuntimeError(f"Expected 8 staged annotated images, found {len(images)}.")
+    for path in images:
+        if cv2.imread(str(path)) is None:
+            raise RuntimeError(f"Could not read staged qualitative image: {path.name}")
+
+    if not SELECTION_CSV_PATH.is_file():
+        raise RuntimeError("Staged qualitative selection CSV was not created.")
+    with SELECTION_CSV_PATH.open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    if len(rows) != 8:
+        raise RuntimeError("Staged qualitative selection CSV must contain 8 rows.")
+
+    expected_roles = {
+        "strong_candidate", "representative_candidate", "challenging_candidate",
+        "high_semantic_diversity", "eye_glasses", "hat", "earring", "necklace",
+    }
+    if {row["role"] for row in rows} != expected_roles:
+        raise RuntimeError("Staged qualitative selection roles are incorrect.")
+
+    image_names = {path.name for path in images}
+    for row in rows:
+        if Path(row["annotated_image"]).name not in image_names:
+            raise RuntimeError("Staged qualitative selection references a missing image.")
+        for field in (
+            "pixel_accuracy", "all_class_miou", "foreground_miou",
+            "all_class_mdice", "foreground_mdice", "foreground_ratio",
+        ):
+            if not np.isfinite(float(row[field])):
+                raise RuntimeError(f"Staged qualitative selection contains non-finite {field}.")
+
+    if not COMBINED_FIGURE_PATH.is_file() or cv2.imread(str(COMBINED_FIGURE_PATH)) is None:
+        raise RuntimeError("Staged qualitative combined figure is unreadable.")
+
+
+def replace_owned_qualitative_outputs(final_qualitative_dir, final_combined_figure_path, staging_dir):
+    """Replace qualitative-owned outputs with rollback on commit failure."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_qualitative = backup_dir / final_qualitative_dir.name
+    backup_figure = backup_dir / final_combined_figure_path.name
+    q_backup = f_backup = q_installed = f_installed = False
+    try:
+        if final_qualitative_dir.exists():
+            os.replace(final_qualitative_dir, backup_qualitative); q_backup = True
+        if final_combined_figure_path.exists():
+            os.replace(final_combined_figure_path, backup_figure); f_backup = True
+        os.replace(QUALITATIVE_DIR, final_qualitative_dir); q_installed = True
+        final_combined_figure_path.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(COMBINED_FIGURE_PATH, final_combined_figure_path); f_installed = True
+    except Exception:
+        if f_installed and final_combined_figure_path.exists(): final_combined_figure_path.unlink()
+        if q_installed and final_qualitative_dir.exists(): shutil.rmtree(final_qualitative_dir)
+        if f_backup and backup_figure.exists(): os.replace(backup_figure, final_combined_figure_path)
+        if q_backup and backup_qualitative.exists(): os.replace(backup_qualitative, final_qualitative_dir)
+        raise
+
+
+def main():
+    """Generate qualitative benchmark evidence transactionally."""
+    global QUALITATIVE_DIR, ANNOTATED_DIR, SELECTION_CSV_PATH, FIGURES_DIR, COMBINED_FIGURE_PATH
+
+    final_qualitative_dir = QUALITATIVE_DIR
+    final_annotated_dir = ANNOTATED_DIR
+    final_selection_csv_path = SELECTION_CSV_PATH
+    final_figures_dir = FIGURES_DIR
+    final_combined_figure_path = COMBINED_FIGURE_PATH
+
+    staging_dir = Path(tempfile.mkdtemp(prefix=".celebamaskhq_segmentation_qualitative_", dir=OUTPUT_DIR))
+    QUALITATIVE_DIR = staging_dir / "qualitative"
+    ANNOTATED_DIR = QUALITATIVE_DIR / "annotated_images"
+    SELECTION_CSV_PATH = QUALITATIVE_DIR / final_selection_csv_path.name
+    FIGURES_DIR = staging_dir / "figures"
+    COMBINED_FIGURE_PATH = FIGURES_DIR / final_combined_figure_path.name
+    try:
+        run_qualitative_generation()
+        print()
+        print("Validating staged qualitative outputs...")
+        validate_staged_qualitative_outputs()
+        replace_owned_qualitative_outputs(final_qualitative_dir, final_combined_figure_path, staging_dir)
+    finally:
+        QUALITATIVE_DIR = final_qualitative_dir
+        ANNOTATED_DIR = final_annotated_dir
+        SELECTION_CSV_PATH = final_selection_csv_path
+        FIGURES_DIR = final_figures_dir
+        COMBINED_FIGURE_PATH = final_combined_figure_path
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
+    print()
+    print("Committed final qualitative outputs.")
 
 
 if __name__ == "__main__":

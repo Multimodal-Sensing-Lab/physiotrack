@@ -1,5 +1,8 @@
 from pathlib import Path
 import csv
+import os
+import shutil
+import tempfile
 import time
 
 import cv2
@@ -685,7 +688,7 @@ def save_summary(
     return output_path
 
 
-def main():
+def run_evaluation():
     validate_required_paths()
 
     test_indices = (
@@ -968,6 +971,128 @@ def main():
         f"Saved summary: "
         f"{summary_path}"
     )
+
+
+
+def validate_staged_evaluator_outputs(staging_dir):
+    """Validate newly generated evaluator artifacts before final replacement."""
+    class_metrics_path = staging_dir / "celebamaskhq_class_metrics.csv"
+    confusion_path = staging_dir / "celebamaskhq_confusion_matrix.csv"
+    summary_path = staging_dir / "celebamaskhq_segmentation_summary.txt"
+
+    for path in (class_metrics_path, confusion_path, summary_path):
+        if not path.is_file():
+            raise RuntimeError(f"Staged evaluator output was not created: {path.name}")
+
+    with class_metrics_path.open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+
+    if len(rows) != NUM_CLASSES:
+        raise RuntimeError(f"Expected {NUM_CLASSES} class-metric rows, found {len(rows)}.")
+
+    if [row["class_name"] for row in rows] != CLASS_NAMES:
+        raise RuntimeError("Staged class-metric class order is incorrect.")
+
+    gt_pixels = np.array([int(row["gt_pixels"]) for row in rows], dtype=np.int64)
+    pred_pixels = np.array([int(row["pred_pixels"]) for row in rows], dtype=np.int64)
+    iou = np.array([float(row["iou"]) for row in rows], dtype=np.float64)
+    dice = np.array([float(row["dice"]) for row in rows], dtype=np.float64)
+
+    with confusion_path.open("r", newline="", encoding="utf-8") as file:
+        cm_rows = list(csv.reader(file))
+
+    if len(cm_rows) != NUM_CLASSES + 1:
+        raise RuntimeError("Staged confusion matrix has an incorrect row count.")
+    if cm_rows[0] != ["gt_class", *CLASS_NAMES]:
+        raise RuntimeError("Staged confusion matrix header is incorrect.")
+
+    matrix = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
+    for class_id, row in enumerate(cm_rows[1:]):
+        if len(row) != NUM_CLASSES + 1 or row[0] != CLASS_NAMES[class_id]:
+            raise RuntimeError("Staged confusion matrix structure is incorrect.")
+        matrix[class_id] = np.array([int(value) for value in row[1:]], dtype=np.int64)
+
+    if np.any(matrix < 0):
+        raise RuntimeError("Staged confusion matrix contains negative counts.")
+
+    recomputed = calculate_metrics(matrix)
+    if not np.array_equal(recomputed["gt_pixels"].astype(np.int64), gt_pixels):
+        raise RuntimeError("Staged ground-truth pixel counts do not match the confusion matrix.")
+    if not np.array_equal(recomputed["pred_pixels"].astype(np.int64), pred_pixels):
+        raise RuntimeError("Staged predicted pixel counts do not match the confusion matrix.")
+    if not np.allclose(recomputed["iou"], iou, rtol=0.0, atol=1e-12, equal_nan=True):
+        raise RuntimeError("Staged IoU values do not match the confusion matrix.")
+    if not np.allclose(recomputed["dice"], dice, rtol=0.0, atol=1e-12, equal_nan=True):
+        raise RuntimeError("Staged Dice values do not match the confusion matrix.")
+
+    summary_text = summary_path.read_text(encoding="utf-8")
+    for token in (
+        "Official test split size: 2824",
+        "Evaluated images: 2824",
+        "Successful images: 2824",
+        "Failed images: 0",
+        "Number of semantic classes: 19",
+        "Aggregation: Dataset-level confusion matrix",
+    ):
+        if token not in summary_text:
+            raise RuntimeError(
+                "Staged evaluator summary is incomplete or the full rerun was not successful: "
+                f"missing {token!r}."
+            )
+
+    expected_pixels = 2824 * 512 * 512
+    if int(matrix.sum()) != expected_pixels:
+        raise RuntimeError("Staged confusion matrix does not account for all pixels in the full test split.")
+
+
+def replace_owned_evaluator_outputs(staging_dir, final_output_dir):
+    """Replace only evaluator-owned outputs with rollback on commit failure."""
+    names = [
+        "celebamaskhq_class_metrics.csv",
+        "celebamaskhq_confusion_matrix.csv",
+        "celebamaskhq_segmentation_summary.txt",
+    ]
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups = []
+    installed = []
+    try:
+        for name in names:
+            final_path = final_output_dir / name
+            if final_path.exists():
+                backup_path = backup_dir / name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+        for name in names:
+            staged_path = staging_dir / name
+            final_path = final_output_dir / name
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists(): final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists(): os.replace(backup_path, final_path)
+        raise
+
+
+def main():
+    """Run the complete scientific evaluator transactionally."""
+    global OUTPUT_DIR
+    final_output_dir = OUTPUT_DIR
+    staging_dir = Path(tempfile.mkdtemp(prefix=".celebamaskhq_segmentation_eval_", dir=final_output_dir))
+    OUTPUT_DIR = staging_dir
+    try:
+        run_evaluation()
+        print()
+        print("Validating staged evaluator outputs...")
+        validate_staged_evaluator_outputs(staging_dir)
+        replace_owned_evaluator_outputs(staging_dir, final_output_dir)
+    finally:
+        OUTPUT_DIR = final_output_dir
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
+    print()
+    print("Committed final evaluator outputs.")
 
 
 if __name__ == "__main__":

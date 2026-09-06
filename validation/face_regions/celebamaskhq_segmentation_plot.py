@@ -1,4 +1,7 @@
 from pathlib import Path
+import os
+import shutil
+import tempfile
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -590,7 +593,7 @@ def create_summary_table(
     return table
 
 
-def main():
+def run_plot_generation():
     dataframe = load_metrics()
 
     confusion_matrix = (
@@ -676,6 +679,115 @@ def main():
         f"Saved summary Markdown table: "
         f"{SUMMARY_TABLE_MD_PATH}"
     )
+
+
+
+def validate_staged_plot_outputs(staged_paths):
+    """Validate newly generated plot and table artifacts before final replacement."""
+    for path in staged_paths:
+        if not path.is_file():
+            raise RuntimeError(f"Staged plot output was not created: {path.name}")
+
+    class_table = pd.read_csv(TABLE_CSV_PATH)
+    if list(class_table.columns) != ["Class", "IoU (%)", "Dice (%)"] or len(class_table) != 19:
+        raise RuntimeError("Staged per-class thesis table is invalid.")
+
+    expected_classes = [
+        "background", "neck", "skin", "cloth", "l_ear", "r_ear", "l_brow", "r_brow",
+        "l_eye", "r_eye", "nose", "mouth", "l_lip", "u_lip", "hair", "eye_g", "hat",
+        "ear_r", "neck_l",
+    ]
+    if class_table["Class"].tolist() != expected_classes:
+        raise RuntimeError("Staged per-class thesis table class order is incorrect.")
+
+    summary_table = pd.read_csv(SUMMARY_TABLE_CSV_PATH)
+    expected_metrics = [
+        "Pixel Accuracy (%)",
+        "All-class mIoU (%)",
+        "Foreground mIoU (%)",
+        "All-class Mean Dice (%)",
+        "Foreground Mean Dice (%)",
+    ]
+    if summary_table["Metric"].tolist() != expected_metrics:
+        raise RuntimeError("Staged summary table metric order is incorrect.")
+
+    for path in (TABLE_MD_PATH, SUMMARY_TABLE_MD_PATH):
+        if not path.read_text(encoding="utf-8").strip():
+            raise RuntimeError(f"Staged Markdown table is empty: {path.name}")
+
+    for path in (FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH):
+        image = plt.imread(path)
+        if image.ndim < 2 or image.shape[0] <= 0 or image.shape[1] <= 0:
+            raise RuntimeError(f"Staged figure is unreadable: {path.name}")
+
+
+def replace_owned_plot_outputs(staged_paths, final_paths, staging_dir):
+    """Replace only plot-owned outputs with rollback on commit failure."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups = []
+    installed = []
+    try:
+        for final_path in final_paths:
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+        for staged_path, final_path in zip(staged_paths, final_paths):
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists(): final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            if backup_path.exists(): os.replace(backup_path, final_path)
+        raise
+
+
+def main():
+    """Generate quantitative tables and figures transactionally."""
+    global FIGURES_DIR, FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH
+    global TABLE_CSV_PATH, TABLE_MD_PATH, SUMMARY_TABLE_CSV_PATH, SUMMARY_TABLE_MD_PATH
+
+    final_figures_dir = FIGURES_DIR
+    final_paths = [
+        FIGURE_PATH,
+        CONFUSION_MATRIX_FIGURE_PATH,
+        TABLE_CSV_PATH,
+        TABLE_MD_PATH,
+        SUMMARY_TABLE_CSV_PATH,
+        SUMMARY_TABLE_MD_PATH,
+    ]
+    staging_dir = Path(tempfile.mkdtemp(prefix=".celebamaskhq_segmentation_plot_", dir=RESULTS_DIR))
+    FIGURES_DIR = staging_dir / "figures"
+    FIGURE_PATH = FIGURES_DIR / final_paths[0].name
+    CONFUSION_MATRIX_FIGURE_PATH = FIGURES_DIR / final_paths[1].name
+    TABLE_CSV_PATH = staging_dir / final_paths[2].name
+    TABLE_MD_PATH = staging_dir / final_paths[3].name
+    SUMMARY_TABLE_CSV_PATH = staging_dir / final_paths[4].name
+    SUMMARY_TABLE_MD_PATH = staging_dir / final_paths[5].name
+    staged_paths = [
+        FIGURE_PATH,
+        CONFUSION_MATRIX_FIGURE_PATH,
+        TABLE_CSV_PATH,
+        TABLE_MD_PATH,
+        SUMMARY_TABLE_CSV_PATH,
+        SUMMARY_TABLE_MD_PATH,
+    ]
+    try:
+        run_plot_generation()
+        print()
+        print("Validating staged plot outputs...")
+        validate_staged_plot_outputs(staged_paths)
+        replace_owned_plot_outputs(staged_paths, final_paths, staging_dir)
+    finally:
+        FIGURES_DIR = final_figures_dir
+        FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH, TABLE_CSV_PATH, TABLE_MD_PATH, SUMMARY_TABLE_CSV_PATH, SUMMARY_TABLE_MD_PATH = final_paths
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
+    print()
+    print("Committed final plot and table outputs.")
 
 
 if __name__ == "__main__":
