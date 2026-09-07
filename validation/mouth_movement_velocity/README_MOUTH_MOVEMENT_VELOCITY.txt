@@ -15,6 +15,12 @@ accepted per-frame PhysioTrack mouth-openness predictions.
 This is a continuous temporal regression evaluation. It is not a mouth-state
 classification task.
 
+After the quantitative benchmark, plotting, and qualitative stages are
+accepted, a separate isolated component-execution test verifies the current
+MouthMovement and mouth-velocity outputs through the real PhysioTrack
+FaceAnalysis pipeline. The isolated execution is software-path and
+reproducibility evidence; it is not a second accuracy benchmark.
+
 Validation Location
 -------------------
 The validation package is located in:
@@ -39,6 +45,13 @@ felt_ravdess_mouth_movement_velocity_qualitative.py
     re-evaluates those frame pairs from the original RAVDESS videos, verifies
     agreement with the accepted quantitative results, and generates annotated
     qualitative examples.
+
+mouth_movement_velocity_component_test.py
+    Executes the current MouthMovement and mouth-velocity path through the real
+    PhysioTrack FaceAnalysis pipeline over the complete paired FELT/RAVDESS
+    speech population, records real numerical component outputs, verifies
+    temporal initialization and continuity-reset semantics, and does not
+    compute a second set of benchmark accuracy metrics.
 
 Datasets and Scope
 ------------------
@@ -91,6 +104,13 @@ ground truth.
 The qualitative validation additionally returns to the original RAVDESS videos
 and reruns PhysioTrack FaceLandmarks, MouthOpenness, and MouthMovement on the
 selected frame pairs.
+
+The isolated component-execution stage is deliberately separate from the
+temporal benchmark. It runs the current real FaceAnalysis path on the same
+complete 1440-trial, 158286-frame population with FaceLandmarks, MouthOpenness,
+and MouthMovement enabled. Its purpose is to verify the implemented software
+path and temporal semantics rather than to produce another FELT accuracy
+result.
 
 Mouth-Openness Reference
 ------------------------
@@ -163,6 +183,17 @@ These initialization frames are recorded in the detailed result file but are
 excluded from regression metrics because no true frame-to-frame transition
 exists at the first frame.
 
+MouthMovement also treats a missing valid mouth input as a temporal boundary.
+When continuity is broken, the next valid sample starts a new temporal segment
+and therefore returns:
+
+mouth_movement = 0
+mouth_velocity = 0
+
+Subsequent valid samples in that segment resume normal frame-to-frame movement
+and velocity computation. The isolated component smoke test explicitly verifies
+this continuity-reset behavior through the real FaceAnalysis pipeline.
+
 Evaluation Protocol
 -------------------
 For every one of the 1440 paired speech trials:
@@ -225,6 +256,35 @@ and:
 
 elapsed_time = 1 / 29.970029970030
              = 0.0333666667 seconds approximately
+
+Safe Rerun and Dataset Protection
+---------------------------------
+The final validation scripts use a staged safe-rerun workflow:
+
+1. Validate the locked dataset, source-result dependency, and protocol.
+2. Create a temporary staging area under
+   validation/mouth_movement_velocity/results/ before generative work begins.
+3. Generate only the outputs owned by the active script inside staging.
+4. Re-read and validate the staged outputs.
+5. Replace accepted script-owned outputs only after staged validation passes.
+6. Preserve or restore prior accepted outputs if final installation fails.
+7. Remove temporary staging artifacts after successful completion or failure.
+
+The quantitative evaluator supports:
+
+python felt_ravdess_mouth_movement_velocity_eval.py --preflight-only
+
+for dataset/source-result verification without temporal evaluation, and:
+
+python felt_ravdess_mouth_movement_velocity_eval.py --validate-existing-results-only
+
+for complete serialized-result validation without regenerating the temporal
+benchmark.
+
+FELT and RAVDESS are treated as read-only benchmark inputs. The isolated
+component execution additionally records file-size and modification-time
+inventories before and after full execution and requires both dataset
+inventories to remain unchanged.
 
 Quantitative Metrics
 --------------------
@@ -432,22 +492,203 @@ anatomical point definitions as well as from temporal estimation error.
 The correct interpretation is agreement or disagreement with the defined FELT
 landmark-derived temporal benchmark.
 
+Isolated Component Execution Verification
+-----------------------------------------
+The accepted isolated component-execution script is:
+
+mouth_movement_velocity_component_test.py
+
+It runs the current PhysioTrack FaceAnalysis pipeline with the following
+configuration.
+
+Enabled components:
+
+- FaceLandmarks
+- MouthOpenness
+- MouthMovement
+
+Disabled unrelated optional components:
+
+- tracking
+- head pose
+- quality
+- eye openness
+- blink
+- legacy gaze
+- learned gaze estimation
+- emotion
+- face regions
+- temporal aggregation
+
+The accepted FELT FaceRect is supplied as controlled upstream localization.
+This prevents face-detector variability from confounding the isolated
+MouthMovement software-path verification while retaining the required real
+FaceLandmarks and MouthOpenness prerequisites.
+
+The isolated execution covers:
+
+Actors: 24
+Paired speech trials: 1440
+Raw FELT annotation rows: 158288
+Unique annotated frames: 158286
+Duplicate annotation rows resolved: 2
+Locked FPS: 29.970029970030
+
+For every accepted frame, the script stores real numerical FaceAnalysis
+outputs including:
+
+- actor, trial, frame, timestamp, and FPS
+- frame dimensions
+- accepted FaceRect and FaceScore
+- duplicate-candidate count
+- landmark availability and landmark count
+- mouth-openness availability
+- mouth_openness, mouth_width, and mouth_height
+- MouthMovement availability
+- mouth_movement
+- mouth_velocity
+- temporal-segment-start status
+- explicit execution status and failure reason
+
+The isolated validator independently checks that:
+
+mouth_openness = mouth_height / mouth_width
+
+The first valid sample of every temporal segment must satisfy:
+
+mouth_movement = 0
+mouth_velocity = 0
+
+For subsequent valid samples:
+
+mouth_movement_t =
+    |mouth_openness_t - mouth_openness_(t-1)|
+
+and, under the locked contiguous-frame FPS:
+
+mouth_velocity_t =
+    mouth_movement_t * 29.970029970030
+
+The dedicated smoke test also introduces a missing-input gap through the real
+FaceAnalysis path and verifies that the first valid post-gap sample restarts at
+zero movement and zero velocity.
+
+The accepted full isolated run produced:
+
+Landmarks available rows: 158286
+MouthOpenness available rows: 158286
+MouthMovement available rows: 158286
+Temporal segment starts: 1440
+Execution failures: 0
+Component unavailable rows: 0
+Overall status: PASS
+Runtime: 2103.66 seconds (approximately 35.06 minutes)
+
+Runtime is environment-dependent and is not a scientific performance metric.
+
+A frame-by-frame audit against the accepted temporal benchmark confirmed that
+the isolated real-pipeline MouthOpenness, MouthMovement, and mouth-velocity
+outputs reproduce the accepted temporal result sequence to floating-point
+precision across the complete 158286-frame population.
+
+Git-Safe Isolated Result Handling
+---------------------------------
+The isolated result writer checks the generated CSV size before final
+installation.
+
+If the complete CSV is at or below 90 MiB, it remains:
+
+results/component_execution/
+mouth_movement_velocity_component_results.csv
+
+If the file would exceed 90 MiB, it is split automatically into sequential
+parts:
+
+mouth_movement_velocity_component_results_part001.csv
+mouth_movement_velocity_component_results_part002.csv
+...
+
+Splitting is allowed only between complete actor groups. An actor is never
+split across multiple result files. The summary JSON records every generated
+filename, row count, actor boundary, and file size.
+
+The accepted run produced one result CSV containing 158286 rows with a size of
+approximately 38.06 MiB, so no split was required.
+
+The isolated execution summary is stored as:
+
+results/component_execution/
+mouth_movement_velocity_component_summary.json
+
 Run Order
 ---------
-Run the scripts from the repository root using the project environment:
+Activate the thesis environment:
 
-python validation/mouth_movement_velocity/felt_ravdess_mouth_movement_velocity_eval.py
-python validation/mouth_movement_velocity/felt_ravdess_mouth_movement_velocity_plot.py
-python validation/mouth_movement_velocity/felt_ravdess_mouth_movement_velocity_qualitative.py
+conda activate PhysioTrack-Thesis
 
+From the component validation directory:
+
+cd /d <project-path>\physiotrack\validation\mouth_movement_velocity
+
+Optional syntax verification:
+
+python -m py_compile felt_ravdess_mouth_movement_velocity_eval.py felt_ravdess_mouth_movement_velocity_plot.py felt_ravdess_mouth_movement_velocity_qualitative.py mouth_movement_velocity_component_test.py
+
+Recommended clean reproduction order:
+
+1. Quantitative preflight:
+
+   python felt_ravdess_mouth_movement_velocity_eval.py --preflight-only
+
+2. Existing-result validation when accepted outputs are already present:
+
+   python felt_ravdess_mouth_movement_velocity_eval.py --validate-existing-results-only
+
+3. Full temporal benchmark:
+
+   python felt_ravdess_mouth_movement_velocity_eval.py
+
+4. Independent quantitative tables and figures:
+
+   python felt_ravdess_mouth_movement_velocity_plot.py
+
+5. Deterministic temporal qualitative validation:
+
+   python felt_ravdess_mouth_movement_velocity_qualitative.py
+
+6. Isolated component preflight:
+
+   python mouth_movement_velocity_component_test.py --preflight-only
+
+7. Real FaceAnalysis smoke test, including explicit continuity-reset
+   verification:
+
+   python mouth_movement_velocity_component_test.py --smoke-test --smoke-count 3
+
+8. Full isolated component execution:
+
+   python mouth_movement_velocity_component_test.py
+
+The quantitative benchmark and isolated component execution serve different
+purposes. The benchmark reports FELT-derived temporal agreement metrics. The
+isolated execution verifies the current implemented FaceAnalysis software path
+and stores real numerical component outputs without generating a second
+accuracy result.
+
+Output Ownership
+----------------
 The scripts have separate output ownership:
 
 - the evaluator owns quantitative per-frame, per-actor, and summary outputs
 - the plotting script owns thesis tables and quantitative figures
 - the qualitative script owns qualitative selections, annotated transitions,
   and the combined qualitative figure
+- the isolated component script owns only component-execution CSV/CSV parts
+  and the component summary JSON
 
-Each script cleans only the artifacts that it owns.
+Each script owns only its designated outputs. New generative outputs are
+created in staging and validated before the corresponding accepted artifacts
+are replaced.
 
 Output Structure
 ----------------
@@ -457,6 +698,7 @@ validation/mouth_movement_velocity/
 |-- felt_ravdess_mouth_movement_velocity_eval.py
 |-- felt_ravdess_mouth_movement_velocity_plot.py
 |-- felt_ravdess_mouth_movement_velocity_qualitative.py
+|-- mouth_movement_velocity_component_test.py
 |-- README_MOUTH_MOVEMENT_VELOCITY.txt
 `-- results/
     |-- felt_ravdess_mouth_movement_velocity_per_frame.csv
@@ -470,10 +712,13 @@ validation/mouth_movement_velocity/
     |   |-- felt_ravdess_mouth_movement_velocity_error_distribution.png
     |   |-- felt_ravdess_mouth_movement_velocity_per_actor.png
     |   `-- felt_ravdess_mouth_movement_velocity_qualitative_examples.png
-    `-- qualitative/
-        |-- felt_ravdess_mouth_movement_velocity_qualitative_selection.csv
-        `-- annotated_transitions/
-            `-- eight annotated temporal-transition PNG examples
+    |-- qualitative/
+    |   |-- felt_ravdess_mouth_movement_velocity_qualitative_selection.csv
+    |   `-- annotated_transitions/
+    |       `-- eight annotated temporal-transition PNG examples
+    `-- component_execution/
+        |-- mouth_movement_velocity_component_results.csv
+        `-- mouth_movement_velocity_component_summary.json
 
 Reproducibility
 ---------------
@@ -494,6 +739,12 @@ same 1440 trials and 158286 annotated frames.
 The qualitative script independently reruns the original video frames selected
 for qualitative inspection and verifies that the current PhysioTrack outputs
 match the accepted quantitative results.
+
+The isolated component execution independently exercises the current real
+FaceAnalysis path over the complete paired speech population, verifies the
+accepted FaceLandmarks model SHA256, enforces controlled FELT FaceRects,
+checks temporal initialization and continuity-reset semantics, validates staged
+serialized outputs before installation, and applies Git-safe result handling.
 
 Methodological Qualifications
 -----------------------------
@@ -517,15 +768,23 @@ inference. The accepted source outputs were produced on the full paired speech
 subset, and the temporal evaluator independently verifies the FELT reference
 for every actor/trial/frame key before computing temporal quantities.
 
-Fifth, all evaluated transitions are consecutive and all videos use the same
-frame rate. The current benchmark therefore validates MouthMovement under the
-normal contiguous-frame operating condition represented by this dataset. It
-does not constitute a separate stress test of irregular frame gaps.
+Fifth, all quantitative benchmark transitions are consecutive and all videos
+use the same frame rate. The reported benchmark accuracy therefore represents
+the normal contiguous-frame operating condition of this dataset. Irregular
+frame gaps are not assigned separate benchmark accuracy metrics. However, the
+isolated real-pipeline smoke test explicitly verifies the required continuity
+reset after a missing input, with the first valid post-gap sample restarting at
+zero movement and zero velocity.
 
 Finally, frame-to-frame differentiation is inherently more sensitive to
 landmark jitter than static mouth-openness estimation. The temporal metrics
 should therefore be interpreted independently rather than expected to match
 the static mouth-openness agreement coefficients.
+
+The isolated component execution is software-path and reproducibility evidence,
+not a second ground-truth accuracy benchmark. Its runtime, availability counts,
+segment-start counts, and result-file size must not be interpreted as
+additional FELT regression metrics.
 
 Scientific Interpretation
 -------------------------
@@ -542,12 +801,48 @@ association and concordance coefficients, as expected under the fixed
 29.970029970030 FPS protocol.
 
 The quantitative result is supported by independent result-file consistency
-checks, per-actor analysis, and temporal qualitative examples spanning low to
-very high movement as well as representative underestimation and
-overestimation cases.
+checks, per-actor analysis, temporal qualitative examples spanning low to very
+high movement as well as representative underestimation and overestimation
+cases, and a separate full-population isolated FaceAnalysis execution with
+complete MouthMovement availability and zero execution failures.
 
 The scientifically appropriate description is:
 
 controlled temporal validation of PhysioTrack MouthMovement and its
 mouth_movement and mouth_velocity outputs on the paired FELT/RAVDESS speech
-subset using a FELT landmark-derived frame-to-frame mouth-openness reference.
+subset using a FELT landmark-derived frame-to-frame mouth-openness reference,
+complemented by isolated real-pipeline MouthMovement software-path
+verification.
+
+
+Final Files to Preserve
+-----------------------
+Final reproducibility artifacts:
+
+- felt_ravdess_mouth_movement_velocity_eval.py
+- felt_ravdess_mouth_movement_velocity_plot.py
+- felt_ravdess_mouth_movement_velocity_qualitative.py
+- mouth_movement_velocity_component_test.py
+- README_MOUTH_MOVEMENT_VELOCITY.txt
+- results/felt_ravdess_mouth_movement_velocity_per_frame.csv
+- results/felt_ravdess_mouth_movement_velocity_per_actor.csv
+- results/felt_ravdess_mouth_movement_velocity_summary.txt
+- results/felt_ravdess_mouth_movement_velocity_thesis_table.csv
+- results/felt_ravdess_mouth_movement_velocity_per_actor_thesis_table.csv
+- results/figures/felt_ravdess_mouth_movement_agreement.png
+- results/figures/felt_ravdess_mouth_velocity_agreement.png
+- results/figures/felt_ravdess_mouth_movement_velocity_error_distribution.png
+- results/figures/felt_ravdess_mouth_movement_velocity_per_actor.png
+- results/figures/felt_ravdess_mouth_movement_velocity_qualitative_examples.png
+- results/qualitative/felt_ravdess_mouth_movement_velocity_qualitative_selection.csv
+- results/qualitative/annotated_transitions/
+- results/component_execution/mouth_movement_velocity_component_results.csv
+- results/component_execution/mouth_movement_velocity_component_summary.json
+
+If a future isolated result exceeds the configured 90 MiB Git-safe threshold,
+the single component-results CSV is replaced by the generated
+mouth_movement_velocity_component_results_partNNN.csv files recorded in the
+summary manifest.
+
+Generated caches and obsolete temporary diagnostic files are not part of the
+final validation deliverables.

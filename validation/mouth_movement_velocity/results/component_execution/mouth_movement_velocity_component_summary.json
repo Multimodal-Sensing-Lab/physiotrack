@@ -1,0 +1,68 @@
+{
+  "component": "PhysioTrack MouthMovement / Mouth Velocity",
+  "execution_type": "isolated component execution; not an accuracy benchmark",
+  "dataset": "FELT/RAVDESS speech subset",
+  "pipeline": "PhysioTrack FaceAnalysis",
+  "physiotrack_source": "src/physiotrack/face/mouth_motion.py",
+  "device": "cpu",
+  "controlled_input": "Accepted FELT FaceRect bounding boxes",
+  "required_prerequisites": [
+    "PhysioTrack FaceLandmarks",
+    "PhysioTrack MouthOpenness"
+  ],
+  "enabled_components": [
+    "landmarks",
+    "mouth",
+    "mouth_motion"
+  ],
+  "disabled_components": [
+    "tracking",
+    "head_pose",
+    "quality",
+    "eyes",
+    "blink",
+    "gaze",
+    "gaze_estimation",
+    "emotion",
+    "regions",
+    "temporal"
+  ],
+  "temporal_semantics": "First valid sample of each temporal segment has mouth_movement=0 and mouth_velocity=0; missing mouth/face input breaks continuity; later valid samples use absolute openness change and elapsed frame time.",
+  "accuracy_metrics_computed": false,
+  "actors": 24,
+  "paired_speech_trials": 1440,
+  "raw_annotation_rows": 158288,
+  "unique_annotated_frames": 158286,
+  "duplicate_rows_resolved": 2,
+  "locked_fps": 29.97002997002997,
+  "landmark_model_file": "face_landmarker.task",
+  "landmark_model_sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "landmarks_available_rows": 158286,
+  "mouth_openness_available_rows": 158286,
+  "mouth_movement_available_rows": 158286,
+  "temporal_segment_start_rows": 1440,
+  "expected_temporal_segment_start_rows": 1440,
+  "status_counts": {
+    "OK": 158286
+  },
+  "execution_failures": 0,
+  "component_unavailable_rows": 0,
+  "runtime_seconds": 2103.6598952,
+  "result_output_policy": {
+    "git_safe_max_file_size_mib": 90.0,
+    "split_only_at_complete_actor_boundaries": true,
+    "result_file_count": 1,
+    "files": [
+      {
+        "filename": "mouth_movement_velocity_component_results.csv",
+        "part_number": 1,
+        "row_count": 158286,
+        "first_actor": "Actor_01",
+        "last_actor": "Actor_24",
+        "size_bytes": 39912484,
+        "size_mib": 38.06351089477539
+      }
+    ]
+  },
+  "overall_status": "PASS"
+}

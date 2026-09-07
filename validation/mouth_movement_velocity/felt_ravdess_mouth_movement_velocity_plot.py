@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import math
+import os
+import shutil
+import tempfile
+import uuid
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -75,6 +79,7 @@ EXPECTED_FPS = 30000.0 / 1001.0
 SUMMARY_TOLERANCE = 5e-7
 PER_ACTOR_TOLERANCE = 5e-12
 IDENTITY_TOLERANCE = 1e-10
+RESULT_CSV_FLOAT_PRECISION = "round_trip"
 
 
 def clean_owned_outputs() -> None:
@@ -297,11 +302,13 @@ def load_quantitative_results() -> tuple[
         )
 
     frame_table = pd.read_csv(
-        PER_FRAME_PATH
+        PER_FRAME_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
     )
 
     actor_table = pd.read_csv(
-        PER_ACTOR_PATH
+        PER_ACTOR_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
     )
 
     required_frame_columns = {
@@ -1340,7 +1347,182 @@ def create_per_actor_figure(
     )
 
 
+
+def validate_staged_plot_outputs(
+    staged_paths: list[Path],
+) -> None:
+    for path in staged_paths:
+        if (
+            not path.is_file()
+            or path.stat().st_size <= 0
+        ):
+            raise RuntimeError(
+                f"Missing or empty staged plot-owned output: {path}"
+            )
+
+    overall = pd.read_csv(
+        staged_paths[
+            0
+        ],
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    per_actor = pd.read_csv(
+        staged_paths[
+            1
+        ],
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    if len(
+        overall
+    ) != 2:
+        raise RuntimeError(
+            "Staged overall thesis table must contain exactly two rows "
+            "(movement and velocity)."
+        )
+
+    if overall[
+        "Measure"
+    ].tolist() != [
+        "Mouth movement",
+        "Mouth velocity",
+    ]:
+        raise RuntimeError(
+            "Staged overall thesis table measure order is inconsistent."
+        )
+
+    if len(
+        per_actor
+    ) != EXPECTED_ACTORS:
+        raise RuntimeError(
+            "Staged per-actor thesis table row count is inconsistent."
+        )
+
+    for path in staged_paths[
+        2:
+    ]:
+        image = plt.imread(
+            path
+        )
+
+        if image.size == 0:
+            raise RuntimeError(
+                f"Staged figure is empty: {path}"
+            )
+
+
+def atomic_copy_file(
+    source_path: Path,
+    destination_path: Path,
+) -> None:
+    destination_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination_path.name}.",
+        suffix=".tmp",
+        dir=destination_path.parent,
+    )
+
+    os.close(
+        descriptor
+    )
+
+    temporary_path = Path(
+        temporary_name
+    )
+
+    try:
+        shutil.copy2(
+            source_path,
+            temporary_path,
+        )
+
+        os.replace(
+            temporary_path,
+            destination_path,
+        )
+
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def commit_owned_files(
+    staged_to_final: list[tuple[Path, Path]],
+    staging_dir: Path,
+) -> None:
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    prior_files = {}
+
+    for _, final_path in staged_to_final:
+        if final_path.is_file():
+            backup_path = (
+                backup_dir
+                / final_path.name
+            )
+
+            shutil.copy2(
+                final_path,
+                backup_path,
+            )
+
+            prior_files[
+                final_path
+            ] = backup_path
+
+    installed = []
+
+    try:
+        for staged_path, final_path in staged_to_final:
+            atomic_copy_file(
+                staged_path,
+                final_path,
+            )
+
+            installed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in installed:
+            backup_path = prior_files.get(
+                final_path
+            )
+
+            if backup_path is not None:
+                shutil.copy2(
+                    backup_path,
+                    final_path,
+                )
+
+            elif final_path.exists():
+                final_path.unlink()
+
+        raise
+
+
 def main() -> None:
+    global FIGURES_DIR
+    global OVERALL_TABLE_PATH
+    global PER_ACTOR_TABLE_PATH
+    global MOVEMENT_AGREEMENT_FIGURE_PATH
+    global VELOCITY_AGREEMENT_FIGURE_PATH
+    global ERROR_FIGURE_PATH
+    global PER_ACTOR_FIGURE_PATH
+    global OWNED_OUTPUTS
     print(
         "=== FELT/RAVDESS Mouth Movement and Velocity Plot and Table Generation ==="
     )
@@ -1446,12 +1628,93 @@ def main() -> None:
             "under equal positive scalar transformation."
         )
 
+    final_paths = list(
+        OWNED_OUTPUTS
+    )
+
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staging_context = tempfile.TemporaryDirectory(
+        prefix=".mouth_movement_velocity_plot_staging_",
+        dir=RESULTS_DIR,
+    )
+
+    staging_root = Path(
+        staging_context.name
+    )
+
+    FIGURES_DIR = (
+        staging_root
+        / "figures"
+    )
+
     FIGURES_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    clean_owned_outputs()
+    OVERALL_TABLE_PATH = (
+        staging_root
+        / final_paths[
+            0
+        ].name
+    )
+
+    PER_ACTOR_TABLE_PATH = (
+        staging_root
+        / final_paths[
+            1
+        ].name
+    )
+
+    MOVEMENT_AGREEMENT_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            2
+        ].name
+    )
+
+    VELOCITY_AGREEMENT_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            3
+        ].name
+    )
+
+    ERROR_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            4
+        ].name
+    )
+
+    PER_ACTOR_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            5
+        ].name
+    )
+
+    OWNED_OUTPUTS = [
+        OVERALL_TABLE_PATH,
+        PER_ACTOR_TABLE_PATH,
+        MOVEMENT_AGREEMENT_FIGURE_PATH,
+        VELOCITY_AGREEMENT_FIGURE_PATH,
+        ERROR_FIGURE_PATH,
+        PER_ACTOR_FIGURE_PATH,
+    ]
+
+    print(
+        f"Staging directory created: {staging_root}"
+    )
+
+    print(
+        "Previous accepted plot/table outputs are preserved until staged "
+        "generation passes validation."
+    )
 
     create_tables(
         frame_table,
@@ -1483,6 +1746,42 @@ def main() -> None:
     create_per_actor_figure(
         actor_table
     )
+
+    validate_staged_plot_outputs(
+        OWNED_OUTPUTS
+    )
+
+    print(
+        "Staged plot/table output validation: PASS"
+    )
+
+    commit_owned_files(
+        list(
+            zip(
+                OWNED_OUTPUTS,
+                final_paths,
+            )
+        ),
+        staging_root,
+    )
+
+    staging_context.cleanup()
+
+    (
+        OVERALL_TABLE_PATH,
+        PER_ACTOR_TABLE_PATH,
+        MOVEMENT_AGREEMENT_FIGURE_PATH,
+        VELOCITY_AGREEMENT_FIGURE_PATH,
+        ERROR_FIGURE_PATH,
+        PER_ACTOR_FIGURE_PATH,
+    ) = final_paths
+
+    FIGURES_DIR = (
+        RESULTS_DIR
+        / "figures"
+    )
+
+    OWNED_OUTPUTS = final_paths
 
     print(
         "Quantitative result consistency: PASS"

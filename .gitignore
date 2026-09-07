@@ -1,1 +1,3 @@
 # Track all files in this repository. No project files are excluded.
+__pycache__/
+*.pyc

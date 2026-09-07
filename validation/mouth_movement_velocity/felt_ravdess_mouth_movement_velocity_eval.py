@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import math
+import os
+import shutil
 import sys
+import tempfile
 import time
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -72,6 +77,9 @@ EXPECTED_FPS = 30000.0 / 1001.0
 
 REFERENCE_TOLERANCE = 1e-9
 FIRST_FRAME_ZERO_TOLERANCE = 1e-12
+SUMMARY_METRIC_TOLERANCE = 5e-7
+PER_ACTOR_METRIC_TOLERANCE = 5e-12
+RESULT_CSV_FLOAT_PRECISION = "round_trip"
 
 REQUIRED_FELT_COLUMNS = {
     "frame",
@@ -721,7 +729,755 @@ def load_mouth_openness_results() -> pd.DataFrame:
     return table
 
 
+
+def parse_summary_scalar(
+    summary_path: Path,
+    label: str,
+) -> str:
+    with summary_path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            if line.startswith(
+                f"{label}:"
+            ):
+                return line.split(
+                    ":",
+                    1,
+                )[1].strip()
+
+    raise RuntimeError(
+        f"Required summary value was not found: {label}"
+    )
+
+
+def parse_summary_metric_sections(
+    summary_path: Path,
+) -> dict[str, dict[str, float]]:
+    sections = {
+        "Mouth Movement Metrics":
+            "movement",
+        "Mouth Velocity Metrics":
+            "velocity",
+    }
+
+    labels = {
+        "MAE":
+            "mae",
+        "RMSE":
+            "rmse",
+        "Median absolute error":
+            "median_absolute_error",
+        "Std absolute error":
+            "std_absolute_error",
+        "90th percentile absolute error":
+            "p90_absolute_error",
+        "95th percentile absolute error":
+            "p95_absolute_error",
+        "Mean signed error (prediction - reference)":
+            "mean_signed_error",
+        "Pearson r":
+            "pearson_r",
+        "Spearman rho":
+            "spearman_rho",
+        "Lin CCC":
+            "ccc",
+    }
+
+    parsed = {
+        "movement": {},
+        "velocity": {},
+    }
+
+    active = None
+
+    with summary_path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            if line in sections:
+                active = sections[
+                    line
+                ]
+                continue
+
+            if (
+                active is None
+                or ":" not in line
+            ):
+                continue
+
+            label, value = line.split(
+                ":",
+                1,
+            )
+
+            label = label.strip()
+
+            if label in labels:
+                parsed[
+                    active
+                ][
+                    labels[
+                        label
+                    ]
+                ] = float(
+                    value.strip()
+                )
+
+    expected = set(
+        labels.values()
+    )
+
+    for section, metrics in parsed.items():
+        missing = sorted(
+            expected
+            - set(
+                metrics
+            )
+        )
+
+        if missing:
+            raise RuntimeError(
+                "Summary is missing required "
+                f"{section} metrics: {missing}"
+            )
+
+    return parsed
+
+
+def validate_serialized_outputs(
+    per_frame_path: Path,
+    per_actor_path: Path,
+    summary_path: Path,
+) -> None:
+    for path in (
+        per_frame_path,
+        per_actor_path,
+        summary_path,
+    ):
+        if (
+            not path.is_file()
+            or path.stat().st_size <= 0
+        ):
+            raise RuntimeError(
+                f"Missing or empty quantitative output: {path}"
+            )
+
+    frame_table = pd.read_csv(
+        per_frame_path,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    actor_table = pd.read_csv(
+        per_actor_path,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    if len(
+        frame_table
+    ) != EXPECTED_UNIQUE_ANNOTATED_FRAMES:
+        raise RuntimeError(
+            "Unexpected serialized per-frame row count."
+        )
+
+    if frame_table.duplicated(
+        [
+            "actor",
+            "trial",
+            "frame",
+        ]
+    ).any():
+        raise RuntimeError(
+            "Duplicate actor/trial/frame rows were found."
+        )
+
+    if len(
+        actor_table
+    ) != len(
+        EXPECTED_ACTORS
+    ):
+        raise RuntimeError(
+            "Unexpected serialized per-actor row count."
+        )
+
+    if actor_table[
+        "actor"
+    ].tolist() != EXPECTED_ACTORS:
+        raise RuntimeError(
+            "Serialized per-actor order changed."
+        )
+
+    initialization = frame_table[
+        frame_table[
+            "temporal_status"
+        ]
+        == "initialization"
+    ].copy()
+
+    transitions = frame_table[
+        frame_table[
+            "temporal_status"
+        ]
+        == "evaluated_transition"
+    ].copy()
+
+    if len(
+        initialization
+    ) != EXPECTED_TOTAL_TRIALS:
+        raise RuntimeError(
+            "Unexpected initialization-frame count."
+        )
+
+    if len(
+        transitions
+    ) != (
+        EXPECTED_UNIQUE_ANNOTATED_FRAMES
+        - EXPECTED_TOTAL_TRIALS
+    ):
+        raise RuntimeError(
+            "Unexpected evaluated-transition count."
+        )
+
+    initialization_values = initialization[
+        [
+            "physiotrack_mouth_movement",
+            "physiotrack_mouth_velocity",
+        ]
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.all(
+        np.isfinite(
+            initialization_values
+        )
+    ):
+        raise RuntimeError(
+            "Initialization rows contain non-finite PhysioTrack outputs."
+        )
+
+    if np.max(
+        np.abs(
+            initialization_values
+        )
+    ) > FIRST_FRAME_ZERO_TOLERANCE:
+        raise RuntimeError(
+            "Initialization movement/velocity semantics changed."
+        )
+
+    numeric_columns = [
+        "felt_openness_reference",
+        "physiotrack_openness",
+        "frame_gap",
+        "elapsed_time_sec",
+        "felt_mouth_movement",
+        "physiotrack_mouth_movement",
+        "movement_signed_error",
+        "movement_absolute_error",
+        "felt_mouth_velocity",
+        "physiotrack_mouth_velocity",
+        "velocity_signed_error",
+        "velocity_absolute_error",
+    ]
+
+    numeric_values = transitions[
+        numeric_columns
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.all(
+        np.isfinite(
+            numeric_values
+        )
+    ):
+        raise RuntimeError(
+            "Evaluated transitions contain non-finite values."
+        )
+
+    frame_gap = transitions[
+        "frame_gap"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.all(
+        frame_gap == 1.0
+    ):
+        raise RuntimeError(
+            "Unexpected temporal gap in accepted FELT sequence."
+        )
+
+    elapsed = transitions[
+        "elapsed_time_sec"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    expected_elapsed = (
+        frame_gap
+        / EXPECTED_FPS
+    )
+
+    if not np.allclose(
+        elapsed,
+        expected_elapsed,
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Serialized elapsed-time values are inconsistent."
+        )
+
+    grouped = frame_table.groupby(
+        [
+            "actor",
+            "trial",
+        ],
+        sort=False,
+    )
+
+    expected_prediction_movement = np.full(
+        len(
+            frame_table
+        ),
+        np.nan,
+        dtype=np.float64,
+    )
+
+    for _, group in grouped:
+        indexes = group.index.to_numpy(
+            dtype=np.int64
+        )
+
+        openness = group[
+            "physiotrack_openness"
+        ].to_numpy(
+            dtype=np.float64
+        )
+
+        if len(
+            openness
+        ) > 1:
+            expected_prediction_movement[
+                indexes[
+                    1:
+                ]
+            ] = np.abs(
+                np.diff(
+                    openness
+                )
+            )
+
+    observed_prediction_movement = frame_table[
+        "physiotrack_mouth_movement"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    transition_mask = (
+        frame_table[
+            "temporal_status"
+        ].to_numpy()
+        == "evaluated_transition"
+    )
+
+    if not np.allclose(
+        observed_prediction_movement[
+            transition_mask
+        ],
+        expected_prediction_movement[
+            transition_mask
+        ],
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Serialized PhysioTrack movement is inconsistent with "
+            "frame-to-frame accepted openness."
+        )
+
+    observed_prediction_velocity = transitions[
+        "physiotrack_mouth_velocity"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.allclose(
+        observed_prediction_velocity,
+        transitions[
+            "physiotrack_mouth_movement"
+        ].to_numpy(
+            dtype=np.float64
+        )
+        * EXPECTED_FPS,
+        rtol=0.0,
+        atol=1e-10,
+    ):
+        raise RuntimeError(
+            "Serialized PhysioTrack velocity is inconsistent with "
+            "movement multiplied by FPS."
+        )
+
+    if not np.allclose(
+        transitions[
+            "movement_signed_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        transitions[
+            "physiotrack_mouth_movement"
+        ].to_numpy(
+            dtype=np.float64
+        )
+        - transitions[
+            "felt_mouth_movement"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Serialized movement signed errors are inconsistent."
+        )
+
+    if not np.allclose(
+        transitions[
+            "movement_absolute_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        np.abs(
+            transitions[
+                "movement_signed_error"
+            ].to_numpy(
+                dtype=np.float64
+            )
+        ),
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Serialized movement absolute errors are inconsistent."
+        )
+
+    if not np.allclose(
+        transitions[
+            "velocity_signed_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        transitions[
+            "physiotrack_mouth_velocity"
+        ].to_numpy(
+            dtype=np.float64
+        )
+        - transitions[
+            "felt_mouth_velocity"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        rtol=0.0,
+        atol=1e-10,
+    ):
+        raise RuntimeError(
+            "Serialized velocity signed errors are inconsistent."
+        )
+
+    if not np.allclose(
+        transitions[
+            "velocity_absolute_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        np.abs(
+            transitions[
+                "velocity_signed_error"
+            ].to_numpy(
+                dtype=np.float64
+            )
+        ),
+        rtol=0.0,
+        atol=1e-10,
+    ):
+        raise RuntimeError(
+            "Serialized velocity absolute errors are inconsistent."
+        )
+
+    movement_metrics = regression_metrics(
+        transitions[
+            "felt_mouth_movement"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        transitions[
+            "physiotrack_mouth_movement"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+    )
+
+    velocity_metrics = regression_metrics(
+        transitions[
+            "felt_mouth_velocity"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        transitions[
+            "physiotrack_mouth_velocity"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+    )
+
+    summary_metrics = parse_summary_metric_sections(
+        summary_path
+    )
+
+    for section, metrics in (
+        (
+            "movement",
+            movement_metrics,
+        ),
+        (
+            "velocity",
+            velocity_metrics,
+        ),
+    ):
+        for metric_name, observed_value in metrics.items():
+            expected_value = summary_metrics[
+                section
+            ][
+                metric_name
+            ]
+
+            if not math.isclose(
+                observed_value,
+                expected_value,
+                rel_tol=0.0,
+                abs_tol=SUMMARY_METRIC_TOLERANCE,
+            ):
+                raise RuntimeError(
+                    "Serialized result/summary metric mismatch for "
+                    f"{section}/{metric_name}."
+                )
+
+    actor_lookup = actor_table.set_index(
+        "actor"
+    )
+
+    for actor, group in transitions.groupby(
+        "actor",
+        sort=True,
+    ):
+        movement = regression_metrics(
+            group[
+                "felt_mouth_movement"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            group[
+                "physiotrack_mouth_movement"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+        )
+
+        velocity = regression_metrics(
+            group[
+                "felt_mouth_velocity"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            group[
+                "physiotrack_mouth_velocity"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+        )
+
+        stored = actor_lookup.loc[
+            actor
+        ]
+
+        for prefix, metrics in (
+            (
+                "movement",
+                movement,
+            ),
+            (
+                "velocity",
+                velocity,
+            ),
+        ):
+            for metric_name, observed_value in metrics.items():
+                column = (
+                    f"{prefix}_"
+                    f"{metric_name}"
+                )
+
+                expected_value = float(
+                    stored[
+                        column
+                    ]
+                )
+
+                if not math.isclose(
+                    observed_value,
+                    expected_value,
+                    rel_tol=0.0,
+                    abs_tol=PER_ACTOR_METRIC_TOLERANCE,
+                ):
+                    raise RuntimeError(
+                        "Serialized per-actor metric mismatch for "
+                        f"{actor}/{column}."
+                    )
+
+
+def atomic_copy_file(
+    source_path: Path,
+    destination_path: Path,
+) -> None:
+    destination_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination_path.name}.",
+        suffix=".tmp",
+        dir=destination_path.parent,
+    )
+
+    os.close(
+        descriptor
+    )
+
+    temporary_path = Path(
+        temporary_name
+    )
+
+    try:
+        shutil.copy2(
+            source_path,
+            temporary_path,
+        )
+
+        os.replace(
+            temporary_path,
+            destination_path,
+        )
+
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def commit_owned_files(
+    staged_to_final: list[tuple[Path, Path]],
+    staging_dir: Path,
+) -> None:
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    prior_files = {}
+
+    for _, final_path in staged_to_final:
+        if final_path.is_file():
+            backup_path = (
+                backup_dir
+                / final_path.name
+            )
+
+            shutil.copy2(
+                final_path,
+                backup_path,
+            )
+
+            prior_files[
+                final_path
+            ] = backup_path
+
+    installed = []
+
+    try:
+        for staged_path, final_path in staged_to_final:
+            atomic_copy_file(
+                staged_path,
+                final_path,
+            )
+
+            installed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in installed:
+            backup_path = prior_files.get(
+                final_path
+            )
+
+            if backup_path is not None:
+                shutil.copy2(
+                    backup_path,
+                    final_path,
+                )
+
+            elif final_path.exists():
+                final_path.unlink()
+
+        raise
+
+
 def main() -> None:
+    global PER_FRAME_OUTPUT_PATH
+    global PER_ACTOR_OUTPUT_PATH
+    global SUMMARY_OUTPUT_PATH
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Evaluate PhysioTrack MouthMovement and velocity on the "
+            "accepted FELT/RAVDESS mouth-openness sequence population."
+        )
+    )
+
+    mode = parser.add_mutually_exclusive_group()
+
+    mode.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help=(
+            "Validate the locked FELT population and accepted mouth-openness "
+            "source results without running temporal evaluation."
+        ),
+    )
+
+    mode.add_argument(
+        "--validate-existing-results-only",
+        action="store_true",
+        help=(
+            "Validate the current serialized MouthMovement/Velocity outputs "
+            "without regenerating them."
+        ),
+    )
+
+    args = parser.parse_args()
+
     print(
         "=== FELT/RAVDESS Mouth Movement and Velocity Evaluation ==="
     )
@@ -858,6 +1614,35 @@ def main() -> None:
         f"{duplicate_rows_resolved}"
     )
 
+    if args.preflight_only:
+        print()
+        print(
+            "Preflight-only mode: no MouthMovement/Velocity evaluation "
+            "was run."
+        )
+        return
+
+    if args.validate_existing_results_only:
+        print()
+        print(
+            "Validating current serialized MouthMovement/Velocity outputs..."
+        )
+
+        validate_serialized_outputs(
+            PER_FRAME_OUTPUT_PATH,
+            PER_ACTOR_OUTPUT_PATH,
+            SUMMARY_OUTPUT_PATH,
+        )
+
+        print(
+            "Existing quantitative output validation: PASS"
+        )
+
+        print(
+            "Validation-only mode: no temporal evaluation was run."
+        )
+        return
+
     print()
 
     OUTPUT_DIR.mkdir(
@@ -865,32 +1650,50 @@ def main() -> None:
         exist_ok=True,
     )
 
-    owned_outputs = (
-        PER_FRAME_OUTPUT_PATH,
-        PER_ACTOR_OUTPUT_PATH,
-        SUMMARY_OUTPUT_PATH,
+    final_per_frame_path = (
+        PER_FRAME_OUTPUT_PATH
     )
 
-    removed_outputs = []
+    final_per_actor_path = (
+        PER_ACTOR_OUTPUT_PATH
+    )
 
-    for output_path in owned_outputs:
-        if output_path.is_file():
-            output_path.unlink()
-            removed_outputs.append(
-                output_path.name
-            )
+    final_summary_path = (
+        SUMMARY_OUTPUT_PATH
+    )
 
-    if removed_outputs:
-        print(
-            "Removed previous quantitative outputs: "
-            + ", ".join(
-                removed_outputs
-            )
-        )
-    else:
-        print(
-            "Previous quantitative outputs: none"
-        )
+    staging_context = tempfile.TemporaryDirectory(
+        prefix=".mouth_movement_velocity_eval_staging_",
+        dir=OUTPUT_DIR,
+    )
+
+    staging_dir = Path(
+        staging_context.name
+    )
+
+    PER_FRAME_OUTPUT_PATH = (
+        staging_dir
+        / final_per_frame_path.name
+    )
+
+    PER_ACTOR_OUTPUT_PATH = (
+        staging_dir
+        / final_per_actor_path.name
+    )
+
+    SUMMARY_OUTPUT_PATH = (
+        staging_dir
+        / final_summary_path.name
+    )
+
+    print(
+        f"Staging directory created: {staging_dir}"
+    )
+
+    print(
+        "Previous accepted quantitative outputs are preserved until the "
+        "staged rerun passes validation."
+    )
 
     print()
 
@@ -1456,6 +2259,57 @@ def main() -> None:
                 summary_lines
             )
         )
+
+    print()
+    print(
+        "Validating staged quantitative outputs..."
+    )
+
+    validate_serialized_outputs(
+        PER_FRAME_OUTPUT_PATH,
+        PER_ACTOR_OUTPUT_PATH,
+        SUMMARY_OUTPUT_PATH,
+    )
+
+    print(
+        "Staged quantitative output validation: PASS"
+    )
+
+    commit_owned_files(
+        [
+            (
+                PER_FRAME_OUTPUT_PATH,
+                final_per_frame_path,
+            ),
+            (
+                PER_ACTOR_OUTPUT_PATH,
+                final_per_actor_path,
+            ),
+            (
+                SUMMARY_OUTPUT_PATH,
+                final_summary_path,
+            ),
+        ],
+        staging_dir,
+    )
+
+    staging_context.cleanup()
+
+    PER_FRAME_OUTPUT_PATH = (
+        final_per_frame_path
+    )
+
+    PER_ACTOR_OUTPUT_PATH = (
+        final_per_actor_path
+    )
+
+    SUMMARY_OUTPUT_PATH = (
+        final_summary_path
+    )
+
+    print(
+        "Committed final quantitative outputs."
+    )
 
     print()
     print(

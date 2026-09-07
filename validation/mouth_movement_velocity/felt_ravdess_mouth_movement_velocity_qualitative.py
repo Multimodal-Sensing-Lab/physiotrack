@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import csv
 import math
+import os
 import shutil
 import sys
+import tempfile
+import uuid
 from pathlib import Path
 
 import cv2
@@ -80,6 +83,7 @@ EXPECTED_FPS = 30000.0 / 1001.0
 
 RERUN_OPENNESS_TOLERANCE = 1e-5
 RERUN_TEMPORAL_TOLERANCE = 1e-10
+RESULT_CSV_FLOAT_PRECISION = "round_trip"
 
 ROLES = [
     "low_movement",
@@ -189,11 +193,13 @@ def load_and_validate_results() -> tuple[
         )
 
     frame_table = pd.read_csv(
-        PER_FRAME_PATH
+        PER_FRAME_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
     )
 
     actor_table = pd.read_csv(
-        PER_ACTOR_PATH
+        PER_ACTOR_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
     )
 
     required_frame_columns = {
@@ -1350,7 +1356,277 @@ def create_combined_figure(
     )
 
 
+
+def validate_staged_qualitative_outputs(
+    selection_csv_path: Path,
+    annotated_dir: Path,
+    combined_figure_path: Path,
+) -> None:
+    if (
+        not selection_csv_path.is_file()
+        or selection_csv_path.stat().st_size <= 0
+    ):
+        raise RuntimeError(
+            "Staged qualitative selection CSV is missing or empty."
+        )
+
+    selection = pd.read_csv(
+        selection_csv_path,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    if len(
+        selection
+    ) != len(
+        ROLES
+    ):
+        raise RuntimeError(
+            "Staged qualitative selection count is inconsistent."
+        )
+
+    if selection[
+        "role"
+    ].tolist() != ROLES:
+        raise RuntimeError(
+            "Staged qualitative role order changed."
+        )
+
+    if selection.duplicated(
+        [
+            "actor",
+            "trial",
+            "previous_frame",
+            "current_frame",
+        ]
+    ).any():
+        raise RuntimeError(
+            "Staged qualitative selection contains duplicate transitions."
+        )
+
+    for accepted, rerun, label, tolerance in (
+        (
+            "accepted_mouth_movement",
+            "rerun_mouth_movement",
+            "movement",
+            RERUN_TEMPORAL_TOLERANCE,
+        ),
+        (
+            "accepted_mouth_velocity",
+            "rerun_mouth_velocity",
+            "velocity",
+            RERUN_TEMPORAL_TOLERANCE,
+        ),
+        (
+            "previous_accepted_physiotrack_openness",
+            "previous_rerun_physiotrack_openness",
+            "previous openness",
+            RERUN_OPENNESS_TOLERANCE,
+        ),
+        (
+            "current_accepted_physiotrack_openness",
+            "current_rerun_physiotrack_openness",
+            "current openness",
+            RERUN_OPENNESS_TOLERANCE,
+        ),
+    ):
+        if not np.allclose(
+            selection[
+                accepted
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            selection[
+                rerun
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            rtol=0.0,
+            atol=tolerance,
+        ):
+            raise RuntimeError(
+                f"Staged qualitative {label} rerun mismatch."
+            )
+
+    image_paths = sorted(
+        annotated_dir.glob(
+            "*.png"
+        )
+    )
+
+    if len(
+        image_paths
+    ) != len(
+        ROLES
+    ):
+        raise RuntimeError(
+            "Unexpected number of staged annotated transition images."
+        )
+
+    for image_path in image_paths:
+        image = cv2.imread(
+            str(
+                image_path
+            )
+        )
+
+        if (
+            image is None
+            or image.size == 0
+        ):
+            raise RuntimeError(
+                f"Staged qualitative image could not be read: {image_path}"
+            )
+
+    combined = cv2.imread(
+        str(
+            combined_figure_path
+        )
+    )
+
+    if (
+        combined is None
+        or combined.size == 0
+    ):
+        raise RuntimeError(
+            "Staged combined qualitative figure is missing or unreadable."
+        )
+
+
+def commit_qualitative_outputs(
+    staged_qualitative_dir: Path,
+    staged_combined_figure: Path,
+    staging_root: Path,
+) -> None:
+    QUALITATIVE_DIR.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    COMBINED_FIGURE_PATH.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    transaction_id = uuid.uuid4().hex
+
+    new_qualitative_dir = (
+        QUALITATIVE_DIR.parent
+        / f".qualitative_new_{transaction_id}"
+    )
+
+    previous_qualitative_dir = (
+        QUALITATIVE_DIR.parent
+        / f".qualitative_previous_{transaction_id}"
+    )
+
+    new_combined = (
+        COMBINED_FIGURE_PATH.parent
+        / f".{COMBINED_FIGURE_PATH.name}.{transaction_id}.tmp"
+    )
+
+    previous_combined = (
+        staging_root
+        / f"previous_{COMBINED_FIGURE_PATH.name}"
+    )
+
+    had_qualitative = QUALITATIVE_DIR.is_dir()
+    had_combined = COMBINED_FIGURE_PATH.is_file()
+    old_moved = False
+    new_installed = False
+    combined_installed = False
+
+    try:
+        shutil.copytree(
+            staged_qualitative_dir,
+            new_qualitative_dir,
+        )
+
+        shutil.copy2(
+            staged_combined_figure,
+            new_combined,
+        )
+
+        if had_combined:
+            shutil.copy2(
+                COMBINED_FIGURE_PATH,
+                previous_combined,
+            )
+
+        if had_qualitative:
+            os.replace(
+                QUALITATIVE_DIR,
+                previous_qualitative_dir,
+            )
+
+            old_moved = True
+
+        os.replace(
+            new_qualitative_dir,
+            QUALITATIVE_DIR,
+        )
+
+        new_installed = True
+
+        os.replace(
+            new_combined,
+            COMBINED_FIGURE_PATH,
+        )
+
+        combined_installed = True
+
+        if previous_qualitative_dir.exists():
+            shutil.rmtree(
+                previous_qualitative_dir
+            )
+
+    except Exception:
+        if new_qualitative_dir.exists():
+            shutil.rmtree(
+                new_qualitative_dir
+            )
+
+        if new_combined.exists():
+            new_combined.unlink()
+
+        if (
+            new_installed
+            and QUALITATIVE_DIR.exists()
+        ):
+            shutil.rmtree(
+                QUALITATIVE_DIR
+            )
+
+        if (
+            old_moved
+            and previous_qualitative_dir.exists()
+        ):
+            os.replace(
+                previous_qualitative_dir,
+                QUALITATIVE_DIR,
+            )
+
+        if combined_installed:
+            if (
+                had_combined
+                and previous_combined.is_file()
+            ):
+                shutil.copy2(
+                    previous_combined,
+                    COMBINED_FIGURE_PATH,
+                )
+            elif COMBINED_FIGURE_PATH.exists():
+                COMBINED_FIGURE_PATH.unlink()
+
+        raise
+
+
 def main() -> None:
+    global FIGURES_DIR
+    global QUALITATIVE_DIR
+    global ANNOTATED_DIR
+    global SELECTION_CSV_PATH
+    global COMBINED_FIGURE_PATH
+
     print(
         "=== FELT/RAVDESS Mouth Movement and Velocity Qualitative Validation ==="
     )
@@ -1415,7 +1691,73 @@ def main() -> None:
             "PhysioTrack MediaPipe face-landmarker model could not be resolved."
         )
 
-    clean_owned_outputs()
+    final_qualitative_dir = (
+        QUALITATIVE_DIR
+    )
+
+    final_combined_figure_path = (
+        COMBINED_FIGURE_PATH
+    )
+
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staging_context = tempfile.TemporaryDirectory(
+        prefix=".mouth_movement_velocity_qualitative_staging_",
+        dir=RESULTS_DIR,
+    )
+
+    staging_root = Path(
+        staging_context.name
+    )
+
+    QUALITATIVE_DIR = (
+        staging_root
+        / "qualitative"
+    )
+
+    ANNOTATED_DIR = (
+        QUALITATIVE_DIR
+        / "annotated_transitions"
+    )
+
+    FIGURES_DIR = (
+        staging_root
+        / "figures"
+    )
+
+    SELECTION_CSV_PATH = (
+        QUALITATIVE_DIR
+        / final_qualitative_dir.joinpath(
+            "felt_ravdess_mouth_movement_velocity_qualitative_selection.csv"
+        ).name
+    )
+
+    COMBINED_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_combined_figure_path.name
+    )
+
+    ANNOTATED_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    print(
+        f"Staging directory created: {staging_root}"
+    )
+
+    print(
+        "Previous accepted qualitative outputs are preserved until staged "
+        "generation passes validation."
+    )
 
     landmarker = FaceLandmarks(
         model_path=model_path,
@@ -1932,8 +2274,13 @@ def main() -> None:
                     "source_video": video_path.relative_to(
                         WORKSPACE_ROOT
                     ).as_posix(),
-                    "output_image": output_path.relative_to(
-                        SCRIPT_DIR
+                    "output_image": (
+                        Path(
+                            "results"
+                        )
+                        / "qualitative"
+                        / "annotated_transitions"
+                        / output_name
                     ).as_posix(),
                 }
             )
@@ -1999,6 +2346,55 @@ def main() -> None:
         raise RuntimeError(
             "RAVDESS dataset integrity check failed during qualitative generation."
         )
+
+    validate_staged_qualitative_outputs(
+        SELECTION_CSV_PATH,
+        ANNOTATED_DIR,
+        COMBINED_FIGURE_PATH,
+    )
+
+    print(
+        "Staged qualitative output validation: PASS"
+    )
+
+    staged_qualitative_dir = (
+        QUALITATIVE_DIR
+    )
+
+    staged_combined_figure = (
+        COMBINED_FIGURE_PATH
+    )
+
+    QUALITATIVE_DIR = (
+        final_qualitative_dir
+    )
+
+    ANNOTATED_DIR = (
+        QUALITATIVE_DIR
+        / "annotated_transitions"
+    )
+
+    FIGURES_DIR = (
+        RESULTS_DIR
+        / "figures"
+    )
+
+    SELECTION_CSV_PATH = (
+        QUALITATIVE_DIR
+        / "felt_ravdess_mouth_movement_velocity_qualitative_selection.csv"
+    )
+
+    COMBINED_FIGURE_PATH = (
+        final_combined_figure_path
+    )
+
+    commit_qualitative_outputs(
+        staged_qualitative_dir,
+        staged_combined_figure,
+        staging_root,
+    )
+
+    staging_context.cleanup()
 
     print()
     print(
