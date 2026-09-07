@@ -1,0 +1,66 @@
+{
+  "component": "PhysioTrack GazeEstimator",
+  "execution_type": "isolated component execution; not an accuracy benchmark",
+  "dataset": "MPIIFaceGaze full annotated image population",
+  "pipeline": "PhysioTrack FaceAnalysis",
+  "physiotrack_source": "src/physiotrack/face/gaze_estimation.py",
+  "device": "cpu",
+  "model_mode": "eth-xgaze",
+  "ptgaze_version": "0.3.0",
+  "checkpoint_file": "model.safetensors",
+  "checkpoint_sha256": "d1c91b2aa6a0c73856c16890d337afdecdb05563ed52182dfdb77742f1c856bc",
+  "required_upstream_input": "Current PhysioTrack face detector boxes passed by FaceAnalysis to GazeEstimator.predict_faces().",
+  "association_note": "The current GazeEstimator face-conditioned path uses one-to-one greedy IoU association and the configured minimum-IoU requirement; target-conditioned crop fallback is handled inside the current source implementation.",
+  "legacy_gaze_note": "Legacy geometric GazeDescriptor is disabled and remains separate from learned gaze_estimation.",
+  "public_api_note": "The current GazeEstimator implementation retains the PredictorMixin-compatible NumPy/path/batch public predict contract; this isolated run exercises the FaceAnalysis predict_faces integration path.",
+  "enabled_components": [
+    "gaze_estimation"
+  ],
+  "disabled_optional_components": [
+    "tracking",
+    "head_pose",
+    "landmarks",
+    "quality",
+    "eyes",
+    "blink",
+    "gaze",
+    "mouth",
+    "mouth_motion",
+    "emotion",
+    "regions",
+    "temporal"
+  ],
+  "gaze_estimation_min_iou": 0.1,
+  "participants": 15,
+  "annotation_images": 37667,
+  "covered_annotation_images": 37667,
+  "images_with_faces": 37666,
+  "images_without_faces": 1,
+  "detected_face_rows": 37809,
+  "gaze_estimation_available_rows": 37661,
+  "status_counts": {
+    "OK": 37661,
+    "NO_GAZE_OUTPUT": 148,
+    "NO_FACE": 1
+  },
+  "execution_failures": 0,
+  "runtime_seconds": 6127.488651900003,
+  "result_output_policy": {
+    "git_safe_max_file_size_mib": 90.0,
+    "split_only_at_complete_participant_boundaries": true,
+    "result_file_count": 1,
+    "files": [
+      {
+        "filename": "gaze_estimation_component_results.csv",
+        "part_number": 1,
+        "row_count": 37810,
+        "first_participant": "p00",
+        "last_participant": "p14",
+        "size_bytes": 9701009,
+        "size_mib": 9.251603126525879
+      }
+    ]
+  },
+  "accuracy_metrics_computed": false,
+  "overall_status": "PASS"
+}

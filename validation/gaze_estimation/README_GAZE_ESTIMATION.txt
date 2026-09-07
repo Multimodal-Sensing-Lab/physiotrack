@@ -9,12 +9,14 @@ PhysioTrack component wraps the pretrained ptgaze backend and is exercised
 through the public PhysioTrack GazeEstimator implementation rather than by
 calling the backend directly.
 
-The validation contains three complementary parts:
+The validation contains four complementary parts:
 
 1. Quantitative evaluation on all MPIIFaceGaze annotations.
 2. Independent result auditing and generation of thesis-ready quantitative
    tables and figures.
 3. Deterministic qualitative evidence selected from the quantitative results.
+4. Isolated component execution through the real PhysioTrack FaceAnalysis
+   pipeline using the current learned GazeEstimator implementation.
 
 Dataset
 -------
@@ -88,6 +90,10 @@ Qualitative evidence generator:
 
 mpiifacegaze_gaze_qualitative.py
 
+Isolated component execution verifier:
+
+gaze_estimation_component_test.py
+
 All validation scripts are located under:
 
 physiotrack/validation/gaze_estimation
@@ -159,16 +165,14 @@ Camera Calibration Handling
 MPIIFaceGaze provides camera calibration in MATLAB format.
 
 For runtime compatibility with ptgaze, the evaluator converts Camera.mat into
-a temporary YAML camera configuration.
+temporary YAML camera configurations.
 
-These temporary camera files are written only to:
+These runtime calibration files are created only inside the evaluator-owned
+staging area under validation/gaze_estimation/results. They are never written
+into datasets/MPIIFaceGaze/Data.
 
-validation/gaze_estimation/_runtime
-
-They are never written into datasets/MPIIFaceGaze/Data.
-
-The runtime directory is deleted automatically after evaluation, including
-when an exception occurs.
+The staging area is deleted automatically after a successful commit or after
+an exception. The dataset itself remains read-only.
 
 Dataset Integrity Protection
 ----------------------------
@@ -184,6 +188,43 @@ evaluator raises an error instead of accepting the run.
 Final evaluation run:
 
 Dataset integrity after evaluation: PASS
+
+Safe Rerun and Output Ownership
+-------------------------------
+The validation package uses script-owned outputs and staged replacement so
+that an interrupted or failed rerun does not destroy previously accepted
+evidence.
+
+The quantitative evaluator owns only:
+
+- results/mpiifacegaze_ethxgaze_summary.txt
+- results/mpiifacegaze_ethxgaze_per_person.csv
+- results/mpiifacegaze_ethxgaze_per_sample.csv
+
+The plotting/audit script owns only:
+
+- results/mpiifacegaze_ethxgaze_audit.txt
+- results/mpiifacegaze_ethxgaze_thesis_table.csv
+- results/mpiifacegaze_ethxgaze_thesis_table.md
+- results/figures/mpiifacegaze_ethxgaze_per_person_mae.png
+- results/figures/mpiifacegaze_ethxgaze_angular_error_distribution.png
+
+The qualitative script owns only:
+
+- results/qualitative/mpiifacegaze_qualitative_manifest.csv
+- results/qualitative/case_01_*.png through case_08_*.png
+- results/figures/mpiifacegaze_qualitative_contact_sheet.png
+
+The isolated component execution script owns only:
+
+- results/component_execution/gaze_estimation_component_results.csv
+- results/component_execution/gaze_estimation_component_summary.json
+
+For each generative stage, new outputs are first produced in a temporary
+staging directory under results, validated there, and only then installed as
+the final script-owned outputs. File-level replacement uses rollback
+protection so accepted prior outputs are preserved if final installation
+fails. Staging data are removed after the run.
 
 Metric
 ------
@@ -286,9 +327,9 @@ Maximum angular error: 57.029950 degrees
 90th percentile angular error: 14.149389 degrees
 95th percentile angular error: 16.026888 degrees
 
-Reported full-run runtime:
+Reported full-run runtime from the accepted clean rerun:
 
-2560.09 seconds
+3046.01 seconds
 
 The 38 face-detection failures were distributed as follows:
 
@@ -385,22 +426,24 @@ as quantitative metrics.
 Scientific comparison remains based exclusively on the 3D angular error
 computed from the original ground-truth and predicted gaze vectors.
 
-Qualitative Output Cleanup
---------------------------
-Before generating new qualitative artifacts, the qualitative script replaces
-only the outputs it owns.
+Qualitative Output Handling
+---------------------------
+The qualitative script generates all eight case images, the manifest, and the
+combined contact sheet inside a staging area first. The staged manifest and
+images are checked against the accepted quantitative per-sample results before
+any final output is replaced.
 
-The eight individual qualitative images and their manifest are written under:
+After staged validation passes, only qualitative-script-owned outputs are
+replaced. Stale qualitative artifacts are removed only after the complete new
+set has been validated and installed successfully.
+
+The eight individual qualitative images and their manifest are stored under:
 
 results/qualitative
 
-The combined qualitative contact sheet is written under:
+The combined qualitative contact sheet is stored under:
 
 results/figures
-
-This keeps individual qualitative evidence separate from the combined
-thesis-ready figure while preventing stale outputs from separate runs from
-being mixed with the current evidence.
 
 The script never deletes or modifies MPIIFaceGaze dataset files.
 
@@ -423,6 +466,160 @@ The manifest stores the exact selection percentile, participant, image path,
 ground-truth and predicted vectors, derived yaw/pitch values, angular error,
 and generated case filename.
 
+Isolated Component Execution Verification
+-----------------------------------------
+After the quantitative evaluator, plotting/audit stage, and qualitative
+evidence were accepted, a separate isolated execution test was run to verify
+the current learned GazeEstimator through the real PhysioTrack FaceAnalysis
+pipeline.
+
+Script:
+
+gaze_estimation_component_test.py
+
+This is not a second accuracy benchmark. It does not recompute MPIIFaceGaze
+ground-truth angular-error metrics.
+
+Configuration:
+
+- Dataset population: complete MPIIFaceGaze annotated image population
+- Participants: 15
+- Annotation images: 37,667
+- Pipeline: PhysioTrack FaceAnalysis
+- Target component: learned GazeEstimator
+- Mode: eth-xgaze
+- Device: cpu
+- ptgaze version: 0.3.0
+- GazeEstimator minimum IoU: 0.10
+- Checkpoint: model.safetensors
+- Checkpoint SHA256:
+  d1c91b2aa6a0c73856c16890d337afdecdb05563ed52182dfdb77742f1c856bc
+
+The current PhysioTrack face detector remains active because FaceAnalysis
+passes its face boxes to GazeEstimator.predict_faces(). All unrelated optional
+components are disabled:
+
+- tracking
+- head_pose
+- landmarks
+- quality
+- eyes
+- blink
+- legacy gaze
+- mouth
+- mouth_motion
+- emotion
+- regions
+- temporal
+
+This preserves the current project design in which the legacy geometric
+GazeDescriptor and the learned GazeEstimator are separate optional
+components.
+
+The current GazeEstimator source performs one-to-one greedy IoU association
+between PhysioTrack face boxes and ptgaze detections. The accepted target-
+conditioned crop fallback and the configured minimum-IoU requirement remain
+inside the current source implementation; the isolated script does not
+duplicate this logic locally.
+
+The isolated run records real numerical component outputs including:
+
+- face bounding-box coordinates
+- detector confidence
+- 3D gaze vector x, y, and z
+- gaze-vector norm
+- pitch
+- yaw
+- association IoU
+- availability
+- explicit status and failure reason
+
+Every successful gaze vector is checked for finite values and unit norm, and
+every successful association must satisfy the configured minimum IoU.
+
+Final isolated execution results:
+
+Participants:
+15
+
+Annotation images:
+37,667
+
+Covered annotation images:
+37,667
+
+Images with at least one detected face:
+37,666
+
+Images without a detected face:
+1
+
+Detected face rows:
+37,809
+
+Total component-result rows:
+37,810
+
+GazeEstimator available rows:
+37,661
+
+NO_GAZE_OUTPUT rows:
+148
+
+NO_FACE rows:
+1
+
+Execution failures:
+0
+
+Overall status:
+PASS
+
+The result contains more rows than annotation images because multi-face images
+produce one row per detected face. The complete 37,667-image annotation
+population remains covered exactly once at image level, while detected-face
+rows preserve the multi-person output structure.
+
+The accepted isolated run also confirms the current one-to-one association
+behavior: in multi-face images only the matched target face receives an
+available gaze-estimation output, while unmatched additional faces remain
+explicitly unavailable.
+
+The numerical output audit found all successful gaze vectors finite and
+unit-normalized within floating-point precision. All successful association
+IoU values were above the configured 0.10 threshold.
+
+The final clean isolated execution runtime was:
+
+102.12 minutes
+
+Runtime is environment-dependent and is not a scientific reproducibility
+target.
+
+Git-Safe Result Handling
+------------------------
+The isolated component writer checks the generated CSV size before final
+installation.
+
+If the complete CSV is at or below the configured Git-safe maximum size of
+90 MiB, it remains a single file:
+
+results/component_execution/gaze_estimation_component_results.csv
+
+If the complete CSV exceeds that limit, the script splits it automatically
+into sequential part files such as:
+
+gaze_estimation_component_results_part001.csv
+gaze_estimation_component_results_part002.csv
+...
+
+Splitting is performed only between complete participant groups. A participant
+is never divided across multiple result files. The summary JSON records the
+generated filenames, row counts, participant boundaries, and file sizes.
+
+The accepted isolated run produced one CSV because its size was only
+approximately 9.25 MiB.
+
 Run Order
 ---------
 Activate the thesis environment:
@@ -439,7 +636,11 @@ installation location.
 
 Optional syntax check:
 
-python -m py_compile mpiifacegaze_ethxgaze_eval.py mpiifacegaze_gaze_plot.py mpiifacegaze_gaze_qualitative.py
+python -m py_compile mpiifacegaze_ethxgaze_eval.py mpiifacegaze_gaze_plot.py mpiifacegaze_gaze_qualitative.py gaze_estimation_component_test.py
+
+Quantitative evaluator preflight:
+
+python mpiifacegaze_ethxgaze_eval.py --preflight-only
 
 Run the quantitative evaluation:
 
@@ -453,14 +654,32 @@ Generate deterministic qualitative evidence:
 
 python mpiifacegaze_gaze_qualitative.py
 
+Isolated component preflight:
+
+python gaze_estimation_component_test.py --preflight-only
+
+Isolated real-pipeline smoke test:
+
+python gaze_estimation_component_test.py --smoke-test --smoke-count 3
+
+Full isolated component execution:
+
+python gaze_estimation_component_test.py
+
+Recommended clean reproduction order:
+
+1. python mpiifacegaze_ethxgaze_eval.py --preflight-only
+2. python mpiifacegaze_ethxgaze_eval.py
+3. python mpiifacegaze_gaze_plot.py
+4. python mpiifacegaze_gaze_qualitative.py
+5. python gaze_estimation_component_test.py --preflight-only
+6. python gaze_estimation_component_test.py --smoke-test --smoke-count 3
+7. python gaze_estimation_component_test.py
+
 Reproducibility Check
 ---------------------
-Before a full run, the dataset preflight can be executed independently from
-the validation directory:
-
-python -c "import importlib.metadata as im; import mpiifacegaze_ethxgaze_eval as m; d=m.preflight_dataset(); print('Dataset root:', m.DATASET_ROOT); print('ptgaze:', im.version('ptgaze')); print('Participants:', len(d)); print('Annotations:', sum(len(x) for x in d.values())); print('PREFLIGHT: PASS')"
-
-A valid installation should report:
+The evaluator and isolated component script both provide dedicated preflight
+modes. A valid installation should report:
 
 ptgaze: 0.3.0
 Participants: 15
@@ -479,6 +698,11 @@ PhysioTrack GazeEstimator component directly, using project-relative paths,
 read-only dataset handling, explicit failure accounting, checkpoint
 provenance, per-sample audit data, independent statistics verification, and
 deterministic qualitative evidence.
+
+The subsequent isolated FaceAnalysis execution independently verifies the
+current learned GazeEstimator software path over the complete 37,667-image
+population and records real per-face numerical outputs without creating a
+second set of accuracy claims.
 
 The participant-level variation and the observed high-error tail are retained
 rather than hidden. The maximum error of 57.029950 degrees and all 38
@@ -501,6 +725,10 @@ The validation evaluates gaze-direction estimation. It does not evaluate
 screen-point-of-regard accuracy, temporal gaze tracking, fixation detection,
 or saccade detection.
 
+The isolated component execution is a software-path and reproducibility
+verification. Its availability counts, face-row counts, and association
+diagnostics must not be interpreted as an additional accuracy benchmark.
+
 Final Files to Preserve
 -----------------------
 Final reproducibility artifacts:
@@ -508,6 +736,7 @@ Final reproducibility artifacts:
 - mpiifacegaze_ethxgaze_eval.py
 - mpiifacegaze_gaze_plot.py
 - mpiifacegaze_gaze_qualitative.py
+- gaze_estimation_component_test.py
 - README_GAZE_ESTIMATION.txt
 - results/mpiifacegaze_ethxgaze_summary.txt
 - results/mpiifacegaze_ethxgaze_per_person.csv
@@ -520,6 +749,13 @@ Final reproducibility artifacts:
 - results/qualitative/mpiifacegaze_qualitative_manifest.csv
 - results/qualitative/case_01_*.png through case_08_*.png
 - results/figures/mpiifacegaze_qualitative_contact_sheet.png
+- results/component_execution/gaze_estimation_component_results.csv
+- results/component_execution/gaze_estimation_component_summary.json
+
+If a future isolated run exceeds the configured Git-safe size threshold, the
+single component-results CSV is replaced by the automatically generated
+gaze_estimation_component_results_partNNN.csv files recorded in the summary
+manifest.
 
 Optional execution evidence includes screenshots of the dataset preflight and
 final quantitative console summary as validation evidence.

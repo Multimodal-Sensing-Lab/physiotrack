@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import csv
 import math
+import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import cv2
@@ -54,12 +56,6 @@ def vector_to_yaw_pitch(vector: np.ndarray) -> tuple[float, float]:
     pitch = math.degrees(math.atan2(y, math.sqrt(x * x + z * z)))
 
     return float(yaw), float(pitch)
-
-
-def clean_output_directory(directory: Path) -> None:
-    if directory.exists():
-        shutil.rmtree(directory)
-    directory.mkdir(parents=True, exist_ok=True)
 
 
 def select_cases(successful: pd.DataFrame) -> list[dict]:
@@ -347,6 +343,419 @@ def annotate_case(
     )
 
 
+def create_staging_directory() -> tuple[Path, Path, Path]:
+    """Create staging before qualitative artifact generation."""
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=".mpiifacegaze_gaze_qualitative_",
+            dir=RESULTS_DIR,
+        )
+    )
+
+    staged_qualitative_dir = (
+        staging_dir
+        / "qualitative"
+    )
+
+    staged_figures_dir = (
+        staging_dir
+        / "figures"
+    )
+
+    staged_qualitative_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staged_figures_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    return (
+        staging_dir,
+        staged_qualitative_dir,
+        staged_figures_dir,
+    )
+
+
+def validate_staged_outputs(
+    staged_qualitative_dir: Path,
+    staged_manifest_path: Path,
+    staged_contact_sheet_path: Path,
+    expected_manifest_rows: list[dict],
+    successful: pd.DataFrame,
+) -> None:
+    """Verify qualitative files and their quantitative provenance."""
+    if not staged_manifest_path.is_file():
+        raise RuntimeError(
+            "Missing staged qualitative manifest."
+        )
+
+    if not staged_contact_sheet_path.is_file():
+        raise RuntimeError(
+            "Missing staged qualitative contact sheet."
+        )
+
+    manifest = pd.read_csv(
+        staged_manifest_path
+    )
+
+    if len(
+        manifest
+    ) != CASE_COUNT:
+        raise RuntimeError(
+            "Unexpected staged qualitative manifest row count."
+        )
+
+    if len(
+        expected_manifest_rows
+    ) != CASE_COUNT:
+        raise RuntimeError(
+            "Unexpected in-memory qualitative manifest row count."
+        )
+
+    expected_output_files = {
+        row[
+            "output_file"
+        ]
+        for row in expected_manifest_rows
+    }
+
+    actual_output_files = {
+        path.name
+        for path in staged_qualitative_dir.glob(
+            "case_*.png"
+        )
+    }
+
+    if actual_output_files != expected_output_files:
+        raise RuntimeError(
+            "Staged qualitative image set does not match the manifest."
+        )
+
+    successful_lookup = successful.set_index(
+        [
+            "participant",
+            "image_relative_path",
+        ],
+        drop=False,
+    )
+
+    for index, expected_row in enumerate(
+        expected_manifest_rows
+    ):
+        stored_row = manifest.iloc[
+            index
+        ]
+
+        string_columns = [
+            "selection_label",
+            "participant",
+            "image_relative_path",
+            "output_file",
+        ]
+
+        for column in string_columns:
+            if str(
+                stored_row[
+                    column
+                ]
+            ) != str(
+                expected_row[
+                    column
+                ]
+            ):
+                raise RuntimeError(
+                    f"Staged qualitative manifest mismatch in {column}."
+                )
+
+        numeric_columns = [
+            "case",
+            "target_percentile",
+            "target_error_deg",
+            "angular_error_deg",
+            "gt_x",
+            "gt_y",
+            "gt_z",
+            "pred_x",
+            "pred_y",
+            "pred_z",
+            "gt_yaw_deg",
+            "gt_pitch_deg",
+            "pred_yaw_deg",
+            "pred_pitch_deg",
+        ]
+
+        for column in numeric_columns:
+            if not math.isclose(
+                float(
+                    stored_row[
+                        column
+                    ]
+                ),
+                float(
+                    expected_row[
+                        column
+                    ]
+                ),
+                rel_tol=0.0,
+                abs_tol=1e-9,
+            ):
+                raise RuntimeError(
+                    f"Staged qualitative manifest mismatch in {column}."
+                )
+
+        key = (
+            str(
+                expected_row[
+                    "participant"
+                ]
+            ),
+            str(
+                expected_row[
+                    "image_relative_path"
+                ]
+            ),
+        )
+
+        if key not in successful_lookup.index:
+            raise RuntimeError(
+                "Qualitative selection is absent from successful raw results."
+            )
+
+        raw_row = successful_lookup.loc[
+            key
+        ]
+
+        if isinstance(
+            raw_row,
+            pd.DataFrame,
+        ):
+            raise RuntimeError(
+                "Duplicate successful quantitative key used by qualitative evidence."
+            )
+
+        if not math.isclose(
+            float(
+                raw_row[
+                    "angular_error_deg"
+                ]
+            ),
+            float(
+                expected_row[
+                    "angular_error_deg"
+                ]
+            ),
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise RuntimeError(
+                "Qualitative angular error differs from raw quantitative evidence."
+            )
+
+        output_path = (
+            staged_qualitative_dir
+            / expected_row[
+                "output_file"
+            ]
+        )
+
+        image = cv2.imread(
+            str(
+                output_path
+            )
+        )
+
+        if image is None or image.size == 0:
+            raise RuntimeError(
+                f"Staged qualitative image is unreadable: {output_path.name}"
+            )
+
+    contact_sheet = cv2.imread(
+        str(
+            staged_contact_sheet_path
+        )
+    )
+
+    if (
+        contact_sheet is None
+        or contact_sheet.size == 0
+    ):
+        raise RuntimeError(
+            "Staged qualitative contact sheet is unreadable."
+        )
+
+
+def atomic_copy_file(
+    source_path: Path,
+    destination_path: Path,
+) -> None:
+    """Atomically install one validated qualitative-owned file."""
+    destination_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination_path.name}.",
+        suffix=".tmp",
+        dir=destination_path.parent,
+    )
+
+    os.close(
+        descriptor
+    )
+
+    temporary_path = Path(
+        temporary_name
+    )
+
+    try:
+        shutil.copy2(
+            source_path,
+            temporary_path,
+        )
+
+        os.replace(
+            temporary_path,
+            destination_path,
+        )
+
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def commit_outputs(
+    staged_qualitative_dir: Path,
+    staged_contact_sheet_path: Path,
+    staging_dir: Path,
+) -> None:
+    """Replace qualitative-owned outputs transactionally with rollback."""
+    QUALITATIVE_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staged_qualitative_files = sorted(
+        path
+        for path in staged_qualitative_dir.iterdir()
+        if path.is_file()
+    )
+
+    output_pairs = [
+        (
+            staged_path,
+            QUALITATIVE_DIR
+            / staged_path.name,
+        )
+        for staged_path in staged_qualitative_files
+    ]
+
+    output_pairs.append(
+        (
+            staged_contact_sheet_path,
+            CONTACT_SHEET_PATH,
+        )
+    )
+
+    desired_qualitative_names = {
+        path.name
+        for path in staged_qualitative_files
+    }
+
+    previous_qualitative_files = sorted(
+        path
+        for path in QUALITATIVE_DIR.iterdir()
+        if path.is_file()
+    )
+
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_qualitative_dir = (
+        backup_dir
+        / "qualitative"
+    )
+
+    backup_qualitative_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    for previous_path in previous_qualitative_files:
+        shutil.copy2(
+            previous_path,
+            backup_qualitative_dir
+            / previous_path.name,
+        )
+
+    backup_contact_sheet = (
+        backup_dir
+        / CONTACT_SHEET_PATH.name
+    )
+
+    if CONTACT_SHEET_PATH.is_file():
+        shutil.copy2(
+            CONTACT_SHEET_PATH,
+            backup_contact_sheet,
+        )
+
+    installed_paths = []
+
+    try:
+        for staged_path, final_path in output_pairs:
+            atomic_copy_file(
+                staged_path,
+                final_path,
+            )
+
+            installed_paths.append(
+                final_path
+            )
+
+        for previous_path in previous_qualitative_files:
+            if (
+                previous_path.name
+                not in desired_qualitative_names
+                and previous_path.exists()
+            ):
+                previous_path.unlink()
+
+    except Exception:
+        for installed_path in installed_paths:
+            if installed_path.exists():
+                installed_path.unlink()
+
+        for backup_path in backup_qualitative_dir.iterdir():
+            atomic_copy_file(
+                backup_path,
+                QUALITATIVE_DIR
+                / backup_path.name,
+            )
+
+        if backup_contact_sheet.is_file():
+            atomic_copy_file(
+                backup_contact_sheet,
+                CONTACT_SHEET_PATH,
+            )
+
+        raise
+
+
 def main() -> None:
     if not DATASET_ROOT.is_dir():
         raise FileNotFoundError(
@@ -413,163 +822,217 @@ def main() -> None:
 
     selections = select_cases(successful)
 
-    clean_output_directory(QUALITATIVE_DIR)
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    (
+        staging_dir,
+        staged_qualitative_dir,
+        staged_figures_dir,
+    ) = create_staging_directory()
 
-    if CONTACT_SHEET_PATH.exists():
-        CONTACT_SHEET_PATH.unlink()
 
-    manifest_rows = []
-    rendered_paths = []
-
-    for case_number, selection in enumerate(selections, start=1):
-        row = selection["row"]
-
-        participant = str(row["participant"])
-        image_relative_path = str(row["image_relative_path"])
-
-        image_path = DATASET_ROOT / participant / image_relative_path
-        image = cv2.imread(str(image_path))
-
-        if image is None:
-            raise RuntimeError(f"Could not read selected image: {image_path}")
-
-        gt_vector = validate_vector(
-            [row["gt_x"], row["gt_y"], row["gt_z"]],
-            "ground-truth",
-        )
-
-        pred_vector = validate_vector(
-            [row["pred_x"], row["pred_y"], row["pred_z"]],
-            "predicted",
-        )
-
-        angular_error = float(row["angular_error_deg"])
-
-        annotated = annotate_case(
-            image=image,
-            gt_vector=gt_vector,
-            pred_vector=pred_vector,
-            participant=participant,
-            image_relative_path=image_relative_path,
-            angular_error_deg=angular_error,
-            percentile_label=selection["percentile_label"],
-        )
-
-        output_name = (
-            f"case_{case_number:02d}_"
-            f"{selection['percentile_label'].lower()}_"
-            f"{participant}.png"
-        )
-
-        output_path = QUALITATIVE_DIR / output_name
-
-        if not cv2.imwrite(str(output_path), annotated):
-            raise RuntimeError(f"Failed to write {output_path.name}")
-
-        rendered_paths.append(output_path)
-
-        gt_yaw, gt_pitch = vector_to_yaw_pitch(gt_vector)
-        pred_yaw, pred_pitch = vector_to_yaw_pitch(pred_vector)
-
-        manifest_rows.append(
-            {
-                "case": case_number,
-                "selection_label": selection["percentile_label"],
-                "target_percentile": selection["target_percentile"],
-                "target_error_deg": selection["target_error_deg"],
-                "participant": participant,
-                "image_relative_path": image_relative_path,
-                "angular_error_deg": angular_error,
-                "gt_x": gt_vector[0],
-                "gt_y": gt_vector[1],
-                "gt_z": gt_vector[2],
-                "pred_x": pred_vector[0],
-                "pred_y": pred_vector[1],
-                "pred_z": pred_vector[2],
-                "gt_yaw_deg": gt_yaw,
-                "gt_pitch_deg": gt_pitch,
-                "pred_yaw_deg": pred_yaw,
-                "pred_pitch_deg": pred_pitch,
-                "output_file": output_name,
-            }
-        )
-
-    with open(MANIFEST_PATH, "w", newline="", encoding="utf-8") as file:
-        fieldnames = list(manifest_rows[0].keys())
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(manifest_rows)
-
-    figure, axes = plt.subplots(
-        2,
-        4,
-        figsize=(20, 10.8),
+    staged_manifest_path = (
+        staged_qualitative_dir
+        / MANIFEST_PATH.name
     )
 
-    for axis, output_path, manifest_row in zip(axes.ravel(), rendered_paths, manifest_rows):
-        image_bgr = cv2.imread(str(output_path))
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    staged_contact_sheet_path = (
+        staged_figures_dir
+        / CONTACT_SHEET_PATH.name
+    )
 
-        axis.imshow(image_rgb)
-        axis.set_title(
+    print(
+        f"Staging directory: {staging_dir}"
+    )
+
+    try:
+        manifest_rows = []
+        rendered_paths = []
+
+        for case_number, selection in enumerate(selections, start=1):
+            row = selection["row"]
+
+            participant = str(row["participant"])
+            image_relative_path = str(row["image_relative_path"])
+
+            image_path = DATASET_ROOT / participant / image_relative_path
+            image = cv2.imread(str(image_path))
+
+            if image is None:
+                raise RuntimeError(f"Could not read selected image: {image_path}")
+
+            gt_vector = validate_vector(
+                [row["gt_x"], row["gt_y"], row["gt_z"]],
+                "ground-truth",
+            )
+
+            pred_vector = validate_vector(
+                [row["pred_x"], row["pred_y"], row["pred_z"]],
+                "predicted",
+            )
+
+            angular_error = float(row["angular_error_deg"])
+
+            annotated = annotate_case(
+                image=image,
+                gt_vector=gt_vector,
+                pred_vector=pred_vector,
+                participant=participant,
+                image_relative_path=image_relative_path,
+                angular_error_deg=angular_error,
+                percentile_label=selection["percentile_label"],
+            )
+
+            output_name = (
+                f"case_{case_number:02d}_"
+                f"{selection['percentile_label'].lower()}_"
+                f"{participant}.png"
+            )
+
+            output_path = staged_qualitative_dir / output_name
+
+            if not cv2.imwrite(str(output_path), annotated):
+                raise RuntimeError(f"Failed to write {output_path.name}")
+
+            rendered_paths.append(output_path)
+
+            gt_yaw, gt_pitch = vector_to_yaw_pitch(gt_vector)
+            pred_yaw, pred_pitch = vector_to_yaw_pitch(pred_vector)
+
+            manifest_rows.append(
+                {
+                    "case": case_number,
+                    "selection_label": selection["percentile_label"],
+                    "target_percentile": selection["target_percentile"],
+                    "target_error_deg": selection["target_error_deg"],
+                    "participant": participant,
+                    "image_relative_path": image_relative_path,
+                    "angular_error_deg": angular_error,
+                    "gt_x": gt_vector[0],
+                    "gt_y": gt_vector[1],
+                    "gt_z": gt_vector[2],
+                    "pred_x": pred_vector[0],
+                    "pred_y": pred_vector[1],
+                    "pred_z": pred_vector[2],
+                    "gt_yaw_deg": gt_yaw,
+                    "gt_pitch_deg": gt_pitch,
+                    "pred_yaw_deg": pred_yaw,
+                    "pred_pitch_deg": pred_pitch,
+                    "output_file": output_name,
+                }
+            )
+
+        with open(
+            staged_manifest_path,
+            "w",
+            newline="",
+            encoding="utf-8",
+        ) as file:
+            fieldnames = list(manifest_rows[0].keys())
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(manifest_rows)
+
+        figure, axes = plt.subplots(
+            2,
+            4,
+            figsize=(20, 10.8),
+        )
+
+        for axis, output_path, manifest_row in zip(axes.ravel(), rendered_paths, manifest_rows):
+            image_bgr = cv2.imread(str(output_path))
+            image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+
+            axis.imshow(image_rgb)
+            axis.set_title(
+                (
+                    f"{manifest_row['selection_label']} | "
+                    f"{manifest_row['participant']} | "
+                    f"{manifest_row['angular_error_deg']:.2f}°"
+                ),
+                fontsize=13,
+                pad=9,
+            )
+            axis.axis("off")
+
+        figure.suptitle(
+            "MPIIFaceGaze Qualitative Evidence: "
+            "Ground Truth vs PhysioTrack GazeEstimator",
+            fontsize=18,
+            y=0.985,
+        )
+
+        figure.text(
+            0.5,
+            0.016,
             (
-                f"{manifest_row['selection_label']} | "
-                f"{manifest_row['participant']} | "
-                f"{manifest_row['angular_error_deg']:.2f}°"
+                "Green = ground truth, red = prediction. "
+                "Arrows are a bounded 2D directional visualization; "
+                "scientific comparison uses the reported 3D angular error."
             ),
-            fontsize=13,
-            pad=9,
+            ha="center",
+            va="bottom",
+            fontsize=11,
         )
-        axis.axis("off")
 
-    figure.suptitle(
-        "MPIIFaceGaze Qualitative Evidence: "
-        "Ground Truth vs PhysioTrack GazeEstimator",
-        fontsize=18,
-        y=0.985,
-    )
+        figure.tight_layout(rect=(0, 0.04, 1, 0.95))
+        figure.savefig(
+            staged_contact_sheet_path,
+            dpi=260,
+            bbox_inches="tight",
+        )
+        plt.close(figure)
 
-    figure.text(
-        0.5,
-        0.016,
-        (
-            "Green = ground truth, red = prediction. "
-            "Arrows are a bounded 2D directional visualization; "
-            "scientific comparison uses the reported 3D angular error."
-        ),
-        ha="center",
-        va="bottom",
-        fontsize=11,
-    )
-
-    figure.tight_layout(rect=(0, 0.04, 1, 0.95))
-    figure.savefig(
-        CONTACT_SHEET_PATH,
-        dpi=260,
-        bbox_inches="tight",
-    )
-    plt.close(figure)
-
-    print("=== MPIIFaceGaze Qualitative Evidence ===")
-    print(f"Successful quantitative samples: {len(successful)}")
-    print(f"Selected cases: {len(manifest_rows)}")
-    print(f"Cleaned output directory before writing: {QUALITATIVE_DIR}")
-    print()
-
-    for row in manifest_rows:
         print(
-            f"Case {row['case']:02d} | "
-            f"{row['selection_label']} | "
-            f"{row['participant']} | "
-            f"{row['image_relative_path']} | "
-            f"error={row['angular_error_deg']:.4f} deg"
+            "Validating staged qualitative outputs..."
         )
 
-    print()
-    print("Dataset write operations: NONE")
-    print(f"Saved manifest: {MANIFEST_PATH}")
-    print(f"Saved contact sheet: {CONTACT_SHEET_PATH}")
+        validate_staged_outputs(
+            staged_qualitative_dir,
+            staged_manifest_path,
+            staged_contact_sheet_path,
+            manifest_rows,
+            successful,
+        )
+
+        commit_outputs(
+            staged_qualitative_dir,
+            staged_contact_sheet_path,
+            staging_dir,
+        )
+
+        print(
+            "Committed final qualitative outputs."
+        )
+
+        print("=== MPIIFaceGaze Qualitative Evidence ===")
+        print(f"Successful quantitative samples: {len(successful)}")
+        print(f"Selected cases: {len(manifest_rows)}")
+        print(
+            "Qualitative outputs were generated and validated in staging "
+            "before final replacement."
+        )
+        print()
+
+        for row in manifest_rows:
+            print(
+                f"Case {row['case']:02d} | "
+                f"{row['selection_label']} | "
+                f"{row['participant']} | "
+                f"{row['image_relative_path']} | "
+                f"error={row['angular_error_deg']:.4f} deg"
+            )
+
+        print()
+        print("Dataset write operations: NONE")
+        print(f"Saved manifest: {MANIFEST_PATH}")
+        print(f"Saved contact sheet: {CONTACT_SHEET_PATH}")
+
+
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(
+                staging_dir,
+                ignore_errors=True,
+            )
 
 
 if __name__ == "__main__":
