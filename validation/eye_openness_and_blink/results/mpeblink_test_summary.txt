@@ -26,7 +26,7 @@ Landmark failures: 105936
 Video frame mismatches: 0
 Video read failures: 0
 Out-of-range blink annotations retained: 1
-Runtime: 87.30 minutes
+Runtime: 96.85 minutes
 
 Blink event evaluation
 ----------------------

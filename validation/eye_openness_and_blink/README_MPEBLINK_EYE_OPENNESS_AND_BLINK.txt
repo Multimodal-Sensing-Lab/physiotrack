@@ -77,6 +77,15 @@ mpeblink_blink_qualitative.py
     landmarks used by EyeOpenness to keep the evidence focused on the
     evaluated component.
 
+eye_openness_blink_component_test.py
+    Performs an isolated execution verification of the current PhysioTrack
+    EyeOpenness and BlinkDetector components through the real FaceAnalysis
+    pipeline. The script keeps only the required FaceLandmarks prerequisite
+    enabled, uses the MPEBlink per-person ground-truth face boxes as controlled
+    upstream input, records real per-person/per-frame numerical component
+    outputs, verifies the accepted blink configuration and population
+    invariants, and does not compute a second accuracy benchmark.
+
 Output Ownership
 ----------------
 The evaluator owns only benchmark-result outputs:
@@ -104,9 +113,25 @@ The qualitative script owns only qualitative outputs:
 - results/qualitative/annotated_images/
 - results/figures/mpeblink_qualitative_examples.png
 
-This separation allows benchmark evaluation, quantitative visualization, and
-qualitative evidence generation to be rerun independently without deleting
-outputs owned by another script.
+The isolated component execution script owns only component-execution
+evidence:
+
+- results/component_execution/eye_openness_blink_component_results_part001.csv
+- results/component_execution/eye_openness_blink_component_results_part002.csv
+- results/component_execution/eye_openness_blink_component_summary.json
+
+The isolated execution writer is size-aware. If the complete per-person/per-frame
+CSV would exceed the configured Git-safe maximum file size, it is split
+automatically at complete-video boundaries only. A video is never divided
+between result parts. Each part repeats the same CSV schema, preserves the
+original row order and numerical values, and is recorded in the summary JSON
+with its row count, video range, and file size. If the complete output remains
+below the configured limit, a single
+eye_openness_blink_component_results.csv file is written instead.
+
+This separation allows benchmark evaluation, quantitative visualization,
+qualitative evidence generation, and isolated component execution to be rerun
+independently without deleting outputs owned by another script.
 
 Evaluated PhysioTrack Components
 --------------------------------
@@ -394,6 +419,185 @@ Final test runtime from the accepted clean rerun:
 Runtime depends on hardware and software environment and is not a scientific
 reproducibility target.
 
+Isolated Component Execution Verification
+-----------------------------------------
+A separate isolated execution test verifies that the accepted EyeOpenness and
+BlinkDetector results are produced by the current PhysioTrack implementation
+through the real FaceAnalysis pipeline rather than by a duplicate local
+implementation of the component logic.
+
+Script:
+
+eye_openness_blink_component_test.py
+
+Execution scope:
+
+Dataset split:
+MPEBlink 2.0 test
+
+Videos:
+212
+
+Annotation frames:
+219,706
+
+Person sequences:
+687
+
+Person-frame samples:
+596,209
+
+Controlled upstream input:
+MPEBlink per-person ground-truth face bounding boxes
+
+Required prerequisite:
+PhysioTrack FaceLandmarks
+
+Enabled components:
+
+- landmarks
+- eyes
+- blink
+
+Disabled unrelated components:
+
+- tracking
+- head_pose
+- quality
+- gaze
+- gaze_estimation
+- mouth
+- mouth_motion
+- emotion
+- regions
+- temporal
+
+The test executes the current PhysioTrack EyeOpenness implementation, including
+its image-dimension-aware pixel-consistent landmark geometry, and the current
+BlinkDetector through FaceAnalysis.
+
+The accepted blink configuration is verified during execution:
+
+blink_threshold = 0.22
+min_closed_frames = 3
+
+Blink temporal state is reset between independent benchmark videos, and the
+BlinkDetector is bound to each video's measured FPS before processing that
+video.
+
+The isolated test is not a second accuracy benchmark. It does not recompute
+precision, recall, F1, ROC AUC, temporal IoU, or the benchmark ground-truth
+event metrics. Its purpose is to verify real component execution, numerical
+output structure, temporal configuration, population accounting, and
+consistency with the accepted benchmark pipeline.
+
+Final isolated execution results:
+
+Videos:
+212
+
+Annotation frames:
+219,706
+
+Person sequences:
+687
+
+Person-frame rows:
+596,209
+
+Valid face-box annotations:
+495,858
+
+Missing face-box annotations:
+100,341
+
+Invalid face-box annotations:
+10
+
+EyeOpenness available rows:
+389,922
+
+Blink available rows:
+389,922
+
+Blink event pulses:
+5,987
+
+Execution failures:
+0
+
+Status accounting:
+
+OK:
+389,922
+
+NO_EYE_OUTPUT:
+105,936
+
+MISSING_BOX:
+100,341
+
+INVALID_BOX:
+10
+
+The valid-box accounting is internally consistent:
+
+389,922 successful EyeOpenness rows
++ 105,936 rows without available EyeOpenness
+= 495,858 valid face-box samples
+
+The isolated execution therefore reproduces the accepted benchmark-level
+component accounting exactly for valid boxes, successful EyeOpenness outputs,
+landmark/EyeOpenness failures, and predicted blink-event count.
+
+The saved per-person/per-frame CSV preserves the real numerical values
+generated by PhysioTrack, including:
+
+- left_openness
+- right_openness
+- mean_openness
+- eye_state
+- blink event flag
+- blink_count
+- blink_duration
+- blink_rate
+- FaceLandmarks availability and landmark count
+- controlled face-box coordinates
+- FPS and timestamp
+- explicit sample status and failure reason
+
+For every available EyeOpenness row, the stored values are finite and
+mean_openness is consistent with the arithmetic mean of left_openness and
+right_openness. Available BlinkDetector rows use valid open/closed eye states,
+non-negative temporal quantities, and the accepted threshold/minimum-closure
+configuration.
+
+The final clean isolated execution completed in:
+
+99.63 minutes
+
+Runtime is environment-dependent and is not a scientific reproducibility
+target.
+
+For the accepted isolated execution, the complete 596,209-row result was
+written as two Git-safe CSV parts without changing any scientific output:
+
+Part 001:
+- videos 1-187
+- 293,689 rows
+- 50.32 MiB
+
+Part 002:
+- videos 188-212
+- 302,520 rows
+- 50.42 MiB
+
+The second part begins with a new benchmark video. No video or temporal
+sequence is split across files. The two parts together preserve the complete
+596,209-row execution population and the accepted totals of 389,922 available
+EyeOpenness rows, 389,922 available BlinkDetector rows, 5,987 blink-event
+pulses, and zero execution failures.
+
 Qualitative Evaluation
 ----------------------
 Eight deterministic qualitative cases are generated from the final test
@@ -479,6 +683,12 @@ results/qualitative/annotated_videos/
 results/qualitative/annotated_images/
 results/figures/mpeblink_qualitative_examples.png
 
+Isolated component-execution outputs:
+
+results/component_execution/eye_openness_blink_component_results_part001.csv
+results/component_execution/eye_openness_blink_component_results_part002.csv
+results/component_execution/eye_openness_blink_component_summary.json
+
 Reproduction
 ------------
 Activate the PhysioTrack thesis environment and move to:
@@ -510,17 +720,43 @@ Qualitative evaluation:
 
 python mpeblink_blink_qualitative.py
 
+Isolated component preflight:
+
+python eye_openness_blink_component_test.py --preflight-only
+
+Isolated real-pipeline smoke test:
+
+python eye_openness_blink_component_test.py --smoke-test --smoke-count 3
+
+Full isolated component execution:
+
+python eye_openness_blink_component_test.py
+
+The isolated execution script validates the complete staged output before
+installation. When splitting is required for repository-safe storage, it
+chooses split points only between complete video groups and records the
+generated output manifest in
+results/component_execution/eye_openness_blink_component_summary.json.
+
 Recommended clean reproduction order when all outputs are regenerated:
 
 1. python mpeblink_blink_eval.py --calibrate
 2. python mpeblink_blink_eval.py
 3. python mpeblink_blink_plot.py
 4. python mpeblink_blink_qualitative.py
+5. python eye_openness_blink_component_test.py --preflight-only
+6. python eye_openness_blink_component_test.py --smoke-test --smoke-count 3
+7. python eye_openness_blink_component_test.py
 
 The calibration rerun is required only when validation-split parameter
 selection needs to be regenerated. If the accepted calibration CSV is already
-preserved and unchanged, the final test, plotting, and qualitative stages can
-be reproduced without recalibrating.
+preserved and unchanged, the final test, plotting, qualitative, and isolated
+component-execution stages can be reproduced without recalibrating.
+
+The isolated component test must not be interpreted as an additional accuracy
+evaluation. The benchmark evaluator remains the authoritative source of
+precision, recall, F1, temporal-IoU, ROC-AUC, blink-count, blink-rate, and
+duration-error results.
 
 Expected core final-test values:
 
@@ -586,6 +822,11 @@ It does not train or fine-tune a blink-specific model.
 The reported blink-event metrics follow the project protocol based on
 one-to-one temporal-IoU matching at tIoU >= 0.50.
 
+The isolated component execution uses the same benchmark test population and
+controlled face initialization only to verify execution of the current
+PhysioTrack EyeOpenness and BlinkDetector components. It does not generate a
+new set of benchmark accuracy claims.
+
 
 Final Files to Preserve
 -----------------------
@@ -594,6 +835,7 @@ Final reproducibility artifacts:
 - mpeblink_blink_eval.py
 - mpeblink_blink_plot.py
 - mpeblink_blink_qualitative.py
+- eye_openness_blink_component_test.py
 - README_MPEBLINK_EYE_OPENNESS_AND_BLINK.txt
 - results/mpeblink_val_calibration.csv
 - results/mpeblink_test_summary.txt
@@ -606,6 +848,9 @@ Final reproducibility artifacts:
 - results/qualitative/annotated_videos/
 - results/qualitative/annotated_images/
 - results/figures/mpeblink_qualitative_examples.png
+- results/component_execution/eye_openness_blink_component_results_part001.csv
+- results/component_execution/eye_openness_blink_component_results_part002.csv
+- results/component_execution/eye_openness_blink_component_summary.json
 
 Generated caches and obsolete temporary diagnostic files are not part of the
 final validation deliverables.

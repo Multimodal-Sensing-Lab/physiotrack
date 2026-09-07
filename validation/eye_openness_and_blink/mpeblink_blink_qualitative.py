@@ -1,7 +1,9 @@
 import csv
 import json
 import math
+import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import cv2
@@ -88,6 +90,293 @@ MIN_CLOSED_FRAMES = (
 EVENT_IOU_THRESHOLD = (
     benchmark.EVENT_IOU_THRESHOLD
 )
+
+
+def make_qualitative_staging_dir():
+    """Create a qualitative-owned staging directory under results."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix=".mpeblink_blink_qualitative_", dir=RESULTS_DIR))
+
+
+def validate_staged_qualitative_outputs(qualitative_dir, selection_csv, combined_image):
+    """Validate staged qualitative evidence before final replacement."""
+    video_dir=qualitative_dir/"annotated_videos"; image_dir=qualitative_dir/"annotated_images"
+    if not selection_csv.is_file(): raise RuntimeError("Staged qualitative selection CSV was not created.")
+    table=pd.read_csv(selection_csv)
+    expected_video_prefix = str(
+        Path("results")
+        / "qualitative"
+        / "annotated_videos"
+    )
+    expected_image_prefix = str(
+        Path("results")
+        / "qualitative"
+        / "annotated_images"
+    )
+    for _, row in table.iterrows():
+        video_path = Path(str(row["video_output"]))
+        image_path = Path(str(row["image_output"]))
+        if str(video_path.parent) != expected_video_prefix:
+            raise RuntimeError(
+                "Staged selection CSV contains a non-final video output path."
+            )
+        if str(image_path.parent) != expected_image_prefix:
+            raise RuntimeError(
+                "Staged selection CSV contains a non-final image output path."
+            )
+        if not (qualitative_dir / "annotated_videos" / video_path.name).is_file():
+            raise RuntimeError(
+                f"Staged qualitative video is missing: {video_path.name}"
+            )
+        if not (qualitative_dir / "annotated_images" / image_path.name).is_file():
+            raise RuntimeError(
+                f"Staged qualitative image is missing: {image_path.name}"
+            )
+    expected_roles=["strong_detection","representative","challenging_false_positive","challenging_false_negative","mixed_detection","accurate_count","high_blink_activity","low_blink_activity"]
+    if list(table["role"]) != expected_roles: raise RuntimeError("Staged qualitative role order is incorrect.")
+    videos=sorted(video_dir.glob("*.mp4")); images=sorted(image_dir.glob("*.png"))
+    if len(videos)!=8 or len(images)!=8: raise RuntimeError(f"Expected eight staged videos and images; found {len(videos)} videos and {len(images)} images.")
+    for path in videos+images+[combined_image]:
+        if not path.is_file() or path.stat().st_size<=0: raise RuntimeError(f"Staged qualitative artifact is missing or empty: {path}")
+    if cv2.imread(str(combined_image)) is None: raise RuntimeError("Staged combined qualitative figure could not be decoded.")
+    for path in images:
+        if cv2.imread(str(path)) is None: raise RuntimeError(f"Staged qualitative image could not be decoded: {path}")
+    for path in videos:
+        cap=cv2.VideoCapture(str(path))
+        try:
+            if not cap.isOpened() or int(cap.get(cv2.CAP_PROP_FRAME_COUNT))<=0: raise RuntimeError(f"Staged qualitative video is not readable: {path}")
+        finally: cap.release()
+
+
+def atomic_copy_file(source_path, destination_path):
+    """Atomically copy one file into place on the destination filesystem."""
+    destination_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination_path.name}.",
+        suffix=".tmp",
+        dir=destination_path.parent,
+    )
+
+    os.close(
+        file_descriptor
+    )
+
+    temporary_path = Path(
+        temporary_name
+    )
+
+    try:
+        shutil.copy2(
+            source_path,
+            temporary_path,
+        )
+
+        os.replace(
+            temporary_path,
+            destination_path,
+        )
+
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def restore_qualitative_backup(
+    backup_qualitative_dir,
+    backup_combined_image,
+    final_qualitative_dir,
+    final_combined_image,
+):
+    """Restore the previous accepted qualitative evidence file by file."""
+    if backup_qualitative_dir.exists():
+        backup_files = [
+            path
+            for path in backup_qualitative_dir.rglob("*")
+            if path.is_file()
+        ]
+
+        backup_relative_paths = {
+            path.relative_to(
+                backup_qualitative_dir
+            )
+            for path in backup_files
+        }
+
+        if final_qualitative_dir.exists():
+            final_files = [
+                path
+                for path in final_qualitative_dir.rglob("*")
+                if path.is_file()
+            ]
+
+            for path in final_files:
+                relative_path = path.relative_to(
+                    final_qualitative_dir
+                )
+
+                if relative_path not in backup_relative_paths:
+                    path.unlink()
+
+        for backup_file in backup_files:
+            relative_path = backup_file.relative_to(
+                backup_qualitative_dir
+            )
+
+            atomic_copy_file(
+                backup_file,
+                final_qualitative_dir
+                / relative_path,
+            )
+
+    elif final_qualitative_dir.exists():
+        shutil.rmtree(
+            final_qualitative_dir
+        )
+
+    if backup_combined_image.exists():
+        atomic_copy_file(
+            backup_combined_image,
+            final_combined_image,
+        )
+
+    elif final_combined_image.exists():
+        final_combined_image.unlink()
+
+
+def replace_qualitative_outputs(
+    staged_qualitative_dir,
+    staged_combined_image,
+    staging_dir,
+):
+    """Replace only qualitative-owned outputs with rollback protection."""
+    final_qualitative_dir = (
+        RESULTS_DIR
+        / "qualitative"
+    )
+
+    final_combined_image = (
+        RESULTS_DIR
+        / "figures"
+        / "mpeblink_qualitative_examples.png"
+    )
+
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    backup_qualitative_dir = (
+        backup_dir
+        / "qualitative"
+    )
+
+    backup_combined_image = (
+        backup_dir
+        / final_combined_image.name
+    )
+
+    if final_qualitative_dir.exists():
+        shutil.copytree(
+            final_qualitative_dir,
+            backup_qualitative_dir,
+        )
+
+    if final_combined_image.exists():
+        shutil.copy2(
+            final_combined_image,
+            backup_combined_image,
+        )
+
+    staged_files = [
+        path
+        for path in staged_qualitative_dir.rglob("*")
+        if path.is_file()
+    ]
+
+    staged_relative_paths = {
+        path.relative_to(
+            staged_qualitative_dir
+        )
+        for path in staged_files
+    }
+
+    try:
+        for staged_file in staged_files:
+            relative_path = staged_file.relative_to(
+                staged_qualitative_dir
+            )
+
+            atomic_copy_file(
+                staged_file,
+                final_qualitative_dir
+                / relative_path,
+            )
+
+        atomic_copy_file(
+            staged_combined_image,
+            final_combined_image,
+        )
+
+        if final_qualitative_dir.exists():
+            final_files = [
+                path
+                for path in final_qualitative_dir.rglob("*")
+                if path.is_file()
+            ]
+
+            for path in final_files:
+                relative_path = path.relative_to(
+                    final_qualitative_dir
+                )
+
+                if relative_path not in staged_relative_paths:
+                    path.unlink()
+
+            directories = sorted(
+                [
+                    path
+                    for path in final_qualitative_dir.rglob("*")
+                    if path.is_dir()
+                ],
+                key=lambda path: len(
+                    path.parts
+                ),
+                reverse=True,
+            )
+
+            for directory in directories:
+                try:
+                    directory.rmdir()
+                except OSError:
+                    pass
+
+    except Exception as error:
+        try:
+            restore_qualitative_backup(
+                backup_qualitative_dir,
+                backup_combined_image,
+                final_qualitative_dir,
+                final_combined_image,
+            )
+
+        except Exception as rollback_error:
+            raise RuntimeError(
+                "Qualitative output replacement failed and rollback also "
+                "failed. Existing evidence may require manual inspection. "
+                f"Replacement error: {error}. "
+                f"Rollback error: {rollback_error}."
+            ) from error
+
+        raise
 
 PANEL_WIDTH = 520
 DISPLAY_WIDTH = 1280
@@ -2359,14 +2648,16 @@ def write_case_outputs(
         "clip_start": clip_start,
         "clip_end": clip_end,
         "video_output": str(
-            video_output_path.relative_to(
-                SCRIPT_DIR
-            )
+            Path("results")
+            / "qualitative"
+            / "annotated_videos"
+            / video_output_path.name
         ),
         "image_output": str(
-            image_output_path.relative_to(
-                SCRIPT_DIR
-            )
+            Path("results")
+            / "qualitative"
+            / "annotated_images"
+            / image_output_path.name
         ),
     }
 
@@ -2377,10 +2668,12 @@ def save_combined_image(rows):
 
     for row in rows:
         image_path = (
-            SCRIPT_DIR
-            / row[
-                "image_output"
-            ]
+            IMAGE_DIR
+            / Path(
+                row[
+                    "image_output"
+                ]
+            ).name
         )
 
         image = cv2.imread(
@@ -2487,232 +2780,55 @@ def verify_summary_configuration():
 
 def main():
     """Generate verified professional video and image benchmark evidence."""
-    if not DATASET_ROOT.is_dir():
-        raise RuntimeError(
-            f"MPEBlink 2.0 dataset not found: {DATASET_ROOT}"
-        )
-
-    if not SEQUENCE_RESULTS_PATH.is_file():
-        raise RuntimeError(
-            "Accepted quantitative sequence results are required: "
-            f"{SEQUENCE_RESULTS_PATH}"
-        )
-
-    if not SUMMARY_PATH.is_file():
-        raise RuntimeError(
-            "Accepted quantitative summary is required: "
-            f"{SUMMARY_PATH}"
-        )
-
+    global QUALITATIVE_DIR, VIDEO_DIR, IMAGE_DIR, SELECTION_CSV_PATH, COMBINED_IMAGE_PATH
+    if not DATASET_ROOT.is_dir(): raise RuntimeError(f"MPEBlink 2.0 dataset not found: {DATASET_ROOT}")
+    if not SEQUENCE_RESULTS_PATH.is_file(): raise RuntimeError("Accepted quantitative sequence results are required: " f"{SEQUENCE_RESULTS_PATH}")
+    if not SUMMARY_PATH.is_file(): raise RuntimeError("Accepted quantitative summary is required: " f"{SUMMARY_PATH}")
     verify_summary_configuration()
-
-    table = pd.read_csv(
-        SEQUENCE_RESULTS_PATH
-    )
-
-    required_columns = {
-        "video_id",
-        "person_id",
-        "fps",
-        "frames",
-        "gt_blinks",
-        "predicted_blinks",
-        "true_positive",
-        "false_positive",
-        "false_negative",
-        "absolute_count_error",
-    }
-
-    missing_columns = (
-        required_columns
-        - set(
-            table.columns
-        )
-    )
-
-    if missing_columns:
-        raise RuntimeError(
-            "Accepted sequence-results CSV is missing columns: "
-            f"{sorted(missing_columns)}"
-        )
-
-    selected = select_cases(
-        table
-    )
-
-    model_path = Models.resolve(
-        Models.Face.MediaPipe.Landmarks.face_landmarker
-    )
-
-    landmarks_model = FaceLandmarks(
-        model_path=model_path,
-        num_faces=1,
-    )
-
-    eye_model = EyeOpenness()
-
-    verified = []
-
-    print(
-        "Selected qualitative benchmark cases:"
-    )
-
+    table=pd.read_csv(SEQUENCE_RESULTS_PATH)
+    required_columns={"video_id","person_id","fps","frames","gt_blinks","predicted_blinks","true_positive","false_positive","false_negative","absolute_count_error"}
+    missing_columns=required_columns-set(table.columns)
+    if missing_columns: raise RuntimeError("Accepted sequence-results CSV is missing columns: " f"{sorted(missing_columns)}")
+    selected=select_cases(table)
+    staging_dir=make_qualitative_staging_dir()
+    final_qual=QUALITATIVE_DIR; final_video=VIDEO_DIR; final_image=IMAGE_DIR; final_selection=SELECTION_CSV_PATH; final_combined=COMBINED_IMAGE_PATH
+    staged_qual=staging_dir/"qualitative"; staged_video=staged_qual/"annotated_videos"; staged_image=staged_qual/"annotated_images"; staged_selection=staged_qual/final_selection.name; staged_combined=staging_dir/"figures"/final_combined.name
+    QUALITATIVE_DIR=staged_qual; VIDEO_DIR=staged_video; IMAGE_DIR=staged_image; SELECTION_CSV_PATH=staged_selection; COMBINED_IMAGE_PATH=staged_combined
+    landmarks_model=None
     try:
+        print("Staging directory:", staging_dir)
+        clean_owned_outputs()
+        model_path=Models.resolve(Models.Face.MediaPipe.Landmarks.face_landmarker)
+        landmarks_model=FaceLandmarks(model_path=model_path,num_faces=1)
+        eye_model=EyeOpenness(); verified=[]
+        print("Selected qualitative benchmark cases:")
         for role, accepted_row in selected:
-            video_id = int(
-                accepted_row[
-                    "video_id"
-                ]
-            )
-
-            person_id = str(
-                accepted_row[
-                    "person_id"
-                ]
-            )
-
-            print(
-                f"  {role}: "
-                f"test/{video_id}/{person_id}"
-            )
-
-            result = process_sequence(
-                video_id,
-                person_id,
-                landmarks_model,
-                eye_model,
-            )
-
-            verify_against_accepted(
-                role,
-                accepted_row,
-                result,
-            )
-
-            verified.append(
-                (
-                    role,
-                    accepted_row,
-                    result,
-                )
-            )
-
+            video_id=int(accepted_row["video_id"]); person_id=str(accepted_row["person_id"])
+            print(f"  {role}: test/{video_id}/{person_id}")
+            result=process_sequence(video_id,person_id,landmarks_model,eye_model)
+            verify_against_accepted(role,accepted_row,result)
+            verified.append((role,accepted_row,result))
+        print("Selected-case re-run verification: PASS")
+        output_rows=[]
+        for role,accepted_row,result in verified:
+            output=write_case_outputs(role,accepted_row,result)
+            for field in ["gt_blinks","predicted_blinks","true_positive","false_positive","false_negative"]: output[field]=int(accepted_row[field])
+            output_rows.append(output)
+        with SELECTION_CSV_PATH.open("w",newline="",encoding="utf-8") as file:
+            writer=csv.DictWriter(file,fieldnames=list(output_rows[0].keys())); writer.writeheader(); writer.writerows(output_rows)
+        save_combined_image(output_rows)
+        print("Validating staged qualitative outputs...")
+        validate_staged_qualitative_outputs(QUALITATIVE_DIR,SELECTION_CSV_PATH,COMBINED_IMAGE_PATH)
+        replace_qualitative_outputs(QUALITATIVE_DIR,COMBINED_IMAGE_PATH,staging_dir)
+        print("Committed final qualitative outputs.")
+        print("\nQualitative benchmark generation: PASS")
+        print("Generated professional dynamic benchmark videos and images.")
+        print("Saved:")
+        print(final_selection); print(final_video); print(final_image); print(final_combined)
     finally:
-        landmarks_model.close()
-
-    print(
-        "Selected-case re-run verification: PASS"
-    )
-
-    clean_owned_outputs()
-
-    output_rows = []
-
-    for (
-        role,
-        accepted_row,
-        result,
-    ) in verified:
-        output = write_case_outputs(
-            role,
-            accepted_row,
-            result,
-        )
-
-        output[
-            "gt_blinks"
-        ] = int(
-            accepted_row[
-                "gt_blinks"
-            ]
-        )
-
-        output[
-            "predicted_blinks"
-        ] = int(
-            accepted_row[
-                "predicted_blinks"
-            ]
-        )
-
-        output[
-            "true_positive"
-        ] = int(
-            accepted_row[
-                "true_positive"
-            ]
-        )
-
-        output[
-            "false_positive"
-        ] = int(
-            accepted_row[
-                "false_positive"
-            ]
-        )
-
-        output[
-            "false_negative"
-        ] = int(
-            accepted_row[
-                "false_negative"
-            ]
-        )
-
-        output_rows.append(
-            output
-        )
-
-    with SELECTION_CSV_PATH.open(
-        "w",
-        newline="",
-        encoding="utf-8",
-    ) as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=list(
-                output_rows[
-                    0
-                ].keys()
-            ),
-        )
-
-        writer.writeheader()
-        writer.writerows(
-            output_rows
-        )
-
-    save_combined_image(
-        output_rows
-    )
-
-    print(
-        "\nQualitative benchmark generation: PASS"
-    )
-
-    print(
-        "Generated professional dynamic benchmark videos and images."
-    )
-
-    print(
-        "Saved:"
-    )
-
-    print(
-        SELECTION_CSV_PATH
-    )
-
-    print(
-        VIDEO_DIR
-    )
-
-    print(
-        IMAGE_DIR
-    )
-
-    print(
-        COMBINED_IMAGE_PATH
-    )
+        if landmarks_model is not None: landmarks_model.close()
+        QUALITATIVE_DIR=final_qual; VIDEO_DIR=final_video; IMAGE_DIR=final_image; SELECTION_CSV_PATH=final_selection; COMBINED_IMAGE_PATH=final_combined
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
 
 
 if __name__ == "__main__":

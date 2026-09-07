@@ -1,5 +1,8 @@
 from pathlib import Path
+import os
 import re
+import shutil
+import tempfile
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,6 +45,50 @@ REQUIRED_SEQUENCE_COLUMNS = {
     "absolute_count_error",
     "absolute_rate_error_per_min",
 }
+
+
+def make_plot_staging_dir():
+    """Create a plotting-owned staging directory under results."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix=".mpeblink_blink_plot_", dir=RESULTS_DIR))
+
+
+def validate_staged_plot_outputs(table_csv, table_md, metric_figure, calibration_figure):
+    """Validate staged tables and figures before final replacement."""
+    for path in [table_csv, table_md, metric_figure, calibration_figure]:
+        if not path.is_file() or path.stat().st_size <= 0:
+            raise RuntimeError(f"Expected staged plot output is missing or empty: {path}")
+    table = pd.read_csv(table_csv)
+    expected_metrics = ["Test videos", "Person sequences", "Availability", "ROC AUC", "Blink-frame median openness", "Non-blink median openness", "Precision", "Recall", "F1-score", "Mean matched temporal IoU", "Ground-truth blinks", "Predicted blinks", "Blink-count MAE per sequence", "Blink-rate MAE", "Mean blink-duration error", "Processing time"]
+    if list(table["Metric"]) != expected_metrics:
+        raise RuntimeError("Staged thesis-table metric order is incorrect.")
+    markdown = table_md.read_text(encoding="utf-8")
+    for metric in expected_metrics:
+        if metric not in markdown:
+            raise RuntimeError(f"Staged Markdown table is missing metric: {metric}")
+
+
+def replace_plot_outputs(staged_to_final, staging_dir):
+    """Replace only plot-owned outputs with rollback protection."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups=[]; installed=[]
+    try:
+        for staged_path, final_path in staged_to_final:
+            if not staged_path.is_file():
+                raise RuntimeError(f"Missing staged plot output: {staged_path}")
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            if final_path.exists():
+                backup_path=backup_dir/final_path.name
+                os.replace(final_path,backup_path); backups.append((backup_path,final_path))
+        for staged_path, final_path in staged_to_final:
+            os.replace(staged_path,final_path); installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists(): final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists(): os.replace(backup_path,final_path)
+        raise
 
 
 def remove_file_if_exists(path):
@@ -1099,79 +1146,38 @@ def print_sequence_summary(
 
 
 def main():
-    metrics = read_summary(
-        SUMMARY_PATH
-    )
-
-    clean_plot_outputs()
-
-    sequence_results = (
-        load_sequence_results()
-    )
-
-    verify_results(
-        metrics,
-        sequence_results,
-    )
-
-    table = save_thesis_table(
-        metrics
-    )
-
-    save_figure(
-        metrics
-    )
-
-    selected_validation_f1 = (
-        save_calibration_figure()
-    )
-
-    print(
-        "Independent result verification: PASS"
-    )
-
-    print(
-        "Selected validation calibration F1:",
-        f"{selected_validation_f1:.6f}",
-    )
-
-    print(
-        "\nThesis table"
-    )
-
-    print(
-        "------------"
-    )
-
-    print(
-        table.to_string(
-            index=False
-        )
-    )
-
-    print_sequence_summary(
-        sequence_results
-    )
-
-    print(
-        "\nSaved:"
-    )
-
-    print(
-        TABLE_CSV_PATH
-    )
-
-    print(
-        TABLE_MD_PATH
-    )
-
-    print(
-        FIGURE_PATH
-    )
-
-    print(
-        CALIBRATION_FIGURE_PATH
-    )
+    global TABLE_CSV_PATH, TABLE_MD_PATH, FIGURE_PATH, CALIBRATION_FIGURE_PATH, FIGURES_DIR
+    metrics = read_summary(SUMMARY_PATH)
+    sequence_results = load_sequence_results()
+    verify_results(metrics, sequence_results)
+    staging_dir = make_plot_staging_dir()
+    final_table_csv=TABLE_CSV_PATH; final_table_md=TABLE_MD_PATH; final_figure=FIGURE_PATH; final_calibration=CALIBRATION_FIGURE_PATH; final_figures_dir=FIGURES_DIR
+    staged_figures=staging_dir/"figures"
+    staged_table_csv=staging_dir/final_table_csv.name
+    staged_table_md=staging_dir/final_table_md.name
+    staged_figure=staged_figures/final_figure.name
+    staged_calibration=staged_figures/final_calibration.name
+    try:
+        print("Staging directory:", staging_dir)
+        TABLE_CSV_PATH=staged_table_csv; TABLE_MD_PATH=staged_table_md; FIGURES_DIR=staged_figures; FIGURE_PATH=staged_figure; CALIBRATION_FIGURE_PATH=staged_calibration
+        table=save_thesis_table(metrics)
+        save_figure(metrics)
+        selected_validation_f1=save_calibration_figure()
+        print("Validating staged plot outputs...")
+        validate_staged_plot_outputs(staged_table_csv, staged_table_md, staged_figure, staged_calibration)
+        replace_plot_outputs([(staged_table_csv,final_table_csv),(staged_table_md,final_table_md),(staged_figure,final_figure),(staged_calibration,final_calibration)], staging_dir)
+        print("Committed final plot and table outputs.")
+        print("Independent result verification: PASS")
+        print("Selected validation calibration F1:", f"{selected_validation_f1:.6f}")
+        print("\nThesis table")
+        print("------------")
+        print(table.to_string(index=False))
+        print_sequence_summary(sequence_results)
+        print("\nSaved:")
+        print(final_table_csv); print(final_table_md); print(final_figure); print(final_calibration)
+    finally:
+        TABLE_CSV_PATH=final_table_csv; TABLE_MD_PATH=final_table_md; FIGURES_DIR=final_figures_dir; FIGURE_PATH=final_figure; CALIBRATION_FIGURE_PATH=final_calibration
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
 
 
 if __name__ == "__main__":

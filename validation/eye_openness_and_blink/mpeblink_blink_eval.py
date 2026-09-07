@@ -2,6 +2,9 @@ from pathlib import Path
 import argparse
 import csv
 import json
+import os
+import shutil
+import tempfile
 import time
 
 import cv2
@@ -75,6 +78,123 @@ EVALUATION_SPLITS = [
     "val",
     "test",
 ]
+
+
+def make_staging_dir(prefix):
+    """Create an evaluator-owned staging directory under results."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix=prefix, dir=RESULTS_DIR))
+
+
+def replace_owned_files(staged_to_final, staging_dir):
+    """Replace only evaluator-owned files with rollback protection."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups = []
+    installed = []
+    try:
+        for staged_path, final_path in staged_to_final:
+            if not staged_path.is_file():
+                raise RuntimeError(f"Missing staged evaluator output: {staged_path}")
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+        for staged_path, final_path in staged_to_final:
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists():
+                final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            if backup_path.exists():
+                os.replace(backup_path, final_path)
+        raise
+
+
+def validate_calibration_output(path):
+    """Validate staged calibration output before replacement."""
+    if not path.is_file():
+        raise RuntimeError(f"Calibration CSV was not created: {path}")
+    with path.open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    expected_rows = len(CALIBRATION_THRESHOLDS) * len(CALIBRATION_MIN_CLOSED_FRAMES)
+    if len(rows) != expected_rows:
+        raise RuntimeError(f"Expected {expected_rows} calibration rows, found {len(rows)}.")
+    required = {"threshold", "min_closed_frames", "precision", "recall", "f1", "mean_matched_tiou"}
+    if not rows or not required.issubset(rows[0].keys()):
+        raise RuntimeError("Staged calibration CSV is missing required columns.")
+    seen = set()
+    best_key = None
+    best_threshold = None
+    best_min_frames = None
+    for row in rows:
+        threshold = float(row["threshold"])
+        min_frames = int(float(row["min_closed_frames"]))
+        values = np.asarray([threshold, min_frames, float(row["precision"]), float(row["recall"]), float(row["f1"]), float(row["mean_matched_tiou"])], dtype=float)
+        if not np.all(np.isfinite(values)):
+            raise RuntimeError("Staged calibration CSV contains non-finite required values.")
+        key = (round(threshold, 12), min_frames)
+        if key in seen:
+            raise RuntimeError(f"Duplicate calibration configuration found: {key}")
+        seen.add(key)
+        rank = (float(row["f1"]), float(row["mean_matched_tiou"]))
+        if best_key is None or rank > best_key:
+            best_key = rank
+            best_threshold = threshold
+            best_min_frames = min_frames
+    if len(seen) != expected_rows:
+        raise RuntimeError("Calibration configuration grid is incomplete.")
+    if not np.isclose(best_threshold, SELECTED_THRESHOLD, rtol=0.0, atol=1e-12) or best_min_frames != SELECTED_MIN_CLOSED_FRAMES:
+        raise RuntimeError("Staged calibration does not reproduce the frozen selected configuration.")
+
+
+def validate_test_outputs(summary_path, sequence_path):
+    """Validate staged final-test outputs before replacement."""
+    if not summary_path.is_file() or not sequence_path.is_file():
+        raise RuntimeError("Staged final-test outputs are incomplete.")
+    with sequence_path.open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    if len(rows) != 687:
+        raise RuntimeError(f"Expected 687 test person-sequence rows, found {len(rows)}.")
+    required = {"video_id", "person_id", "fps", "frames", "gt_blinks", "predicted_blinks", "true_positive", "false_positive", "false_negative", "absolute_count_error", "absolute_rate_error_per_min"}
+    if not rows or not required.issubset(rows[0].keys()):
+        raise RuntimeError("Staged sequence-results CSV is missing required columns.")
+    keys = set()
+    gt_total = pred_total = tp_total = fp_total = fn_total = 0
+    for row in rows:
+        key = (int(row["video_id"]), row["person_id"])
+        if key in keys:
+            raise RuntimeError(f"Duplicate test sequence row found: {key}")
+        keys.add(key)
+        fps = float(row["fps"]); frames = int(float(row["frames"]))
+        gt = int(float(row["gt_blinks"])); pred = int(float(row["predicted_blinks"]))
+        tp = int(float(row["true_positive"])); fp = int(float(row["false_positive"])); fn = int(float(row["false_negative"]))
+        count_error = float(row["absolute_count_error"]); rate_error = float(row["absolute_rate_error_per_min"])
+        vals=np.asarray([fps,frames,gt,pred,tp,fp,fn,count_error,rate_error],dtype=float)
+        if not np.all(np.isfinite(vals)):
+            raise RuntimeError(f"Non-finite staged sequence values for {key}.")
+        if fps <= 0 or frames <= 0:
+            raise RuntimeError(f"Invalid fps/frame accounting for {key}.")
+        if pred != tp + fp or gt != tp + fn:
+            raise RuntimeError(f"Event accounting mismatch for {key}.")
+        if not np.isclose(count_error, abs(pred-gt), rtol=0.0, atol=1e-12):
+            raise RuntimeError(f"Blink-count error mismatch for {key}.")
+        gt_rate = gt / frames * fps * 60.0
+        pred_rate = pred / frames * fps * 60.0
+        if not np.isclose(rate_error, abs(pred_rate-gt_rate), rtol=0.0, atol=1e-9):
+            raise RuntimeError(f"Blink-rate error mismatch for {key}.")
+        gt_total += gt; pred_total += pred; tp_total += tp; fp_total += fp; fn_total += fn
+    precision = tp_total/(tp_total+fp_total) if tp_total+fp_total else 0.0
+    recall = tp_total/(tp_total+fn_total) if tp_total+fn_total else 0.0
+    f1 = 2*precision*recall/(precision+recall) if precision+recall else 0.0
+    summary = summary_path.read_text(encoding="utf-8")
+    expected = ["Split: test", "Blink threshold: 0.2200", "Minimum closed frames: 3", "Videos: 212", "Person sequences: 687", f"Ground-truth blinks: {gt_total}", f"Predicted blinks: {pred_total}", f"True positives: {tp_total}", f"False positives: {fp_total}", f"False negatives: {fn_total}", f"Precision: {precision:.6f}", f"Recall: {recall:.6f}", f"F1: {f1:.6f}"]
+    for line in expected:
+        if line not in summary:
+            raise RuntimeError(f"Staged test summary is inconsistent with sequence results: {line}")
 
 
 def remove_file_if_exists(path):
@@ -1502,12 +1622,10 @@ def evaluate_records(
 def save_sequence_results(
     split,
     sequence_rows,
+    output_path=None,
 ):
     """Save per-person sequence results for independent verification."""
-    path = (
-        RESULTS_DIR
-        / f"mpeblink_{split}_sequence_results.csv"
-    )
+    path = output_path if output_path is not None else (RESULTS_DIR / f"mpeblink_{split}_sequence_results.csv")
 
     if not sequence_rows:
         raise RuntimeError(
@@ -1540,12 +1658,10 @@ def save_summary(
     split,
     stats,
     metrics,
+    output_path=None,
 ):
     """Save the evaluator-level quantitative summary."""
-    path = (
-        RESULTS_DIR
-        / f"mpeblink_{split}_summary.txt"
-    )
+    path = output_path if output_path is not None else (RESULTS_DIR / f"mpeblink_{split}_summary.txt")
 
     with path.open(
         "w",
@@ -1754,7 +1870,7 @@ def save_summary(
     return path
 
 
-def calibrate(records):
+def calibrate(records, output_path=CALIBRATION_CSV):
     """Select blink parameters on the validation split only."""
     results = []
 
@@ -1797,7 +1913,7 @@ def calibrate(records):
         reverse=True,
     )
 
-    with CALIBRATION_CSV.open(
+    with output_path.open(
         "w",
         newline="",
         encoding="utf-8",
@@ -1820,219 +1936,81 @@ def calibrate(records):
         results[
             0
         ],
-        CALIBRATION_CSV,
+        output_path,
     )
 
 
 def run_validation_calibration():
-    """Run validation-only parameter selection."""
-    clean_calibration_outputs()
-
-    records, stats = extract_split(
-        "val"
-    )
-
-    (
-        best,
-        calibration_path,
-    ) = calibrate(
-        records
-    )
-
-    print(
-        "\n=== Selected Validation Configuration ==="
-    )
-
-    print(
-        f"blink_threshold: "
-        f"{best['threshold']:.4f}"
-    )
-
-    print(
-        f"min_closed_frames: "
-        f"{best['min_closed_frames']}"
-    )
-
-    print(
-        f"Precision: "
-        f"{best['precision']:.4f}"
-    )
-
-    print(
-        f"Recall: "
-        f"{best['recall']:.4f}"
-    )
-
-    print(
-        f"F1: "
-        f"{best['f1']:.4f}"
-    )
-
-    print(
-        "\nCalibration saved:"
-    )
-
-    print(
-        calibration_path
-    )
-
-    print(
-        "\nExtraction runtime:"
-    )
-
-    print(
-        f"{stats['runtime_seconds'] / 60.0:.2f} minutes"
-    )
+    """Run validation-only parameter selection transactionally."""
+    staging_dir = make_staging_dir(".mpeblink_blink_eval_calibration_")
+    staged_calibration = staging_dir / CALIBRATION_CSV.name
+    try:
+        print("Staging directory:", staging_dir)
+        records, stats = extract_split("val")
+        best, calibration_path = calibrate(records, output_path=staged_calibration)
+        print("\nValidating staged calibration output...")
+        validate_calibration_output(calibration_path)
+        replace_owned_files([(calibration_path, CALIBRATION_CSV)], staging_dir)
+        print("Committed final calibration output.")
+        print("\n=== Selected Validation Configuration ===")
+        print(f"blink_threshold: {best['threshold']:.4f}")
+        print(f"min_closed_frames: {best['min_closed_frames']}")
+        print(f"Precision: {best['precision']:.4f}")
+        print(f"Recall: {best['recall']:.4f}")
+        print(f"F1: {best['f1']:.4f}")
+        print("\nCalibration saved:")
+        print(CALIBRATION_CSV)
+        print("\nExtraction runtime:")
+        print(f"{stats['runtime_seconds'] / 60.0:.2f} minutes")
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
 
 
 def run_final_test():
-    """Run the final test split with the frozen validation-selected parameters."""
-    clean_test_outputs()
+    """Run the frozen final test transactionally."""
+    staging_dir = make_staging_dir(".mpeblink_blink_eval_test_")
+    staged_summary = staging_dir / TEST_SUMMARY_PATH.name
+    staged_sequence = staging_dir / TEST_SEQUENCE_RESULTS_PATH.name
+    try:
+        print("Staging directory:", staging_dir)
+        print("Running final MPEBlink 2.0 test evaluation.")
+        print("The parameters below were frozen using the validation split.")
+        print(f"blink_threshold = {SELECTED_THRESHOLD:.2f}")
+        print(f"min_closed_frames = {SELECTED_MIN_CLOSED_FRAMES}")
+        records, stats = extract_split("test")
+        metrics, sequence_rows = evaluate_records(records, SELECTED_THRESHOLD, SELECTED_MIN_CLOSED_FRAMES, EVENT_IOU_THRESHOLD)
+        sequence_path = save_sequence_results("test", sequence_rows, output_path=staged_sequence)
+        summary_path = save_summary("test", stats, metrics, output_path=staged_summary)
+        print("\nValidating staged evaluator outputs...")
+        validate_test_outputs(summary_path, sequence_path)
+        replace_owned_files([(summary_path, TEST_SUMMARY_PATH), (sequence_path, TEST_SEQUENCE_RESULTS_PATH)], staging_dir)
+        print("Committed final evaluator outputs.")
+        print("\n=== Final Test Results ===")
+        print(f"Videos: {stats['videos']}")
+        print(f"Person sequences: {stats['person_sequences']}")
+        print(f"Eye-openness availability: {stats['eye_availability'] * 100.0:.2f}%")
+        print(f"Landmark failures: {stats['landmark_failures']}")
+        print(f"Ground-truth blinks: {metrics['ground_truth_blinks']}")
+        print(f"Predicted blinks: {metrics['predicted_blinks']}")
+        print(f"Precision: {metrics['precision']:.4f}")
+        print(f"Recall: {metrics['recall']:.4f}")
+        print(f"F1: {metrics['f1']:.4f}")
+        print(f"Mean matched temporal IoU: {metrics['mean_matched_tiou']:.4f}")
+        print(f"Blink-count MAE per sequence: {metrics['blink_count_mae_per_sequence']:.4f}")
+        print(f"Blink-rate MAE: {metrics['blink_rate_mae_per_min']:.4f} blinks/min")
+        print(f"Mean blink-duration error: {metrics['mean_duration_error_seconds']:.4f} s")
+        print(f"Eye-openness ROC AUC: {metrics['eye_openness_auc']:.4f}")
+        print(f"Blink-frame median openness: {metrics['blink_openness_median']:.4f}")
+        print(f"Non-blink median openness: {metrics['nonblink_openness_median']:.4f}")
+        print(f"Runtime: {stats['runtime_seconds'] / 60.0:.2f} minutes")
+        print("\nSaved:")
+        print(TEST_SUMMARY_PATH)
+        print(TEST_SEQUENCE_RESULTS_PATH)
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
 
-    print(
-        "Running final MPEBlink 2.0 test evaluation."
-    )
-
-    print(
-        "The parameters below were frozen using the validation split."
-    )
-
-    print(
-        f"blink_threshold = "
-        f"{SELECTED_THRESHOLD:.2f}"
-    )
-
-    print(
-        f"min_closed_frames = "
-        f"{SELECTED_MIN_CLOSED_FRAMES}"
-    )
-
-    records, stats = extract_split(
-        "test"
-    )
-
-    metrics, sequence_rows = (
-        evaluate_records(
-            records,
-            SELECTED_THRESHOLD,
-            SELECTED_MIN_CLOSED_FRAMES,
-            EVENT_IOU_THRESHOLD,
-        )
-    )
-
-    sequence_path = (
-        save_sequence_results(
-            "test",
-            sequence_rows,
-        )
-    )
-
-    summary_path = save_summary(
-        "test",
-        stats,
-        metrics,
-    )
-
-    print(
-        "\n=== Final Test Results ==="
-    )
-
-    print(
-        f"Videos: "
-        f"{stats['videos']}"
-    )
-
-    print(
-        f"Person sequences: "
-        f"{stats['person_sequences']}"
-    )
-
-    print(
-        f"Eye-openness availability: "
-        f"{stats['eye_availability'] * 100.0:.2f}%"
-    )
-
-    print(
-        f"Landmark failures: "
-        f"{stats['landmark_failures']}"
-    )
-
-    print(
-        f"Ground-truth blinks: "
-        f"{metrics['ground_truth_blinks']}"
-    )
-
-    print(
-        f"Predicted blinks: "
-        f"{metrics['predicted_blinks']}"
-    )
-
-    print(
-        f"Precision: "
-        f"{metrics['precision']:.4f}"
-    )
-
-    print(
-        f"Recall: "
-        f"{metrics['recall']:.4f}"
-    )
-
-    print(
-        f"F1: "
-        f"{metrics['f1']:.4f}"
-    )
-
-    print(
-        f"Mean matched temporal IoU: "
-        f"{metrics['mean_matched_tiou']:.4f}"
-    )
-
-    print(
-        f"Blink-count MAE per sequence: "
-        f"{metrics['blink_count_mae_per_sequence']:.4f}"
-    )
-
-    print(
-        f"Blink-rate MAE: "
-        f"{metrics['blink_rate_mae_per_min']:.4f} blinks/min"
-    )
-
-    print(
-        f"Mean blink-duration error: "
-        f"{metrics['mean_duration_error_seconds']:.4f} s"
-    )
-
-    print(
-        f"Eye-openness ROC AUC: "
-        f"{metrics['eye_openness_auc']:.4f}"
-    )
-
-    print(
-        f"Blink-frame median openness: "
-        f"{metrics['blink_openness_median']:.4f}"
-    )
-
-    print(
-        f"Non-blink median openness: "
-        f"{metrics['nonblink_openness_median']:.4f}"
-    )
-
-    print(
-        f"Runtime: "
-        f"{stats['runtime_seconds'] / 60.0:.2f} minutes"
-    )
-
-    print(
-        "\nSaved:"
-    )
-
-    print(
-        summary_path
-    )
-
-    print(
-        sequence_path
-    )
 
 def parse_args():
     """Parse evaluator execution mode."""
