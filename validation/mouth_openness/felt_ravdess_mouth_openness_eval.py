@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import inspect
 import math
+import os
+import shutil
 import sys
+import tempfile
 import time
+import uuid
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
@@ -47,6 +52,10 @@ RAVDESS_ROOT = (
 OUTPUT_DIR = SCRIPT_DIR / "results"
 
 DEVICE = "cpu"
+
+SUMMARY_METRIC_TOLERANCE = 5e-7
+PER_ACTOR_METRIC_TOLERANCE = 5e-12
+RESULT_CSV_FLOAT_PRECISION = "round_trip"
 EXPECTED_ACTORS = [
     f"Actor_{index:02d}"
     for index in range(1, 25)
@@ -938,7 +947,765 @@ def format_metric(
     return "nan"
 
 
+
+def parse_summary_scalar(
+    summary_path: Path,
+    label: str,
+) -> str:
+    with summary_path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            if line.startswith(
+                f"{label}:"
+            ):
+                return line.split(
+                    ":",
+                    1,
+                )[1].strip()
+
+    raise RuntimeError(
+        f"Required staged summary value was not found: {label}"
+    )
+
+
+def parse_summary_metric_sections(
+    summary_path: Path,
+) -> dict[
+    str,
+    dict[
+        str,
+        float,
+    ],
+]:
+    section_titles = {
+        "Primary Reference Metrics":
+            "primary",
+        "Secondary Three-Pair Reference Metrics":
+            "secondary",
+        "Face-Box-Normalized Sensitivity Metrics":
+            "facebox",
+    }
+
+    metric_labels = {
+        "MAE":
+            "mae",
+        "RMSE":
+            "rmse",
+        "Median absolute error":
+            "median_absolute_error",
+        "Std absolute error":
+            "std_absolute_error",
+        "90th percentile absolute error":
+            "p90_absolute_error",
+        "95th percentile absolute error":
+            "p95_absolute_error",
+        "Mean signed error (prediction - reference)":
+            "mean_signed_error",
+        "Pearson r":
+            "pearson_r",
+        "Spearman rho":
+            "spearman_rho",
+        "Lin CCC":
+            "ccc",
+    }
+
+    parsed = {
+        section: {}
+        for section in (
+            "primary",
+            "secondary",
+            "facebox",
+        )
+    }
+
+    active_section = None
+
+    with summary_path.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            if line in section_titles:
+                active_section = (
+                    section_titles[
+                        line
+                    ]
+                )
+                continue
+
+            if (
+                active_section is None
+                or ":" not in line
+            ):
+                continue
+
+            label, value_text = line.split(
+                ":",
+                1,
+            )
+
+            label = label.strip()
+
+            if label not in metric_labels:
+                continue
+
+            parsed[
+                active_section
+            ][
+                metric_labels[
+                    label
+                ]
+            ] = float(
+                value_text.strip()
+            )
+
+    for section, metrics in parsed.items():
+        missing = sorted(
+            set(
+                metric_labels.values()
+            )
+            - set(
+                metrics
+            )
+        )
+
+        if missing:
+            raise RuntimeError(
+                "Staged summary is missing required "
+                f"{section} metrics: {missing}"
+            )
+
+    return parsed
+
+
+def validate_staged_quantitative_outputs(
+    per_frame_csv_path: Path,
+    per_actor_csv_path: Path,
+    summary_path: Path,
+) -> None:
+    for path in (
+        per_frame_csv_path,
+        per_actor_csv_path,
+        summary_path,
+    ):
+        if (
+            not path.is_file()
+            or path.stat().st_size <= 0
+        ):
+            raise RuntimeError(
+                f"Missing or empty staged quantitative output: {path}"
+            )
+
+    frame_table = pd.read_csv(
+        per_frame_csv_path,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    actor_table = pd.read_csv(
+        per_actor_csv_path,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    required_frame_columns = {
+        "actor",
+        "trial",
+        "frame",
+        "status",
+        "failure_reason",
+        "duplicate_candidates",
+        "felt_reference",
+        "felt_reference_three_pair",
+        "physiotrack_openness",
+        "signed_error",
+        "absolute_error",
+        "felt_reference_facebox",
+        "physiotrack_openness_facebox",
+        "facebox_signed_error",
+        "facebox_absolute_error",
+    }
+
+    missing_frame_columns = sorted(
+        required_frame_columns
+        - set(
+            frame_table.columns
+        )
+    )
+
+    if missing_frame_columns:
+        raise RuntimeError(
+            "Staged per-frame output is missing required columns: "
+            f"{missing_frame_columns}"
+        )
+
+    if len(
+        frame_table
+    ) != EXPECTED_UNIQUE_ANNOTATED_FRAMES:
+        raise RuntimeError(
+            "Unexpected staged per-frame row count: "
+            f"expected={EXPECTED_UNIQUE_ANNOTATED_FRAMES}, "
+            f"found={len(frame_table)}."
+        )
+
+    if frame_table.duplicated(
+        [
+            "actor",
+            "trial",
+            "frame",
+        ]
+    ).any():
+        raise RuntimeError(
+            "Duplicate actor/trial/frame rows were found in staged output."
+        )
+
+    expected_statuses = {
+        "success",
+        "video_read_failure",
+        "landmark_failure",
+        "invalid_reference",
+        "prediction_failure",
+    }
+
+    observed_statuses = set(
+        frame_table[
+            "status"
+        ].astype(
+            str
+        )
+    )
+
+    unexpected_statuses = sorted(
+        observed_statuses
+        - expected_statuses
+    )
+
+    if unexpected_statuses:
+        raise RuntimeError(
+            "Unexpected staged per-frame statuses: "
+            f"{unexpected_statuses}"
+        )
+
+    if len(
+        actor_table
+    ) != len(
+        EXPECTED_ACTORS
+    ):
+        raise RuntimeError(
+            "Unexpected staged per-actor row count: "
+            f"expected={len(EXPECTED_ACTORS)}, "
+            f"found={len(actor_table)}."
+        )
+
+    if actor_table[
+        "actor"
+    ].tolist() != EXPECTED_ACTORS:
+        raise RuntimeError(
+            "Staged per-actor rows do not preserve the expected actor order."
+        )
+
+    if int(
+        actor_table[
+            "annotations"
+        ].sum()
+    ) != EXPECTED_UNIQUE_ANNOTATED_FRAMES:
+        raise RuntimeError(
+            "Staged per-actor annotation total is inconsistent."
+        )
+
+    status_counts = frame_table[
+        "status"
+    ].value_counts()
+
+    expected_counts = {
+        "success": int(
+            parse_summary_scalar(
+                summary_path,
+                "Successful predictions",
+            )
+        ),
+        "video_read_failure": int(
+            parse_summary_scalar(
+                summary_path,
+                "Video read failures",
+            )
+        ),
+        "landmark_failure": int(
+            parse_summary_scalar(
+                summary_path,
+                "Landmark failures",
+            )
+        ),
+        "invalid_reference": int(
+            parse_summary_scalar(
+                summary_path,
+                "Invalid references",
+            )
+        ),
+        "prediction_failure": int(
+            parse_summary_scalar(
+                summary_path,
+                "Prediction failures",
+            )
+        ),
+    }
+
+    for status, expected_count in expected_counts.items():
+        observed_count = int(
+            status_counts.get(
+                status,
+                0,
+            )
+        )
+
+        if observed_count != expected_count:
+            raise RuntimeError(
+                "Staged status/summary count mismatch for "
+                f"{status}: observed={observed_count}, "
+                f"summary={expected_count}."
+            )
+
+    if sum(
+        expected_counts.values()
+    ) != EXPECTED_UNIQUE_ANNOTATED_FRAMES:
+        raise RuntimeError(
+            "Staged summary failure accounting is incomplete."
+        )
+
+    if int(
+        parse_summary_scalar(
+            summary_path,
+            "Accounted annotated frames",
+        )
+    ) != EXPECTED_UNIQUE_ANNOTATED_FRAMES:
+        raise RuntimeError(
+            "Staged summary accounted-frame count is inconsistent."
+        )
+
+    summary_text = summary_path.read_text(
+        encoding="utf-8"
+    )
+
+    for required_line in (
+        "FELT dataset integrity after evaluation: PASS",
+        "RAVDESS dataset integrity after evaluation: PASS",
+    ):
+        if required_line not in summary_text:
+            raise RuntimeError(
+                f"Staged summary is missing required integrity evidence: "
+                f"{required_line}"
+            )
+
+    success_table = frame_table[
+        frame_table[
+            "status"
+        ]
+        == "success"
+    ].copy()
+
+    if success_table.empty:
+        raise RuntimeError(
+            "Staged output contains no successful predictions."
+        )
+
+    numeric_columns = [
+        "felt_reference",
+        "felt_reference_three_pair",
+        "physiotrack_openness",
+        "signed_error",
+        "absolute_error",
+        "felt_reference_facebox",
+        "physiotrack_openness_facebox",
+        "facebox_signed_error",
+        "facebox_absolute_error",
+    ]
+
+    numeric_values = success_table[
+        numeric_columns
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.all(
+        np.isfinite(
+            numeric_values
+        )
+    ):
+        raise RuntimeError(
+            "Successful staged rows contain non-finite quantitative values."
+        )
+
+    primary_reference = success_table[
+        "felt_reference"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    secondary_reference = success_table[
+        "felt_reference_three_pair"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    prediction = success_table[
+        "physiotrack_openness"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    facebox_reference = success_table[
+        "felt_reference_facebox"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    facebox_prediction = success_table[
+        "physiotrack_openness_facebox"
+    ].to_numpy(
+        dtype=np.float64
+    )
+
+    if not np.allclose(
+        success_table[
+            "signed_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        prediction
+        - primary_reference,
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Staged primary signed-error values are inconsistent."
+        )
+
+    if not np.allclose(
+        success_table[
+            "absolute_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        np.abs(
+            prediction
+            - primary_reference
+        ),
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Staged primary absolute-error values are inconsistent."
+        )
+
+    if not np.allclose(
+        success_table[
+            "facebox_signed_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        facebox_prediction
+        - facebox_reference,
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Staged face-box signed-error values are inconsistent."
+        )
+
+    if not np.allclose(
+        success_table[
+            "facebox_absolute_error"
+        ].to_numpy(
+            dtype=np.float64
+        ),
+        np.abs(
+            facebox_prediction
+            - facebox_reference
+        ),
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise RuntimeError(
+            "Staged face-box absolute-error values are inconsistent."
+        )
+
+    recomputed_metrics = {
+        "primary": regression_metrics(
+            primary_reference,
+            prediction,
+        ),
+        "secondary": regression_metrics(
+            secondary_reference,
+            prediction,
+        ),
+        "facebox": regression_metrics(
+            facebox_reference,
+            facebox_prediction,
+        ),
+    }
+
+    summary_metrics = (
+        parse_summary_metric_sections(
+            summary_path
+        )
+    )
+
+    for section, metrics in recomputed_metrics.items():
+        for metric_name, observed_value in metrics.items():
+            summary_value = (
+                summary_metrics[
+                    section
+                ][
+                    metric_name
+                ]
+            )
+
+            if not math.isclose(
+                observed_value,
+                summary_value,
+                rel_tol=0.0,
+                abs_tol=SUMMARY_METRIC_TOLERANCE,
+            ):
+                raise RuntimeError(
+                    "Staged summary/per-frame metric mismatch for "
+                    f"{section}/{metric_name}: "
+                    f"recomputed={observed_value}, "
+                    f"summary={summary_value}."
+                )
+
+    actor_lookup = actor_table.set_index(
+        "actor"
+    )
+
+    for actor, group in success_table.groupby(
+        "actor",
+        sort=True,
+    ):
+        if actor not in actor_lookup.index:
+            raise RuntimeError(
+                f"Actor missing from staged per-actor output: {actor}"
+            )
+
+        actor_primary = regression_metrics(
+            group[
+                "felt_reference"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            group[
+                "physiotrack_openness"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+        )
+
+        actor_secondary = regression_metrics(
+            group[
+                "felt_reference_three_pair"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            group[
+                "physiotrack_openness"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+        )
+
+        actor_facebox = regression_metrics(
+            group[
+                "felt_reference_facebox"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+            group[
+                "physiotrack_openness_facebox"
+            ].to_numpy(
+                dtype=np.float64
+            ),
+        )
+
+        expected_actor = actor_lookup.loc[
+            actor
+        ]
+
+        for prefix, metrics in (
+            (
+                "primary",
+                actor_primary,
+            ),
+            (
+                "secondary",
+                actor_secondary,
+            ),
+            (
+                "facebox",
+                actor_facebox,
+            ),
+        ):
+            for metric_name, observed_value in metrics.items():
+                column = (
+                    f"{prefix}_"
+                    f"{metric_name}"
+                )
+
+                if column not in actor_table.columns:
+                    raise RuntimeError(
+                        "Staged per-actor output is missing required "
+                        f"metric column: {column}"
+                    )
+
+                expected_value = float(
+                    expected_actor[
+                        column
+                    ]
+                )
+
+                if (
+                    math.isnan(
+                        expected_value
+                    )
+                    and math.isnan(
+                        observed_value
+                    )
+                ):
+                    continue
+
+                if not math.isclose(
+                    expected_value,
+                    observed_value,
+                    rel_tol=0.0,
+                    abs_tol=PER_ACTOR_METRIC_TOLERANCE,
+                ):
+                    raise RuntimeError(
+                        "Staged per-actor metric mismatch for "
+                        f"{actor}/{column}: "
+                        f"recomputed={observed_value}, "
+                        f"stored={expected_value}."
+                    )
+
+
+
+def commit_owned_files(
+    staged_to_final: list[
+        tuple[
+            Path,
+            Path,
+        ]
+    ],
+    staging_dir: Path,
+) -> None:
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    prior_files = {}
+
+    for _, final_path in staged_to_final:
+        if final_path.is_file():
+            backup_path = (
+                backup_dir
+                / final_path.name
+            )
+
+            shutil.copy2(
+                final_path,
+                backup_path,
+            )
+
+            prior_files[
+                final_path
+            ] = backup_path
+
+    installed = []
+
+    try:
+        for staged_path, final_path in staged_to_final:
+            final_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            temporary_final = (
+                final_path.parent
+                / (
+                    f".{final_path.name}."
+                    f"{uuid.uuid4().hex}.tmp"
+                )
+            )
+
+            shutil.copy2(
+                staged_path,
+                temporary_final,
+            )
+
+            os.replace(
+                temporary_final,
+                final_path,
+            )
+
+            installed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in installed:
+            backup_path = prior_files.get(
+                final_path
+            )
+
+            if backup_path is not None:
+                shutil.copy2(
+                    backup_path,
+                    final_path,
+                )
+
+            elif final_path.exists():
+                final_path.unlink()
+
+        raise
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Evaluate PhysioTrack mouth openness on the complete "
+            "FELT/RAVDESS speech benchmark."
+        )
+    )
+
+    mode_group = parser.add_mutually_exclusive_group()
+
+    mode_group.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help=(
+            "Validate the locked dataset/protocol without running "
+            "landmark or mouth-openness inference."
+        ),
+    )
+
+    mode_group.add_argument(
+        "--validate-existing-results-only",
+        action="store_true",
+        help=(
+            "Run the complete serialized-result validator on the current "
+            "accepted quantitative outputs without rerunning inference."
+        ),
+    )
+
+    args = parser.parse_args()
+
     print(
         "=== FELT/RAVDESS Mouth Openness Evaluation ==="
     )
@@ -1005,7 +1772,58 @@ def main() -> None:
         f"{duplicate_rows_resolved}"
     )
 
+    if args.preflight_only:
+        print()
+        print(
+            "Preflight-only mode: no landmark or mouth-openness "
+            "inference was run."
+        )
+        return
+
+    if args.validate_existing_results_only:
+        print()
+        print(
+            "Validating current serialized quantitative outputs..."
+        )
+
+        validate_staged_quantitative_outputs(
+            OUTPUT_DIR
+            / "felt_ravdess_mouth_openness_per_frame.csv",
+            OUTPUT_DIR
+            / "felt_ravdess_mouth_openness_per_actor.csv",
+            OUTPUT_DIR
+            / "felt_ravdess_mouth_openness_summary.txt",
+        )
+
+        print(
+            "Existing quantitative output validation: PASS"
+        )
+
+        print(
+            "Validation-only mode: no landmark or mouth-openness "
+            "inference was run."
+        )
+        return
+
     print()
+
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staging_context = tempfile.TemporaryDirectory(
+        prefix=".mouth_openness_eval_staging_",
+        dir=OUTPUT_DIR,
+    )
+
+    staging_dir = Path(
+        staging_context.name
+    )
+
+    print(
+        f"Staging directory created: {staging_dir}"
+    )
 
     felt_before = dataset_inventory(
         FELT_ROOT
@@ -1015,52 +1833,40 @@ def main() -> None:
         RAVDESS_ROOT
     )
 
-    OUTPUT_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    per_frame_csv_path = (
+    final_per_frame_csv_path = (
         OUTPUT_DIR
         / "felt_ravdess_mouth_openness_per_frame.csv"
     )
 
-    per_actor_csv_path = (
+    final_per_actor_csv_path = (
         OUTPUT_DIR
         / "felt_ravdess_mouth_openness_per_actor.csv"
     )
 
-    summary_path = (
+    final_summary_path = (
         OUTPUT_DIR
         / "felt_ravdess_mouth_openness_summary.txt"
     )
 
-    quantitative_output_paths = (
-        per_frame_csv_path,
-        per_actor_csv_path,
-        summary_path,
+    per_frame_csv_path = (
+        staging_dir
+        / final_per_frame_csv_path.name
     )
 
-    removed_outputs = []
+    per_actor_csv_path = (
+        staging_dir
+        / final_per_actor_csv_path.name
+    )
 
-    for output_path in quantitative_output_paths:
-        if output_path.is_file():
-            output_path.unlink()
-            removed_outputs.append(
-                output_path.name
-            )
+    summary_path = (
+        staging_dir
+        / final_summary_path.name
+    )
 
-    if removed_outputs:
-        print(
-            "Removed previous quantitative outputs: "
-            + ", ".join(
-                removed_outputs
-            )
-        )
-    else:
-        print(
-            "Previous quantitative outputs: none"
-        )
+    print(
+        "Previous accepted quantitative outputs are preserved until "
+        "the staged rerun passes validation."
+    )
 
     print()
 
@@ -1967,6 +2773,45 @@ def main() -> None:
 
     print()
     print(
+        "Validating staged quantitative outputs..."
+    )
+
+    validate_staged_quantitative_outputs(
+        per_frame_csv_path,
+        per_actor_csv_path,
+        summary_path,
+    )
+
+    print(
+        "Staged quantitative output validation: PASS"
+    )
+
+    commit_owned_files(
+        [
+            (
+                per_frame_csv_path,
+                final_per_frame_csv_path,
+            ),
+            (
+                per_actor_csv_path,
+                final_per_actor_csv_path,
+            ),
+            (
+                summary_path,
+                final_summary_path,
+            ),
+        ],
+        staging_dir,
+    )
+
+    staging_context.cleanup()
+
+    print(
+        "Committed final quantitative outputs."
+    )
+
+    print()
+    print(
         "=== Final Summary ==="
     )
 
@@ -1977,15 +2822,15 @@ def main() -> None:
 
     print()
     print(
-        f"Saved: {summary_path}"
+        f"Saved: {final_summary_path}"
     )
 
     print(
-        f"Saved: {per_actor_csv_path}"
+        f"Saved: {final_per_actor_csv_path}"
     )
 
     print(
-        f"Saved: {per_frame_csv_path}"
+        f"Saved: {final_per_frame_csv_path}"
     )
 
 

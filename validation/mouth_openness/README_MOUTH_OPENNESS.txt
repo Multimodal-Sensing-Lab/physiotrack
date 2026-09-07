@@ -15,6 +15,11 @@ The validation target is the combination of:
 The benchmark is a regression evaluation of continuous mouth openness. It is
 not an open/closed mouth classification task.
 
+After the benchmark, plotting, and qualitative stages are accepted, a separate
+isolated component-execution test verifies the current MouthOpenness component
+through the real PhysioTrack FaceAnalysis pipeline. The isolated execution is
+not a second accuracy benchmark and does not recompute FELT agreement metrics.
+
 Validation Location
 -------------------
 The validation package is located in:
@@ -36,6 +41,12 @@ felt_ravdess_mouth_openness_qualitative.py
     Selects deterministic benchmark examples from the accepted quantitative
     result set, re-evaluates only those selected frames, and generates
     annotated qualitative examples.
+
+mouth_openness_component_test.py
+    Verifies the current MouthOpenness implementation through the real
+    FaceAnalysis pipeline on the complete accepted FELT/RAVDESS speech
+    population and stores real per-frame numerical outputs without computing
+    a second set of accuracy metrics.
 
 Datasets and Scope
 ------------------
@@ -75,6 +86,11 @@ mouth openness = d(13,14) / d(61,291)
 
 where landmarks 13 and 14 represent the central upper and lower lip locations,
 and landmarks 61 and 291 represent the left and right mouth corners.
+
+The current implementation converts normalized MediaPipe landmark coordinates
+using the image width and image height before Euclidean geometry is evaluated.
+This image-dimension-aware formulation keeps horizontal and vertical distances
+physically consistent on non-square frames.
 
 The primary FELT landmark-derived reference uses the corresponding geometry in
 the 68-point annotation scheme:
@@ -159,6 +175,38 @@ Prediction failures: 0
 Availability: 100.0000%
 
 The FELT and RAVDESS dataset integrity checks both passed after evaluation.
+
+Safe Rerun and Dataset Protection
+---------------------------------
+The final validation scripts follow a staged safe-rerun workflow:
+
+1. Validate the locked dataset and protocol.
+2. Create a temporary staging area under validation/mouth_openness/results/
+   before generative work begins.
+3. Generate only the outputs owned by the active script inside staging.
+4. Re-read and validate the staged outputs.
+5. Replace final script-owned outputs only after staged validation passes.
+6. Preserve or restore prior accepted outputs if final installation fails.
+7. Remove temporary staging data after completion.
+
+This transactional replacement behavior provides rollback protection for prior
+accepted evidence if a final installation step fails.
+
+The quantitative evaluator records inventories of both FELT and RAVDESS before
+and after the full run. Dataset paths, file sizes, and modification timestamps
+must remain unchanged. Both datasets are therefore treated as read-only
+benchmark inputs.
+
+The evaluator also supports:
+
+python felt_ravdess_mouth_openness_eval.py --preflight-only
+
+for dataset/protocol validation without inference, and:
+
+python felt_ravdess_mouth_openness_eval.py --validate-existing-results-only
+
+for full serialized-result validation without rerunning the 158286-frame
+inference.
 
 Quantitative Metrics
 --------------------
@@ -326,23 +374,164 @@ The qualitative script owns only qualitative outputs:
 - results/qualitative/annotated_images/
 - results/figures/felt_ravdess_mouth_openness_qualitative_examples.png
 
-Each script cleans only the outputs that it owns. The Markdown thesis tables
-are final plot-owned outputs and are regenerated together with their matching
-CSV tables during a clean plot rerun.
+Each script owns only the outputs listed above. New outputs are generated in
+staging and validated before the corresponding accepted files are replaced.
+The Markdown thesis tables are final plot-owned outputs and are regenerated
+together with their matching CSV tables during a clean plot rerun.
+
+Isolated Component Execution Verification
+-----------------------------------------
+The accepted isolated component-execution script is:
+
+mouth_openness_component_test.py
+
+It executes the current MouthOpenness component through the real PhysioTrack
+FaceAnalysis pipeline using the complete accepted FELT/RAVDESS speech
+population.
+
+Configuration:
+
+- Target component: MouthOpenness
+- Required prerequisite: FaceLandmarks
+- Controlled upstream input: accepted FELT FaceRect bounding boxes
+- Device: cpu
+- Actors: 24
+- Paired speech trials: 1440
+- Raw FELT annotation rows: 158288
+- Unique annotated frames: 158286
+- Duplicate annotation rows resolved: 2
+
+The controlled FELT FaceRect input prevents face-detector behavior from
+confounding the isolated MouthOpenness execution. FaceLandmarks remains enabled
+because MouthOpenness requires current facial landmarks. All unrelated optional
+components are disabled:
+
+- tracking
+- head_pose
+- quality
+- eyes
+- blink
+- gaze
+- gaze_estimation
+- mouth_motion
+- emotion
+- regions
+- temporal
+
+The isolated script records real numerical outputs for every accepted frame,
+including:
+
+- actor, trial, frame, timestamp, and FPS
+- frame dimensions
+- accepted FaceRect and FaceScore
+- duplicate-candidate count
+- landmark availability and landmark count
+- mouth-openness availability
+- mouth_openness
+- mouth_width
+- mouth_height
+- explicit execution status and failure reason
+
+For every available row, the script verifies finite numerical values and checks
+that:
+
+mouth_openness = mouth_height / mouth_width
+
+The accepted full isolated run produced:
+
+Actors: 24
+Paired speech trials: 1440
+Unique annotated frames: 158286
+Landmarks available rows: 158286
+MouthOpenness available rows: 158286
+Execution failures: 0
+Component unavailable rows: 0
+Overall status: PASS
+Runtime: 2155.61 seconds (approximately 35.93 minutes)
+
+Runtime is environment-dependent and is not a scientific performance metric.
+
+A frame-by-frame audit against the accepted quantitative benchmark confirmed
+that the isolated FaceAnalysis MouthOpenness value matched the accepted
+PhysioTrack benchmark prediction exactly across all 158286 frames. This
+supports that the isolated execution exercises the same current MouthOpenness
+implementation rather than a duplicated local formula.
+
+Git-Safe Isolated Result Handling
+---------------------------------
+The isolated component result writer checks the generated CSV size before
+final installation.
+
+If the complete result CSV is at or below 90 MiB, it remains:
+
+results/component_execution/mouth_openness_component_results.csv
+
+If the file would exceed 90 MiB, it is split automatically into sequential
+parts:
+
+mouth_openness_component_results_part001.csv
+mouth_openness_component_results_part002.csv
+...
+
+Splitting is performed only between complete actor groups. An actor is never
+split across multiple result files. The summary JSON records every generated
+filename, row count, actor boundary, and file size.
+
+The accepted run produced one CSV containing 158286 rows because its size was
+approximately 30.33 MiB.
+
+The isolated summary is stored as:
+
+results/component_execution/mouth_openness_component_summary.json
 
 Run Order
 ---------
-Run the scripts from the repository root using the project environment:
+Activate the thesis environment:
 
-python validation/mouth_openness/felt_ravdess_mouth_openness_eval.py
-python validation/mouth_openness/felt_ravdess_mouth_openness_plot.py
-python validation/mouth_openness/felt_ravdess_mouth_openness_qualitative.py
+conda activate PhysioTrack-Thesis
 
-The evaluator regenerates only its quantitative result files. The plotting
-script regenerates only its quantitative tables and figures. The qualitative
-script regenerates only its qualitative outputs and combined qualitative
-figure. Each script therefore owns and cleans only the artifacts that it
-creates.
+From the validation directory:
+
+cd /d <project-path>\physiotrack\validation\mouth_openness
+
+Optional syntax check:
+
+python -m py_compile felt_ravdess_mouth_openness_eval.py felt_ravdess_mouth_openness_plot.py felt_ravdess_mouth_openness_qualitative.py mouth_openness_component_test.py
+
+Recommended clean reproduction order:
+
+1. Quantitative preflight:
+
+   python felt_ravdess_mouth_openness_eval.py --preflight-only
+
+2. Full quantitative benchmark:
+
+   python felt_ravdess_mouth_openness_eval.py
+
+3. Independent quantitative tables and figures:
+
+   python felt_ravdess_mouth_openness_plot.py
+
+4. Deterministic qualitative validation:
+
+   python felt_ravdess_mouth_openness_qualitative.py
+
+5. Isolated component preflight:
+
+   python mouth_openness_component_test.py --preflight-only
+
+6. Real FaceAnalysis smoke test:
+
+   python mouth_openness_component_test.py --smoke-test --smoke-count 3
+
+7. Full isolated component execution:
+
+   python mouth_openness_component_test.py
+
+The benchmark and isolated component execution serve different purposes. The
+benchmark reports ground-truth-derived agreement metrics. The isolated run
+verifies the current software execution path and stores real numerical outputs
+without generating a second accuracy result.
 
 Output Structure
 ----------------
@@ -352,6 +541,7 @@ validation/mouth_openness/
 |-- felt_ravdess_mouth_openness_eval.py
 |-- felt_ravdess_mouth_openness_plot.py
 |-- felt_ravdess_mouth_openness_qualitative.py
+|-- mouth_openness_component_test.py
 |-- README_MOUTH_OPENNESS.txt
 `-- results/
     |-- felt_ravdess_mouth_openness_per_frame.csv
@@ -366,10 +556,13 @@ validation/mouth_openness/
     |   |-- felt_ravdess_mouth_openness_error_distribution.png
     |   |-- felt_ravdess_mouth_openness_per_actor.png
     |   `-- felt_ravdess_mouth_openness_qualitative_examples.png
-    `-- qualitative/
-        |-- felt_ravdess_mouth_openness_qualitative_selection.csv
-        `-- annotated_images/
-            `-- eight annotated PNG examples
+    |-- qualitative/
+    |   |-- felt_ravdess_mouth_openness_qualitative_selection.csv
+    |   `-- annotated_images/
+    |       `-- eight annotated PNG examples
+    `-- component_execution/
+        |-- mouth_openness_component_results.csv
+        `-- mouth_openness_component_summary.json
 
 Reproducibility
 ---------------
@@ -394,6 +587,11 @@ generated from the same verified in-memory tables, so their contents represent
 the same accepted quantitative results. This provides an independent
 consistency check between detailed outputs, aggregate metrics, tables, and
 figures.
+
+The isolated component execution additionally verifies the current FaceAnalysis
+software path using the same read-only FELT/RAVDESS population, the accepted
+FaceLandmarks model hash, controlled FELT FaceRects, staged result validation,
+transactional output replacement, and explicit Git-safe result handling.
 
 Methodological Qualifications
 -----------------------------
@@ -422,6 +620,10 @@ Finally, individual frames can show substantial disagreement even when the
 aggregate metrics are strong. The qualitative challenging-underestimate and
 challenging-overestimate examples explicitly document these failure modes.
 
+The isolated component execution is software-path evidence, not a second
+accuracy benchmark. Its availability counts, runtime, and component-result
+rows must not be interpreted as additional FELT agreement metrics.
+
 Scientific Interpretation
 -------------------------
 The results demonstrate that PhysioTrack provides a stable continuous
@@ -439,7 +641,8 @@ visible examples of larger disagreement.
 The scientifically appropriate description is:
 
 controlled continuous mouth-openness validation of PhysioTrack FaceLandmarks
-and MouthOpenness on the paired FELT/RAVDESS speech subset.
+and MouthOpenness on the paired FELT/RAVDESS speech subset, complemented by
+isolated real-pipeline MouthOpenness execution through FaceAnalysis.
 
 Final Files to Preserve
 -----------------------
@@ -448,6 +651,7 @@ Final reproducibility artifacts:
 - felt_ravdess_mouth_openness_eval.py
 - felt_ravdess_mouth_openness_plot.py
 - felt_ravdess_mouth_openness_qualitative.py
+- mouth_openness_component_test.py
 - README_MOUTH_OPENNESS.txt
 - results/felt_ravdess_mouth_openness_per_frame.csv
 - results/felt_ravdess_mouth_openness_per_actor.csv
@@ -462,6 +666,13 @@ Final reproducibility artifacts:
 - results/qualitative/felt_ravdess_mouth_openness_qualitative_selection.csv
 - results/qualitative/annotated_images/
 - results/figures/felt_ravdess_mouth_openness_qualitative_examples.png
+- results/component_execution/mouth_openness_component_results.csv
+- results/component_execution/mouth_openness_component_summary.json
+
+If a future isolated result exceeds the configured 90 MiB Git-safe threshold,
+the single component-results CSV is replaced by the generated
+mouth_openness_component_results_partNNN.csv files recorded in the summary
+manifest.
 
 Generated caches and obsolete temporary diagnostic files are not part of the
 final validation deliverables.

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import math
+import os
+import shutil
+import tempfile
+import uuid
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -40,6 +44,7 @@ EXPECTED_FRAMES = 158286
 EXPECTED_ACTORS = 24
 SUMMARY_TOLERANCE = 5e-7
 PER_ACTOR_TOLERANCE = 5e-12
+RESULT_CSV_FLOAT_PRECISION = "round_trip"
 
 
 def clean_owned_outputs() -> None:
@@ -114,8 +119,14 @@ def load_quantitative_results() -> tuple[pd.DataFrame, pd.DataFrame]:
     for path in (PER_FRAME_PATH, PER_ACTOR_PATH, SUMMARY_PATH):
         require_input(path)
 
-    frame_table = pd.read_csv(PER_FRAME_PATH)
-    actor_table = pd.read_csv(PER_ACTOR_PATH)
+    frame_table = pd.read_csv(
+        PER_FRAME_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+    actor_table = pd.read_csv(
+        PER_ACTOR_PATH,
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
 
     required_frame_columns = {
         "actor",
@@ -479,7 +490,169 @@ def create_per_actor_figure(actor_table: pd.DataFrame) -> None:
     plt.close(figure)
 
 
+
+def validate_staged_plot_outputs(
+    staged_paths: list[Path],
+) -> None:
+    for path in staged_paths:
+        if (
+            not path.is_file()
+            or path.stat().st_size <= 0
+        ):
+            raise RuntimeError(
+                f"Missing or empty staged plot-owned output: {path}"
+            )
+
+    overall_table = pd.read_csv(
+        staged_paths[0],
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    per_actor_table = pd.read_csv(
+        staged_paths[1],
+        float_precision=RESULT_CSV_FLOAT_PRECISION,
+    )
+
+    if len(
+        overall_table
+    ) != 1:
+        raise RuntimeError(
+            "Staged overall thesis table must contain exactly one row."
+        )
+
+    if int(
+        overall_table.iloc[
+            0
+        ][
+            "Frames"
+        ]
+    ) != EXPECTED_FRAMES:
+        raise RuntimeError(
+            "Staged overall thesis table frame count is inconsistent."
+        )
+
+    if len(
+        per_actor_table
+    ) != EXPECTED_ACTORS:
+        raise RuntimeError(
+            "Staged per-actor thesis table row count is inconsistent."
+        )
+
+    for path in staged_paths[
+        2:5
+    ]:
+        try:
+            image = plt.imread(
+                path
+            )
+        except Exception as error:
+            raise RuntimeError(
+                f"Staged figure could not be read: {path}"
+            ) from error
+
+        if image.size == 0:
+            raise RuntimeError(
+                f"Staged figure is empty: {path}"
+            )
+
+
+def commit_owned_files(
+    staged_to_final: list[
+        tuple[
+            Path,
+            Path,
+        ]
+    ],
+    staging_dir: Path,
+) -> None:
+    backup_dir = (
+        staging_dir
+        / "backup"
+    )
+
+    backup_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    prior_files = {}
+
+    for _, final_path in staged_to_final:
+        if final_path.is_file():
+            backup_path = (
+                backup_dir
+                / final_path.name
+            )
+
+            shutil.copy2(
+                final_path,
+                backup_path,
+            )
+
+            prior_files[
+                final_path
+            ] = backup_path
+
+    installed = []
+
+    try:
+        for staged_path, final_path in staged_to_final:
+            final_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            temporary_final = (
+                final_path.parent
+                / (
+                    f".{final_path.name}."
+                    f"{uuid.uuid4().hex}.tmp"
+                )
+            )
+
+            shutil.copy2(
+                staged_path,
+                temporary_final,
+            )
+
+            os.replace(
+                temporary_final,
+                final_path,
+            )
+
+            installed.append(
+                final_path
+            )
+
+    except Exception:
+        for final_path in installed:
+            backup_path = prior_files.get(
+                final_path
+            )
+
+            if backup_path is not None:
+                shutil.copy2(
+                    backup_path,
+                    final_path,
+                )
+
+            elif final_path.exists():
+                final_path.unlink()
+
+        raise
+
+
 def main() -> None:
+    global FIGURES_DIR
+    global OVERALL_TABLE_CSV_PATH
+    global PER_ACTOR_TABLE_CSV_PATH
+    global OVERALL_TABLE_MD_PATH
+    global PER_ACTOR_TABLE_MD_PATH
+    global AGREEMENT_FIGURE_PATH
+    global ERROR_FIGURE_PATH
+    global PER_ACTOR_FIGURE_PATH
+    global OWNED_OUTPUTS
+
     print("=== FELT/RAVDESS Mouth Openness Plot and Table Generation ===")
 
     frame_table, actor_table = load_quantitative_results()
@@ -509,13 +682,143 @@ def main() -> None:
     )
     validate_per_actor_consistency(frame_table, actor_table)
 
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    clean_owned_outputs()
+    final_paths = list(
+        OWNED_OUTPUTS
+    )
+
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    staging_context = tempfile.TemporaryDirectory(
+        prefix=".mouth_openness_plot_staging_",
+        dir=RESULTS_DIR,
+    )
+
+    staging_root = Path(
+        staging_context.name
+    )
+
+    FIGURES_DIR = (
+        staging_root
+        / "figures"
+    )
+
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    OVERALL_TABLE_CSV_PATH = (
+        staging_root
+        / final_paths[
+            0
+        ].name
+    )
+
+    PER_ACTOR_TABLE_CSV_PATH = (
+        staging_root
+        / final_paths[
+            1
+        ].name
+    )
+
+    AGREEMENT_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            2
+        ].name
+    )
+
+    ERROR_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            3
+        ].name
+    )
+
+    PER_ACTOR_FIGURE_PATH = (
+        FIGURES_DIR
+        / final_paths[
+            4
+        ].name
+    )
+
+    OVERALL_TABLE_MD_PATH = (
+        staging_root
+        / final_paths[
+            5
+        ].name
+    )
+
+    PER_ACTOR_TABLE_MD_PATH = (
+        staging_root
+        / final_paths[
+            6
+        ].name
+    )
+
+    OWNED_OUTPUTS = [
+        OVERALL_TABLE_CSV_PATH,
+        PER_ACTOR_TABLE_CSV_PATH,
+        AGREEMENT_FIGURE_PATH,
+        ERROR_FIGURE_PATH,
+        PER_ACTOR_FIGURE_PATH,
+        OVERALL_TABLE_MD_PATH,
+        PER_ACTOR_TABLE_MD_PATH,
+    ]
+
+    print(
+        f"Staging directory created: {staging_root}"
+    )
+
+    print(
+        "Previous accepted plot/table outputs are preserved until "
+        "the staged generation passes validation."
+    )
 
     create_tables(frame_table, actor_table)
     create_agreement_figure(frame_table)
     create_error_figure(frame_table)
     create_per_actor_figure(actor_table)
+
+    validate_staged_plot_outputs(
+        OWNED_OUTPUTS
+    )
+
+    print(
+        "Staged plot/table output validation: PASS"
+    )
+
+    commit_owned_files(
+        list(
+            zip(
+                OWNED_OUTPUTS,
+                final_paths,
+            )
+        ),
+        staging_root,
+    )
+
+    staging_context.cleanup()
+
+    (
+        OVERALL_TABLE_CSV_PATH,
+        PER_ACTOR_TABLE_CSV_PATH,
+        AGREEMENT_FIGURE_PATH,
+        ERROR_FIGURE_PATH,
+        PER_ACTOR_FIGURE_PATH,
+        OVERALL_TABLE_MD_PATH,
+        PER_ACTOR_TABLE_MD_PATH,
+    ) = final_paths
+
+    FIGURES_DIR = (
+        RESULTS_DIR
+        / "figures"
+    )
+
+    OWNED_OUTPUTS = final_paths
 
     print("Quantitative result consistency: PASS")
     print(f"Frames: {len(frame_table)}")
