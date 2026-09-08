@@ -1,0 +1,96 @@
+PhysioTrack Face Quality Validation
+====================================
+
+Scientific scope
+----------------
+This controlled evaluation validates the current FaceQuality
+descriptors on the complete 300-W evaluation set.
+
+Validated descriptors:
+- brightness
+- sharpness
+- face_area_ratio
+
+Detector confidence is preserved as an auxiliary field only.
+It is not treated as an independently validated FaceQuality descriptor
+because the value originates from the face detector.
+
+Dataset
+-------
+Images: 600
+Indoor images: 300
+Outdoor images: 300
+Annotation format: 68-point PTS
+Dataset handling: read-only
+
+Controlled face initialization
+------------------------------
+Face box: tight 68-point GT landmark box with 20% padding
+Boxes fully inside image: 532
+Boxes touching image boundary: 68
+
+Baseline descriptor distribution
+--------------------------------
+Brightness mean: 0.398100
+Brightness median: 0.390741
+Brightness std: 0.125265
+Brightness min: 0.076807
+Brightness max: 0.818553
+
+Sharpness mean: 402.147187
+Sharpness median: 171.433484
+Sharpness std: 685.027773
+Sharpness min: 2.222105
+Sharpness max: 7964.856704
+
+Face-area-ratio mean: 0.158229
+Face-area-ratio median: 0.072849
+Face-area-ratio std: 0.194310
+Face-area-ratio min: 0.001568
+Face-area-ratio max: 1.000000
+
+Brightness sensitivity
+----------------------
+Factor 0.40: mean brightness 0.157693
+Factor 0.60: mean brightness 0.237313
+Factor 0.80: mean brightness 0.316941
+Factor 1.00: mean brightness 0.398100
+Factor 1.20: mean brightness 0.467012
+Factor 1.40: mean brightness 0.525849
+Strictly increasing images: 600/600
+
+Sharpness sensitivity
+---------------------
+Kernel 1: mean sharpness 402.147187
+Kernel 3: mean sharpness 62.284649
+Kernel 5: mean sharpness 30.070450
+Kernel 9: mean sharpness 10.004285
+Kernel 15: mean sharpness 4.684518
+Kernel 25: mean sharpness 2.804621
+Strictly decreasing images: 600/600
+
+Face-area-ratio validation
+--------------------------
+Scale 0.50: mean face-area ratio 0.029307
+Scale 0.75: mean face-area ratio 0.065933
+Scale 1.00: mean face-area ratio 0.117215
+Strictly increasing images: 532/532
+Maximum formula absolute error: 0
+
+Interpretation
+--------------
+Brightness responds monotonically to controlled intensity scaling.
+Exact proportionality is not required at high factors because
+8-bit image values are clipped at 255.
+
+Sharpness is the variance of the grayscale Laplacian and decreases
+monotonically as controlled Gaussian blur increases.
+
+Face area ratio is the integer-clipped face-box area divided by
+full frame area. The controlled scale experiment uses only boxes
+fully inside the image to avoid clipping as a confounding factor.
+
+Detailed result rows: 9396
+Runtime seconds: 177.298
+
+Overall scientific status: PASS
