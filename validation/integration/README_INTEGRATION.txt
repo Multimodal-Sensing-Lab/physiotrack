@@ -1070,6 +1070,20 @@ and export accounting, feature-configuration behavior, tracked-identity
 behavior, static-versus-temporal behavior, module observation, numerical export
 structure, and PASS/FAIL invariants.
 
+Clean Rerun Reproducibility Check
+---------------------------------
+A complete clean rerun of all seven integration scripts on the documented
+fixtures reproduced the accepted integration result set exactly. The comparison
+covered all 31 generated result artifacts: 16 CSV files and 15 JSON files.
+Cell-by-cell comparison of the CSV outputs found no differences across 713,357
+cells, including headers, and recursive comparison of 729,094 JSON leaf values
+found no differences. The corresponding result files were also byte-identical.
+
+This reproducibility check supports deterministic regeneration of the documented
+integration evidence when the same project state, environment, configuration,
+and test fixtures are used. It is a regression/reproducibility property and does
+not constitute an additional predictive-accuracy claim for any component.
+
 Regression Use
 --------------
 The integration suite can also be used for regression checking after changes to
