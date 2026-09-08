@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import csv
+import os
+import tempfile
 import json
 import math
 import shutil
@@ -26,15 +29,202 @@ VIDEO_EXTENSIONS = {
     ".webm",
 }
 
-OUTPUT_DIR = (
+FINAL_OUTPUT_DIR = (
     SCRIPT_DIR
     / "results"
     / "runtime_smoke"
 )
 
+OUTPUT_DIR = FINAL_OUTPUT_DIR
+
 
 MOTION_ZERO_TOLERANCE = 1e-12
 
+
+
+EXPECTED_OUTPUT_FILES = (
+    "runtime_smoke_summary.json",
+)
+
+
+def preflight_validation() -> None:
+    """Validate integration inputs before creating staged outputs."""
+    video_paths = get_video_paths()
+
+    for video_path in video_paths:
+        capture = cv2.VideoCapture(
+            str(video_path)
+        )
+
+        try:
+            if not capture.isOpened():
+                raise RuntimeError(
+                    f"Could not open integration video during preflight: {video_path}"
+                )
+
+            fps = float(
+                capture.get(
+                    cv2.CAP_PROP_FPS
+                )
+            )
+
+            if fps <= 0.0:
+                raise RuntimeError(
+                    f"Invalid integration-video FPS during preflight: {video_path}"
+                )
+
+            ok, frame = capture.read()
+
+            if not ok or frame is None:
+                raise RuntimeError(
+                    f"Could not read integration video during preflight: {video_path}"
+                )
+
+        finally:
+            capture.release()
+
+    runtime_cases = (
+        (False, False, True, True),
+        (True, False, True, True),
+        (False, True, True, True),
+        (True, True, True, True),
+        (False, False, True, False),
+        (False, False, False, False),
+    )
+
+    for (
+        gaze_enabled,
+        gaze_estimation_enabled,
+        mouth_enabled,
+        mouth_motion_enabled,
+    ) in runtime_cases:
+        config = FaceAnalysisConfig(
+            tracking=True,
+            head_pose=True,
+            landmarks=True,
+            quality=True,
+            eyes=True,
+            blink=True,
+            gaze=gaze_enabled,
+            gaze_estimation=gaze_estimation_enabled,
+            mouth=mouth_enabled,
+            mouth_motion=mouth_motion_enabled,
+            emotion=True,
+            regions=True,
+            temporal=True,
+            gaze_estimation_mode="eth-xgaze",
+            gaze_estimation_min_iou=0.10,
+        )
+        config.validate()
+
+    results_root = FINAL_OUTPUT_DIR.parent
+
+    if results_root.exists() and not results_root.is_dir():
+        raise RuntimeError(
+            f"Integration results root is not a directory: {results_root}"
+        )
+
+    results_root.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+
+def validate_staged_outputs(
+    staging_dir: Path,
+) -> None:
+    """Verify that all expected staged outputs exist and are readable."""
+    for filename in EXPECTED_OUTPUT_FILES:
+        path = staging_dir / filename
+
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"Expected staged output was not created: {path}"
+            )
+
+        if path.stat().st_size <= 0:
+            raise RuntimeError(
+                f"Staged output is empty: {path}"
+            )
+
+        if path.suffix.lower() == ".json":
+            with path.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                json.load(file)
+
+        elif path.suffix.lower() == ".csv":
+            with path.open(
+                "r",
+                newline="",
+                encoding="utf-8",
+            ) as file:
+                reader = csv.reader(file)
+
+                try:
+                    header = next(reader)
+                except StopIteration as exc:
+                    raise RuntimeError(
+                        f"Staged CSV has no header: {path}"
+                    ) from exc
+
+                if not header:
+                    raise RuntimeError(
+                        f"Staged CSV has an empty header: {path}"
+                    )
+
+
+def commit_staged_output_directory(
+    staging_dir: Path,
+) -> None:
+    """Promote validated staged outputs with rollback protection."""
+    results_root = FINAL_OUTPUT_DIR.parent
+    backup_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f".{FINAL_OUTPUT_DIR.name}_backup_",
+            dir=results_root,
+        )
+    )
+    backup_dir.rmdir()
+
+    final_backed_up = False
+    staging_promoted = False
+
+    try:
+        if FINAL_OUTPUT_DIR.exists():
+            os.replace(
+                FINAL_OUTPUT_DIR,
+                backup_dir,
+            )
+            final_backed_up = True
+
+        os.replace(
+            staging_dir,
+            FINAL_OUTPUT_DIR,
+        )
+        staging_promoted = True
+
+    except Exception:
+        if staging_promoted and FINAL_OUTPUT_DIR.exists():
+            shutil.rmtree(
+                FINAL_OUTPUT_DIR,
+                ignore_errors=True,
+            )
+
+        if final_backed_up and backup_dir.exists():
+            os.replace(
+                backup_dir,
+                FINAL_OUTPUT_DIR,
+            )
+
+        raise
+
+    if backup_dir.exists():
+        shutil.rmtree(
+            backup_dir,
+            ignore_errors=True,
+        )
 
 def get_video_paths() -> list[Path]:
     if not TEST_DATA_DIR.exists():
@@ -501,7 +691,7 @@ def clean_output_directory() -> None:
     )
 
 
-def main() -> None:
+def run_validation() -> None:
     video_paths = get_video_paths()
 
     clean_output_directory()
@@ -716,6 +906,67 @@ def main() -> None:
             "Runtime smoke test completed with "
             "one or more failed cases."
         )
+
+
+def main() -> None:
+    """Run the integration test with safe staged output replacement."""
+    global OUTPUT_DIR
+
+    print(
+        "Running complete integration preflight..."
+    )
+    preflight_validation()
+    print(
+        "Integration preflight: PASS"
+    )
+
+    results_root = FINAL_OUTPUT_DIR.parent
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f".{FINAL_OUTPUT_DIR.name}_staging_",
+            dir=results_root,
+        )
+    )
+
+    OUTPUT_DIR = staging_dir
+
+    try:
+        run_validation()
+
+        print()
+        print(
+            "Validating staged integration outputs..."
+        )
+        validate_staged_outputs(
+            staging_dir
+        )
+        print(
+            "Staged integration outputs: PASS"
+        )
+
+        commit_staged_output_directory(
+            staging_dir
+        )
+
+        print(
+            "Committed final integration outputs."
+        )
+
+    except Exception:
+        print()
+        print(
+            "Integration run failed; previously accepted final outputs were preserved."
+        )
+        raise
+
+    finally:
+        OUTPUT_DIR = FINAL_OUTPUT_DIR
+
+        if staging_dir.exists():
+            shutil.rmtree(
+                staging_dir,
+                ignore_errors=True,
+            )
 
 
 if __name__ == "__main__":

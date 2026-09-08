@@ -148,10 +148,12 @@ All generated integration results are organized under:
 
 validation/integration/results/
 
-Each script owns a dedicated result subdirectory and may clean only that
-subdirectory before regenerating its outputs. A script must not delete another
-integration test's results, modify the test media, modify benchmark datasets,
-or modify project source code.
+Each script owns a dedicated final result subdirectory. New integration
+outputs are generated in a temporary staging directory under results/ and are
+validated before promotion. Previously accepted outputs are not removed before
+the replacement run has completed successfully and its staged files have passed
+validation. A script must not delete another integration test's results, modify
+the test media, modify benchmark datasets, or modify project source code.
 
 Integration Scope
 -----------------
@@ -360,6 +362,30 @@ localized and interpreted correctly.
    facial-analysis components where scientifically applicable while preserving
    the distinction between static and temporal analysis.
 
+Safe Rerun and Transactional Output Replacement
+-----------------------------------------------
+All seven integration scripts use the same safe-rerun architecture:
+
+1. Discover and validate the required input-media directory before processing.
+2. Verify that the integration results root is usable.
+3. Create a script-specific temporary staging directory before expensive
+   pipeline execution begins.
+4. Run the complete discovered media set while preserving media-level failure
+   accounting in the staged run.
+5. Write all script-owned outputs to staging rather than to the accepted final
+   result directory.
+6. Validate that every expected staged JSON/CSV artifact exists, is non-empty,
+   and can be parsed or read with a valid CSV header.
+7. Promote the staged directory only after the complete integration test has
+   passed.
+8. Replace the previous script-owned final directory transactionally, with a
+   temporary rollback copy retained until promotion succeeds.
+9. Restore the previous accepted directory if final promotion fails.
+10. Remove temporary staging/rollback directories after completion.
+
+A failed rerun therefore cannot destroy the previously accepted integration
+evidence. Failed staged runs are not promoted as final evidence.
+
 Test Design Principles
 ----------------------
 The integration tests follow the following principles:
@@ -453,8 +479,11 @@ python whole_project_final_e2e_test.py
 
 python face_pipeline_image_e2e_test.py
 
-Each script cleans only the result directory that it owns before creating new
-outputs.
+Each script performs input preflight first, creates a script-specific staging
+directory before expensive processing begins, writes the complete replacement
+run to staging, validates the staged files, and only then replaces the final
+result directory that it owns. If execution or validation fails, the previously
+accepted final outputs are preserved.
 
 Reported Integration Results
 ----------------------------
@@ -1009,10 +1038,11 @@ processing, the failure is recorded with a reason and subsequent media items
 are still attempted.
 
 Where a failed media item produces no frame-level records, its status is
-preserved in an appropriate media-level summary. Aggregate status becomes FAIL
-when one or more media items fail, even if other media complete successfully.
-Result files are written before the final test-level exception is raised so
-that failure evidence remains auditable.
+recorded in the staged media-level summary and aggregate status becomes FAIL
+even if other media complete successfully. A failed overall run is not promoted
+to the accepted final result directory. The previously accepted final outputs
+remain unchanged, and temporary staged outputs are removed after the failed
+attempt. The console reports the failure reason for diagnosis.
 
 Intentional diagnostic failure fixtures are not part of the final integration
 package and must not be retained in release-quality result directories.

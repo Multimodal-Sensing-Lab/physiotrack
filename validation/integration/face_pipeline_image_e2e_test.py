@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tempfile
 import csv
 import json
 import math
@@ -31,11 +33,13 @@ IMAGE_EXTENSIONS = {
     ".webp",
 }
 
-OUTPUT_DIR = (
+FINAL_OUTPUT_DIR = (
     SCRIPT_DIR
     / "results"
     / "image_e2e"
 )
+
+OUTPUT_DIR = FINAL_OUTPUT_DIR
 
 STATIC_MODULES = [
     "detection",
@@ -68,6 +72,140 @@ EMOTION_LABELS = [
     "Surprise",
 ]
 
+
+
+EXPECTED_OUTPUT_FILES = (
+    "image_e2e_results.json",
+    "image_e2e_frames.csv",
+    "image_e2e_summary.json",
+    "image_e2e_modules.csv",
+)
+
+
+def preflight_validation() -> None:
+    """Validate integration inputs before creating staged outputs."""
+    image_paths = get_image_paths()
+
+    for image_path in image_paths:
+        image = cv2.imread(
+            str(image_path)
+        )
+
+        if image is None:
+            raise RuntimeError(
+                f"Could not read integration image during preflight: {image_path}"
+            )
+
+    make_config()
+
+    results_root = FINAL_OUTPUT_DIR.parent
+
+    if results_root.exists() and not results_root.is_dir():
+        raise RuntimeError(
+            f"Integration results root is not a directory: {results_root}"
+        )
+
+    results_root.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+
+def validate_staged_outputs(
+    staging_dir: Path,
+) -> None:
+    """Verify that all expected staged outputs exist and are readable."""
+    for filename in EXPECTED_OUTPUT_FILES:
+        path = staging_dir / filename
+
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"Expected staged output was not created: {path}"
+            )
+
+        if path.stat().st_size <= 0:
+            raise RuntimeError(
+                f"Staged output is empty: {path}"
+            )
+
+        if path.suffix.lower() == ".json":
+            with path.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                json.load(file)
+
+        elif path.suffix.lower() == ".csv":
+            with path.open(
+                "r",
+                newline="",
+                encoding="utf-8",
+            ) as file:
+                reader = csv.reader(file)
+
+                try:
+                    header = next(reader)
+                except StopIteration as exc:
+                    raise RuntimeError(
+                        f"Staged CSV has no header: {path}"
+                    ) from exc
+
+                if not header:
+                    raise RuntimeError(
+                        f"Staged CSV has an empty header: {path}"
+                    )
+
+
+def commit_staged_output_directory(
+    staging_dir: Path,
+) -> None:
+    """Promote validated staged outputs with rollback protection."""
+    results_root = FINAL_OUTPUT_DIR.parent
+    backup_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f".{FINAL_OUTPUT_DIR.name}_backup_",
+            dir=results_root,
+        )
+    )
+    backup_dir.rmdir()
+
+    final_backed_up = False
+    staging_promoted = False
+
+    try:
+        if FINAL_OUTPUT_DIR.exists():
+            os.replace(
+                FINAL_OUTPUT_DIR,
+                backup_dir,
+            )
+            final_backed_up = True
+
+        os.replace(
+            staging_dir,
+            FINAL_OUTPUT_DIR,
+        )
+        staging_promoted = True
+
+    except Exception:
+        if staging_promoted and FINAL_OUTPUT_DIR.exists():
+            shutil.rmtree(
+                FINAL_OUTPUT_DIR,
+                ignore_errors=True,
+            )
+
+        if final_backed_up and backup_dir.exists():
+            os.replace(
+                backup_dir,
+                FINAL_OUTPUT_DIR,
+            )
+
+        raise
+
+    if backup_dir.exists():
+        shutil.rmtree(
+            backup_dir,
+            ignore_errors=True,
+        )
 
 def get_image_paths() -> list[Path]:
     if not TEST_DATA_DIR.exists():
@@ -1540,7 +1678,7 @@ def run_image(
     return records, summary
 
 
-def main() -> None:
+def run_validation() -> None:
     image_paths = get_image_paths()
 
     clean_output_directory()
@@ -1990,6 +2128,67 @@ def main() -> None:
     print(
         "Image end-to-end integration test: PASS"
     )
+
+
+def main() -> None:
+    """Run the integration test with safe staged output replacement."""
+    global OUTPUT_DIR
+
+    print(
+        "Running complete integration preflight..."
+    )
+    preflight_validation()
+    print(
+        "Integration preflight: PASS"
+    )
+
+    results_root = FINAL_OUTPUT_DIR.parent
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f".{FINAL_OUTPUT_DIR.name}_staging_",
+            dir=results_root,
+        )
+    )
+
+    OUTPUT_DIR = staging_dir
+
+    try:
+        run_validation()
+
+        print()
+        print(
+            "Validating staged integration outputs..."
+        )
+        validate_staged_outputs(
+            staging_dir
+        )
+        print(
+            "Staged integration outputs: PASS"
+        )
+
+        commit_staged_output_directory(
+            staging_dir
+        )
+
+        print(
+            "Committed final integration outputs."
+        )
+
+    except Exception:
+        print()
+        print(
+            "Integration run failed; previously accepted final outputs were preserved."
+        )
+        raise
+
+    finally:
+        OUTPUT_DIR = FINAL_OUTPUT_DIR
+
+        if staging_dir.exists():
+            shutil.rmtree(
+                staging_dir,
+                ignore_errors=True,
+            )
 
 
 if __name__ == "__main__":
