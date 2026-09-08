@@ -8,7 +8,7 @@ PhysioTrack face-analysis pipeline.
 
 The component-level benchmark validations evaluate individual modules under
 task-specific protocols. Integration validation has a different purpose: it
-verifies that the validated components can operate together inside the
+verifies that the configured components can operate together inside the
 PhysioTrack FaceAnalysis pipeline without breaking feature configuration,
 per-face association, temporal processing, tracking, static-image processing,
 or native result export.
@@ -25,7 +25,8 @@ cannot be established from isolated benchmark results alone:
 4. Whether gaze-estimation results remain associated with the correct tracked
    face in multi-person video.
 5. Whether the framework's native frame and window exports preserve the
-   expected analysis structure and numerical measurements.
+   expected analysis structure and numerical measurements, including FaceQuality
+   confidence, brightness, sharpness, and face-area ratio where applicable.
 6. Whether the complete configured pipeline can process an entire test video
    without dropped frames, missing face records, broken tracking, or missing
    enabled modules.
@@ -259,6 +260,9 @@ localized and interpreted correctly.
    - Observation of both gaze mechanisms
    - Finite Eye Openness values in available eye records
    - Finite Mouth Openness values in available mouth records
+   - Finite FaceQuality confidence, brightness, sharpness, and face-area-ratio
+     values in available quality records
+   - Preservation of FaceQuality numerical values in native frame export
    - Finite MouthMotion movement and velocity values when available
    - Numerical consistency of MouthMotion movement and velocity with their
      frame-to-frame definitions and video timing
@@ -285,6 +289,7 @@ localized and interpreted correctly.
    - Gaze-estimation output observed for at least two tracked persons
    - Consistency between face instances and frame/window exports
    - Availability of the configured analysis components
+   - Per-person availability and numerical export of FaceQuality descriptors
    - Per-person MouthMotion initialization and subsequent temporal updates
    - Numerical MouthMotion movement/velocity consistency within each tracked
      identity using the video's measured FPS
@@ -327,6 +332,7 @@ localized and interpreted correctly.
    - Use of the validated blink configuration
    - Finite Eye Openness values for all available eye samples
    - Finite Mouth Openness values for all available mouth samples
+   - Numerical FaceQuality outputs for all available quality samples
    - Finite MouthMotion movement and velocity values
    - Numerical MouthMotion consistency with frame-to-frame mouth-openness
      change and the video's measured FPS
@@ -349,6 +355,8 @@ localized and interpreted correctly.
    - Multi-face image handling
    - Static-module availability
    - Finite Eye Openness and Mouth Openness values
+   - Numerical FaceQuality export, including confidence, brightness, sharpness,
+     and face-area ratio
    - Numerical export of static facial measurements and descriptors
    - Explicit NOT_APPLICABLE handling for tracking, blink, mouth motion, and
      temporal aggregation
@@ -438,6 +446,12 @@ The integration tests follow the following principles:
 14. Emotion output is treated here as an integrated and operational pipeline
     output. Integration availability is not a scientific benchmark validation
     of emotion-recognition accuracy.
+
+15. FaceQuality is treated as a numerical integrated component. Its confidence,
+    brightness, sharpness, and face-area-ratio outputs are preserved in the
+    integration exports. Scientific validation of these descriptors is handled
+    separately by the FaceQuality controlled correctness and sensitivity
+    validation rather than by interpreting integration availability as accuracy.
 
 Running the Integration Validation
 ----------------------------------
@@ -565,7 +579,9 @@ Combined frame-result table:
 Module-summary table:
 14 rows x 8 columns
 
-The remaining configured modules passed in both runs.
+The remaining configured modules passed in both runs. FaceQuality was available
+in all 858 exported face records across the two runs, with numerical confidence,
+brightness, sharpness, and face-area-ratio values preserved in the frame table.
 
 Overall status:
 PASS
@@ -606,6 +622,12 @@ Existing landmark-based gaze available:
 
 Learned gaze estimation available:
 429
+
+FaceQuality available:
+429
+
+FaceQuality numerical frame export:
+confidence, brightness, sharpness, and face_area_ratio present and finite
 
 Blink available:
 429
@@ -709,8 +731,10 @@ PASS at 25.0 FPS with per-person temporal state preserved independently
 
 Both tracked persons were present throughout the evaluated video. The
 configured modules were available for 344/344 person-frames for each identity
-in this fixture. Learned gaze estimation was therefore available for 688/688
-evaluated face instances.
+in this fixture. Learned gaze estimation and FaceQuality were therefore
+available for 688/688 evaluated face instances. FaceQuality produced numerical
+confidence, brightness, sharpness, and face-area-ratio values for both tracked
+identities.
 
 Overall status:
 PASS
@@ -753,7 +777,9 @@ PASS
 
 The complete configured pipeline produced the expected frame-level and
 temporal records across the entire video, including real numerical facial
-measurements and temporal outputs.
+measurements and temporal outputs. FaceQuality was available for 1127/1127
+face records and its numerical confidence, brightness, sharpness, and
+face-area-ratio outputs were preserved in the frame export.
 
 Overall analysis status:
 PASS
@@ -834,6 +860,10 @@ Finite Eye Openness samples:
 Finite Mouth Openness samples:
 1127/1127 available mouth samples
 
+FaceQuality samples:
+1127/1127 face samples with numerical confidence, brightness, sharpness, and
+face-area-ratio outputs
+
 Finite MouthMotion samples:
 1127/1127 face samples
 
@@ -889,10 +919,12 @@ images because they require temporal sequence input:
 - temporal
 
 All 23 detected face records contained the expected static numerical outputs.
+FaceQuality was available for 23/23 detected faces and exported numerical
+confidence, brightness, sharpness, and face-area-ratio values for every face.
 
-Static numerical checks included finite EyeOpenness, gaze descriptors,
-learned gaze-estimation vectors, MouthOpenness, and normalized emotion
-probabilities where the corresponding module was available.
+Static numerical checks included finite EyeOpenness, FaceQuality descriptors,
+gaze descriptors, learned gaze-estimation vectors, MouthOpenness, and normalized
+emotion probabilities where the corresponding module was available.
 
 Temporal-only outputs were absent or explicitly neutral as required:
 
@@ -911,6 +943,24 @@ No temporal quantity was fabricated from an independent static image.
 
 Overall status:
 PASS
+
+Current Acceptance Summary
+--------------------------
+The complete seven-script integration suite passed on the documented fixtures.
+The accepted run confirms that the currently configured components remain
+operational together across runtime-configuration, single-person, native-export,
+multi-person, full-video, final whole-project, and static-image execution paths.
+
+FaceQuality is included in this accepted integrated configuration. It produced
+numerical outputs in all applicable runs: 858/858 records in the two-condition
+single-person test, 429/429 records in native export, 688/688 multi-person face
+instances, 1127/1127 whole-project video face records, 1127/1127 final
+whole-project face samples, and 23/23 static-image face records.
+
+The integration evidence supports software operation, numerical export,
+association, accounting, and internal consistency. It does not replace the
+separate scientific benchmark or controlled validation evidence for individual
+components.
 
 Result Organization
 -------------------
@@ -978,6 +1028,9 @@ The results establish the following system-level properties:
   single-person analysis outputs.
 - Per-frame and temporal exports preserve the expected analysis structure and
   numerical facial measurements.
+- FaceQuality operates with the other configured modules and preserves numerical
+  confidence, brightness, sharpness, and face-area-ratio values in video,
+  multi-person, native-export, whole-project, and static-image integration runs.
 - MouthMotion exports preserve real numerical movement and velocity values,
   use measured video timing, and maintain independent temporal state per
   tracked identity.
@@ -1061,7 +1114,8 @@ To reproduce the integration validation on another machine:
 7. Verify the generated result counts and PASS conditions against the values in
    this README.
 8. Verify that numerical measurements are present in the frame/window exports
-   where the corresponding module is applicable.
+   where the corresponding module is applicable, including FaceQuality
+   confidence, brightness, sharpness, and face-area ratio.
 9. Preserve the final result directories as integration evidence.
 
 Runtime can vary across machines and is not a scientific reproducibility
@@ -1069,20 +1123,6 @@ target. The principal reproducibility targets are processed-frame counts, face
 and export accounting, feature-configuration behavior, tracked-identity
 behavior, static-versus-temporal behavior, module observation, numerical export
 structure, and PASS/FAIL invariants.
-
-Clean Rerun Reproducibility Check
----------------------------------
-A complete clean rerun of all seven integration scripts on the documented
-fixtures reproduced the accepted integration result set exactly. The comparison
-covered all 31 generated result artifacts: 16 CSV files and 15 JSON files.
-Cell-by-cell comparison of the CSV outputs found no differences across 713,357
-cells, including headers, and recursive comparison of 729,094 JSON leaf values
-found no differences. The corresponding result files were also byte-identical.
-
-This reproducibility check supports deterministic regeneration of the documented
-integration evidence when the same project state, environment, configuration,
-and test fixtures are used. It is a regression/reproducibility property and does
-not constitute an additional predictive-accuracy claim for any component.
 
 Regression Use
 --------------
