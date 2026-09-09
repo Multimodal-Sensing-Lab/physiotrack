@@ -1,0 +1,72 @@
+{
+  "purpose": "Real PhysioTrack FaceAnalysis execution validation for FaceTemporalAggregator with independent frame-level recomputation of every current temporal summary field.",
+  "analysis_source": "src/physiotrack/face/analysis.py",
+  "temporal_source": "src/physiotrack/face/temporal.py",
+  "configuration": {
+    "tracking": true,
+    "head_pose": true,
+    "landmarks": true,
+    "quality": true,
+    "eyes": true,
+    "blink": true,
+    "gaze": true,
+    "gaze_estimation": false,
+    "mouth": true,
+    "mouth_motion": true,
+    "emotion": true,
+    "regions": false,
+    "temporal": true,
+    "tracker_type": "ocsort",
+    "blink_threshold": 0.22,
+    "min_closed_frames": 3,
+    "temporal_window_sec": 5.0
+  },
+  "scope_note": "GazeEstimator and face-region segmentation are disabled because the current FaceTemporalAggregator does not summarize their outputs. All upstream components currently consumed by the temporal aggregator are enabled.",
+  "output_directory": "validation/temporal_aggregation/results/component_execution",
+  "videos": [
+    {
+      "video": "validation/integration/test_data/single_person/face_blink_pose.mp4",
+      "status": "PASS",
+      "fps": 25.0,
+      "reported_frames": 429,
+      "processed_frames": 429,
+      "frames_with_faces": 429,
+      "face_records": 429,
+      "window_frames": 125,
+      "duplicate_person_id_frames": 0,
+      "failed_rows": 0,
+      "failed_checks": 0,
+      "error": null
+    },
+    {
+      "video": "validation/integration/test_data/multi_person/multi_person2.mp4",
+      "status": "PASS",
+      "fps": 25.0,
+      "reported_frames": 344,
+      "processed_frames": 344,
+      "frames_with_faces": 344,
+      "face_records": 688,
+      "window_frames": 125,
+      "duplicate_person_id_frames": 0,
+      "failed_rows": 0,
+      "failed_checks": 0,
+      "error": null
+    }
+  ],
+  "metrics": {
+    "videos_discovered": 2,
+    "videos_passed": 2,
+    "videos_failed": 0,
+    "processed_frames": 773,
+    "face_records": 1117,
+    "temporal_available_records": 1117,
+    "failed_frame_rows": 0,
+    "total_checks": 55850,
+    "passed_checks": 55850,
+    "failed_checks": 0,
+    "max_numeric_absolute_error": 2.131628207280301e-14,
+    "runtime_sec": 194.75313050000113,
+    "overall_status": "PASS"
+  },
+  "overall_status": "PASS"
+}
