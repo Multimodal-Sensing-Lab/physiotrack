@@ -27,9 +27,13 @@
 
 **Physiotrack** is an open-source Python toolkit for contactless human understanding. It integrates
 state-of-the-art computer-vision models (YOLO11, RT-DETR, ViTPose, Sapiens, Depth-Anything-V2,
-ZipDepth, MotionBERT, 6DRepNet360, SegFace) into a **single, unified API** that extracts actionable, theory-linked
-signals from ordinary **RGB video**, for healthcare, education, XR, and operator-support
-systems. Developed at the **Center for Machine Vision and Signal Processing (CMVS), University of Oulu**.
+ZipDepth, MotionBERT, 6DRepNet360, SegFace) together with a modular **face-analysis pipeline**
+for face tracking, landmarks, quality descriptors, eye and blink analysis, geometric and learned
+gaze estimation, mouth dynamics, facial emotion, face-region analysis, temporal aggregation, and
+structured numerical export. These components are exposed through a **single, unified API** that
+extracts actionable, theory-linked signals from ordinary **RGB video**, for healthcare, education,
+XR, and operator-support systems. Developed at the **Center for Machine Vision and Signal
+Processing (CMVS), University of Oulu**.
 
 <div align="center">
 
@@ -59,8 +63,9 @@ systems. Developed at the **Center for Machine Vision and Signal Processing (CMV
 
 Foundational models are good at labeling *what* they see. Physiotrack is designed to help systems
 understand *what it means*. It converts an ordinary RGB video stream into interpretable
-human-state features: pose and motion patterns, posture symmetry, head orientation and gaze
-stability, and rPPG-derived heart rate, heart-rate variability (HRV) and respiration rate.
+human-state features: pose and motion patterns, posture symmetry, head orientation, eye and blink
+behavior, geometric and learned gaze, mouth activity, facial emotion, face-region and quality
+descriptors, and rPPG-derived heart rate, heart-rate variability (HRV) and respiration rate.
 
 The philosophy is simple: **"send meaning, not pixels"**, so downstream AI agents can reason about
 human *states* instead of processing raw video.
@@ -77,6 +82,7 @@ human *states* instead of processing raw video.
 - [Subsystem Guide](#subsystem-guide)
 - [Model Registry](#model-registry)
 - [Result Objects](#result-objects)
+- [Face-analysis validation & reproducibility](#face-analysis-validation--reproducibility)
 - [Scope & Limitations](#scope--limitations)
 - [Project Layout](#project-layout)
 - [Citations](#citations)
@@ -95,7 +101,8 @@ auto-downloads weights from Hugging Face.
 
 The modules group into three tiers that mirror the *"send meaning, not pixels"* pipeline:
 **🧰 enabling tools** (generic CV) → **🧍 human structure** (pose & kinematics) → **📡 human-state
-signals** (the interpretable payload).
+signals** (the interpretable payload). The modular `FaceAnalysis` pipeline extends the face path
+with per-face behavioral and temporal descriptors while remaining independently configurable.
 
 ```mermaid
 flowchart TB
@@ -108,9 +115,9 @@ flowchart TB
         I4["Single image"]
     end
 
-    CAP["🎞️ <b>Video orchestrator</b> · capture.Video<br/><i>frame loop · resize · rotate · FPS subsample · batching</i><br/><i>per-frame pipeline: 6 model stages · sync ego-video</i>"]
+    CAP["🎞️ <b>Video orchestrator</b> · capture.Video<br/><i>frame loop · resize · rotate · FPS subsample · batching</i><br/><i>per-frame pipeline · sync ego-video</i>"]
 
-    %% ====== TIER 1: enabling tools (general-purpose CV) ======
+    %% ====== TIER 1: enabling tools ======
     subgraph TOOLS["🧰 General-purpose perception · enabling tools"]
         direction LR
         DET["🔍 <b>Detection</b> → boxes<br/><i>Person · Face · VR · VRStudent · Custom</i><br/>YOLO11 · RT-DETR"]
@@ -129,13 +136,14 @@ flowchart TB
         FSEG["🧩 <b>Face parsing</b><br/>SegFace · Swin-Base<br/><i>19 CelebAMask-HQ classes</i>"]
     end
 
-    %% ====== TIER 3: human-state signals (the payload) ======
+    %% ====== TIER 3: human-state signals ======
     subgraph SIGNAL["📡 Human-state signals · physiological · motion · behavioral"]
         direction LR
         PPG["❤️ <b>rPPG → HR · HRV · RR</b> · physiological<br/>POS · CHROM · LGI · OMIT<br/><i>RR intervals · Lipponen-Tarvainen · Task-Force HRV</i>"]
         ANG["📐 <b>Joint angles &amp; ROM</b> · goniometry<br/>8 interior angles + clinical ROM<br/><i>flexion · extension · abd · add</i><br/><i>angle panel + ROM skeleton</i>"]
         MOT["🏃 <b>Motion features</b><br/>velocity · accel · trajectories<br/><i>centroids · filters · metrics</i>"]
-        FORI["👁️ <b>Head orientation</b> · gaze<br/>6DRepNet360 · CMVS-FO-VR<br/><i>yaw · pitch · roll</i>"]
+        FORI["👁️ <b>Head orientation</b><br/>6DRepNet360 · CMVS-FO-VR<br/><i>yaw · pitch · roll</i>"]
+        FANA["🙂 <b>FaceAnalysis</b><br/><i>tracking · 478 landmarks · quality · eyes/blink</i><br/><i>geometric gaze · learned 3D gaze · mouth dynamics</i><br/><i>emotion · face regions · temporal summaries · export</i>"]
         RAD["🗺️ <b>Floor map / radar</b> · location<br/>4-corner homography<br/><i>bird's-eye trajectories</i>"]
     end
 
@@ -145,26 +153,33 @@ flowchart TB
         RES["<b>Result family</b><br/>Result · DepthResult · TrackResult · Pose3DResult<br/>Instance · Keypoints · FrameResult / VideoResults<br/>.plot() · .to_dict()"]
         VID["Annotated<br/>video"]
         JSON["JSON<br/>time-series"]
+        CSV["CSV<br/>tabular export"]
         RTP["Real-time<br/>plots"]
     end
 
     %% ------------- Model registry -------------
-    REG[["🗂️ <b>Models registry</b> · Models.&lt;Task&gt;.&lt;Backend&gt;.&lt;Variant&gt;<br/>YOLO11/12 · RT-DETR · ViTPose · Sapiens · SegFace<br/>Depth-Anything-V2 · ZipDepth · MotionBERT · DDHPose · 3DPCNet · 6DRepNet360<br/><i>51 pretrained variants (52 selectable) · auto-download from Hugging Face</i>"]]
+    REG[["🗂️ <b>Models registry</b> · Models.&lt;Task&gt;.&lt;Backend&gt;.&lt;Variant&gt;<br/>YOLO11/12 · RT-DETR · ViTPose · Sapiens · SegFace<br/>Depth-Anything-V2 · ZipDepth · MotionBERT · DDHPose · 3DPCNet · 6DRepNet360<br/><i>pretrained variants · auto-download from Hugging Face</i>"]]
 
     %% ---------------- Flow ----------------
     I1 --> CAP
     I2 --> CAP
     I3 --> CAP
     I4 --> CAP
+
     CAP --> DET
     CAP --> DEP
     CAP --> FDET
+
     DET --> TRK
     DET -.boxes.-> POSE
     DET -.boxes.-> SEG
+
     POSE --> P3D --> CAN
+
     FDET --> FORI
     FDET -.boxes.-> FSEG
+    FDET --> FANA
+
     TRK --> RAD
     POSE --> ANG
     POSE --> MOT
@@ -184,14 +199,18 @@ flowchart TB
     ANG --> RES
     MOT --> RES
     FORI --> RES
+    FANA --> RES
     RAD --> RES
+
     RES --> VID
     RES --> JSON
+    FANA --> CSV
     RES --> RTP
 
     REG -.weights.-> TOOLS
     REG -.weights.-> HUMAN
     REG -.weights.-> FORI
+    REG -.weights.-> FANA
 
     classDef input  fill:#e3f2fd,stroke:#1565c0,color:#0d47a1;
     classDef tools  fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
@@ -204,24 +223,26 @@ flowchart TB
     class I1,I2,I3,I4 input;
     class DET,TRK,SEG,DEP,FDET tools;
     class POSE,P3D,CAN,FSEG human;
-    class PPG,ANG,MOT,FORI,RAD signal;
-    class RES,VID,JSON,RTP out;
+    class PPG,ANG,MOT,FORI,FANA,RAD signal;
+    class RES,VID,JSON,CSV,RTP out;
     class CAP orch;
     class REG reg;
 ```
 
 **Reading the diagram:** read it as *pixels → tools → human structure → signals*.
-**🧰 Enabling tools** (detection, tracking, segmentation, depth, face detection) localize and parse the
-image; **🧍 human structure** (2D/3D pose, canonicalization, face parsing) turns those into
-body-specific estimates; **📡 human-state signals** (rPPG HR/RR, **joint angles & clinical ROM**,
-motion, head orientation/gaze, location) are the interpretable payload. Each box lists its backend
-options/variants (italics = key options or output format), selected through the
-[`Models` registry](#model-registry). Solid arrows are per-frame data flow; dotted arrows show
+**🧰 Enabling tools** (detection, tracking, segmentation, depth, face detection) localize and parse
+the image; **🧍 human structure** (2D/3D pose, canonicalization, face parsing) turns those into
+body-specific estimates; **📡 human-state signals** include rPPG HR/RR, **joint angles & clinical
+ROM**, motion, head orientation, modular facial behavior, gaze, and location. `FaceAnalysis`
+extends the face path with configurable per-face tracking, landmarks, quality, eye/blink,
+geometric and learned gaze, mouth, emotion, face-region, temporal, and export operations.
+
+Solid arrows show the principal data flow. Dotted arrows show supporting relationships such as
 detection boxes feeding pose/segmentation, skin regions feeding rPPG, canonical pose feeding the
-angles, and weights from the registry. Every module also works standalone. Inputs are **monocular
-RGB** (BGR frames) via OpenCV. Depth is *estimated* monocularly rather than sensed: there is no
-RGB-D, infrared or thermal capture path. Where a clip comes from an RGB-D camera, only its colour
-stream is used.
+angles, and model weights supplied by the registry. Every module also works standalone. Inputs are
+**monocular RGB** (BGR frames) via OpenCV. Depth is *estimated* monocularly rather than sensed:
+there is no RGB-D, infrared or thermal capture path. Where a clip comes from an RGB-D camera, only
+its colour stream is used.
 
 ---
 
@@ -237,20 +258,20 @@ stream is used.
 | **Segmentation** | Pixel-level instance masks | YOLO-Seg, Sapiens, VR-Head |
 | **Face parsing** | Face-part segmentation (19 classes) | SegFace (Swin-Base) |
 | **Depth** | Monocular dense depth estimation | Depth-Anything-V2 (s/b/l), ZipDepth (base/npu) |
-| **Face** | Face detection + 3D head orientation | YOLO-Face, 6DRepNet360, CMVS-FO-VR |
+| **Face analysis** | Face detection and tracking, head pose, 478 landmarks, quality descriptors, eye openness, blink events, geometric gaze, learned 3D gaze, mouth openness/motion, emotion, face regions, temporal summaries, JSON/CSV export | YOLO-Face, MediaPipe Face Landmarker, 6DRepNet360 / CMVS-FO-VR, ptgaze (optional), EmotiEffLib, SegFace |
 | **Signals** | rPPG heart rate, HRV, respiration + motion features | POS, CHROM, LGI, OMIT; RR intervals; Lipponen-Tarvainen artefact correction; Task-Force HRV |
 | **Joint angles & ROM** | 8 anatomical joint angles + clinical range-of-motion (flexion/extension/abduction/adduction) as rows in the left-side angle panel, plus a clean full-room **skeleton canvas** | goniometry from pose |
 | **Views** | Bird's-eye floor map, ego-video, depth & angle/ROM overlays | n/a |
 
-**Inputs:** monocular RGB video — files, RTSP streams, live cameras, or single images. **Hardware:** CPU or CUDA GPU (acceleration
-recommended for real-time use).
+**Inputs:** monocular RGB video — files, RTSP streams, live cameras, or single images.
+**Hardware:** CPU or CUDA GPU (acceleration recommended for real-time use).
 
 ---
 
 ## Installation
 
-**Requires Python 3.10 or newer.** Install the PyTorch build that matches your platform
-first, then the package:
+**Requires Python 3.10 or newer.** Install the PyTorch build that matches your platform first,
+then the package:
 
 ```bash
 git clone https://github.com/tharindu326/physiotrack.git
@@ -258,6 +279,7 @@ cd physiotrack
 
 # CPU-only
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 # ...or CUDA 12.8
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
@@ -270,6 +292,7 @@ Everything else resolves from `pyproject.toml`. Optional extras:
 pip install -e ".[test]"     # test suite, including the NeuroKit2 reference implementation
 pip install -e ".[docs]"     # MkDocs toolchain
 pip install -e ".[pose3d]"   # smplx, for 3D mesh rendering in Pose3D
+pip install -e ".[gaze]"     # ptgaze 0.3.0, for learned 3D gaze estimation
 ```
 
 | | Supported |
@@ -284,9 +307,9 @@ Hugging Face).
 
 #### Where weights are cached
 
-Checkpoints are cached **outside** the installed package, so a read-only or containerised
-install works, Docker layer caching is not defeated by a multi-gigabyte write into
-`site-packages`, and several environments can share one download:
+Checkpoints are cached **outside** the installed package, so a read-only or containerised install
+works, Docker layer caching is not defeated by a multi-gigabyte write into `site-packages`, and
+several environments can share one download:
 
 | | Location |
 | --- | --- |
@@ -315,11 +338,11 @@ pip install -e ".[test]"
 pytest
 ```
 
-The suite validates the biomedical DSP against closed-form definitions and synthetic signals
-with known ground truth, and cross-checks the HRV, artefact-correction and pulse-peak paths
-against NeuroKit2 as an independent reference implementation. It must pass with **zero
-skips**: `neurokit2` is part of the `test` extra precisely so those cross-checks cannot skip
-silently and leave the strongest correctness claim unverified.
+The suite validates the biomedical DSP against closed-form definitions and synthetic signals with
+known ground truth, and cross-checks the HRV, artefact-correction and pulse-peak paths against
+NeuroKit2 as an independent reference implementation. It must pass with **zero skips**:
+`neurokit2` is part of the `test` extra precisely so those cross-checks cannot skip silently and
+leave the strongest correctness claim unverified.
 
 ---
 
@@ -343,13 +366,45 @@ wrist  = people[0].keypoints.by_name("left_wrist")
 print(wrist.x, wrist.y, wrist.confidence)
 ```
 
+For modular facial analysis:
+
+```python
+from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
+
+config = FaceAnalysisConfig(
+    tracking=True,
+    head_pose=True,
+    landmarks=True,
+    quality=True,
+    eyes=True,
+    blink=True,
+    gaze=True,
+    gaze_estimation=False,   # set True when the optional [gaze] dependency is installed
+    mouth=True,
+    mouth_motion=True,
+    emotion=True,
+    regions=True,
+    temporal=True,
+)
+
+face_pipeline = FaceAnalysis(
+    config=config,
+    fps=30,
+)
+
+face_result = face_pipeline.predict(frame)
+```
+
+`FaceAnalysisConfig` keeps each optional analysis path explicit. Learned gaze estimation remains
+separate from the original geometric iris-position descriptor and can be enabled independently.
+
 ---
 
 ## The Unified API
 
 Everything user-facing is reached through one flat, predictable hierarchy. Import the entry
-points from the top-level `physiotrack` package (or a named subsystem); you never need to reach
-into internal module paths:
+points from the top-level `physiotrack` package or a named subsystem; you never need to reach into
+internal module paths:
 
 ```text
 physiotrack ─┬─ Detection.Person() / .Face() / .VR() / .VRStudent() / .Custom()
@@ -364,19 +419,29 @@ physiotrack ─┬─ Detection.Person() / .Face() / .VR() / .VRStudent() / .Cus
              └─ Result · DepthResult · TrackResult      # returned by every predictor
                           ↳ .boxes · .keypoints · .seg_map · .names · .plot() · .to_dict()
 
+physiotrack.face ─┬─ FaceAnalysis · FaceAnalysisConfig
+                  ├─ Face · VRFace · FaceOrientation
+                  ├─ FaceTracker · FaceLandmarks · FaceQuality
+                  ├─ EyeOpenness · BlinkDetector
+                  ├─ GazeDescriptor · GazeEstimator
+                  ├─ MouthOpenness · MouthMovement
+                  ├─ FaceEmotion · FaceRegions
+                  ├─ FaceTemporalAggregator · FaceResultExporter
+                  └─ drawing helpers (draw_axis, plot_pose_cube)
+
 physiotrack.signals ─┬─ compute (plotter-free, use directly):
                      │    joint_angles() · compute_rom_angles() · motion features · respiration_from_motion()
                      │    rPPG: POS/CHROM/LGI/OMIT · HeartRateEstimator · bvp_to_hr · bvp_snr
                      │    pulse analysis: bvp_to_rri · correct_rr_artifacts · compute_hrv · respiration_from_pulse/rri
                      │    filters · agreement metrics (Pearson, RMSE, DTW, hrv_errors, …)
                      └─ overlays (optional, wrap the compute above):
-                          JointAnglePlotter · RPPGPlotter · HeartRatePlotter · HRVPlotter · RespirationPlotter · KeypointMotionPlotter · RealTimePlotter
-physiotrack.pose    ── keypoint name maps (COCO_WHOLEBODY_NAMES, HUMAN26M_NAMES)
-physiotrack.face    ── drawing helpers (draw_axis, plot_pose_cube)
+                          JointAnglePlotter · RPPGPlotter · HeartRatePlotter · HRVPlotter · RespirationPlotter · KeypointMotionPlotter
+
+physiotrack.pose ── keypoint name maps (COCO_WHOLEBODY_NAMES, HUMAN26M_NAMES)
 ```
 
-Every image predictor (`Detection`, `Pose`, `Segmentation`, `Depth`, `Face`) follows the
-**same pattern** (modeled on Ultralytics / MediaPipe / scikit-learn):
+Every image predictor (`Detection`, `Pose`, `Segmentation`, `Depth`, `Face`) follows the same
+pattern (modeled on Ultralytics / MediaPipe / scikit-learn):
 
 ```python
 model  = pt.Detection.Person(conf=0.25, iou=0.45, device=0)   # 1. configure the MODEL
@@ -389,8 +454,8 @@ Three rules make the whole library predictable:
 
 1. **One verb.** Every predictor exposes `.predict(img)` and is callable. Batch with a list:
    `predict([img, img, ...]) -> list[Result]`.
-2. **One return type.** Every predictor returns a rich [`Result`](#result-objects) object, not
-   tuples in mixed orders.
+2. **One return type.** Every predictor returns a rich `Result` object rather than tuples in mixed
+   orders.
 3. **Rendering lives on the result, not the model.** `result.plot(...)` draws the overlay;
    constructors only configure the model.
 
@@ -407,11 +472,13 @@ from physiotrack import Detection, Models
 det = Detection.Person()                       # also .Face() .VR() .VRStudent()
 result = det.predict(image)
 print(result.boxes)                            # (N, 4)
+
 for inst in result:
     print(inst.box, inst.confidence, inst.cls_name)
 
-det = Detection.Custom(model=Models.Detection.YOLO.VR.m_vr)   # custom weights
+det = Detection.Custom(model=Models.Detection.YOLO.VR.m_vr)
 ```
+
 </details>
 
 <details>
@@ -420,8 +487,8 @@ det = Detection.Custom(model=Models.Detection.YOLO.VR.m_vr)   # custom weights
 ```python
 from physiotrack import Pose, Models
 
-pose = Pose.Person()                           # or Pose.VRStudent(), Pose.Custom(model=...)
-result = pose.predict(image)                   # auto-detects people if no boxes given
+pose = Pose.Person()
+result = pose.predict(image)
 print(result.architecture)                     # "WHOLEBODY" or "COCO"
 
 for person in result:
@@ -432,8 +499,11 @@ for person in result:
 pose = Pose.Custom(model=Models.Pose.ViTPose.WholeBody.l_wholebody)
 ```
 
-- **COCO**: 17 keypoints (body only). **WholeBody**: 133 keypoints (body + hands + face).
-- When no bounding boxes are supplied, the pose estimator detects people with the default detector.
+- **COCO**: 17 keypoints (body only).
+- **WholeBody**: 133 keypoints (body + hands + face).
+- When no bounding boxes are supplied, the pose estimator detects people with the default
+  detector.
+
 </details>
 
 <details>
@@ -442,53 +512,215 @@ pose = Pose.Custom(model=Models.Pose.ViTPose.WholeBody.l_wholebody)
 ```python
 from physiotrack import Models, Pose, Pose3D, Video, canonicalize_pose
 
-results = Video(source="clip.mp4", pose=Pose.Person()).run()   # 2D pass
+results = Video(source="clip.mp4", pose=Pose.Person()).run()
 
-p3d = Pose3D(model=Models.Pose3D.MotionBERT.mb_ft_h36m_global_lite, device="cpu")
-poses = p3d.predict(results, fps=30)        # -> Pose3DResult, (N, 17, 3) H3.6M order
-poses.by_name("left_wrist")                 # (N, 3) trajectory of one joint
+p3d = Pose3D(
+    model=Models.Pose3D.MotionBERT.mb_ft_h36m_global_lite,
+    device="cpu",
+)
+poses = p3d.predict(results, fps=30)
+poses.by_name("left_wrist")
 
-# Viewpoint-invariant canonical form
-canonical = canonicalize_pose(poses.poses, view="front")        # geometric (training-free) default
-canonical = canonicalize_pose(                                 # learned 3DPCNet (recommended)
+canonical = canonicalize_pose(
+    poses.poses,
+    view="front",
+)
+
+canonical = canonicalize_pose(
     poses.poses,
     model=Models.Pose3D.Canonicalizer.Models._3DPCNetTC48_byCam,
     view="front",
 )
-
-# Or canonicalize during lifting, and use predict_json() for the file-based workflow.
 ```
 
-> Lifting is **sequence-level** (a temporal model needs a window of 2D frames per 3D frame)
-> and single-subject. Coordinates are root-relative, not metric.
+> Lifting is **sequence-level** (a temporal model needs a window of 2D frames per 3D frame) and
+> single-subject. Coordinates are root-relative, not metric.
+
 </details>
 
 <details>
-<summary><b>Segmentation, Depth, Face</b></summary>
+<summary><b>Segmentation &amp; Depth</b></summary>
 
 ```python
-from physiotrack import Segmentation, Depth, VRFace, FaceOrientation, Models
+from physiotrack import Segmentation, Depth
 
 seg = Segmentation.Person()
-seg_map = seg.predict(image).seg_map           # (H, W) class map
+seg_map = seg.predict(image).seg_map
 
-# Face parsing (SegFace, 19 face-part classes). Faces are auto-detected if no
-# boxes are given; pass boxes=[...] to parse specific faces.
+# Face parsing (SegFace, 19 face-part classes).
 parse = Segmentation.Face()
-result = parse.predict(image)                  # -> Result(task="segment")
-seg_map = result.seg_map                       # (H, W) face-part class map
-annotated = result.plot()                      # overlay with the 19-class palette
+result = parse.predict(image)
+seg_map = result.seg_map
+annotated = result.plot()
 
-depth = Depth.DepthAnythingV2Base()            # or Depth.ZipDepth() — lightweight, 6.8M params
+depth = Depth.DepthAnythingV2Base()
 d = depth.predict(image)
 raw, colored = d.depth, d.plot(colormap="inferno")
+```
+
+</details>
+
+<details>
+<summary><b>Face detection &amp; head orientation</b></summary>
+
+```python
+from physiotrack import VRFace, FaceOrientation, Models
 
 face = VRFace()
 boxes = face.predict(image).boxes
-orient = FaceOrientation(model=Models.Pose3D.FaceOrientation.VR)
+
+orient = FaceOrientation(
+    model=Models.Pose3D.FaceOrientation.VR,
+)
+
 for inst in orient.predict(image, boxes):
-    print(inst.orientation)                    # {"yaw": .., "pitch": .., "roll": ..}
+    print(inst.orientation)
 ```
+
+</details>
+
+<details>
+<summary><b>Modular face analysis</b></summary>
+
+The `physiotrack.face` subsystem provides a configurable `FaceAnalysis` orchestrator on top of the
+individual face components. The face detector remains the primary localization stage; the
+remaining analysis modules can be enabled or disabled independently through `FaceAnalysisConfig`
+subject to their explicit dependencies.
+
+```python
+from physiotrack.face import FaceAnalysis, FaceAnalysisConfig
+
+config = FaceAnalysisConfig(
+    tracking=True,
+    head_pose=True,
+    landmarks=True,
+    quality=True,
+    eyes=True,
+    blink=True,
+    gaze=True,
+    gaze_estimation=False,
+    mouth=True,
+    mouth_motion=True,
+    emotion=True,
+    regions=True,
+    temporal=True,
+)
+
+pipeline = FaceAnalysis(
+    config=config,
+    fps=30,
+)
+
+result = pipeline.predict(frame)
+
+for face in result:
+    print(face.id, face.box)
+```
+
+The current modular stack includes:
+
+- **Face detection** for per-frame facial localization.
+- **FaceTracker** for persistent per-face identities across video frames.
+- **FaceLandmarks** for 478-point facial landmarks.
+- **FaceQuality** for detector confidence, normalized grayscale brightness,
+  Laplacian-variance sharpness, and face-area ratio.
+- **EyeOpenness** for continuous left/right/mean eye-openness measurements.
+- **BlinkDetector** for temporal blink state, events, duration, count, and rate.
+- **GazeDescriptor** for the original landmark/iris-based geometric gaze descriptor.
+- **GazeEstimator** for learned normalized 3D gaze vectors with pitch/yaw angles through the
+  optional `ptgaze` backend.
+- **MouthOpenness** for continuous normalized mouth opening.
+- **MouthMovement** for temporal mouth movement and velocity.
+- **FaceEmotion** for eight-class emotion scores, predicted label, and confidence.
+- **FaceRegions** for semantic face-region outputs.
+- **FaceTemporalAggregator** for per-person sliding-window summaries.
+- **FaceResultExporter** for structured frame/window JSON and CSV export.
+
+The geometric gaze descriptor and learned `GazeEstimator` intentionally remain separate because
+they represent different quantities. The former describes normalized iris position, whereas the
+latter estimates a learned 3D gaze direction.
+
+`FaceAnalysisConfig` validates important component dependencies. In the current pipeline:
+
+- eye openness requires landmarks;
+- blink detection requires eye openness;
+- geometric gaze requires landmarks;
+- mouth openness requires landmarks;
+- mouth motion requires mouth openness;
+- temporal aggregation requires tracking.
+
+Learned gaze estimation is optional and is disabled by default. Enable it after installing the
+`gaze` extra:
+
+```bash
+pip install -e ".[gaze]"
+```
+
+Then configure:
+
+```python
+config = FaceAnalysisConfig(
+    gaze_estimation=True,
+    gaze_estimation_mode="eth-xgaze",
+    gaze_estimation_min_iou=0.10,
+)
+```
+
+### Face-analysis data flow
+
+```mermaid
+flowchart LR
+    IMG["RGB frame"] --> DET["Face detector"]
+
+    DET --> TRK["FaceTracker"]
+    DET --> HP["Head pose"]
+    DET --> LM["FaceLandmarks<br/>478 points"]
+    DET --> Q["FaceQuality"]
+    DET --> G3D["GazeEstimator<br/>optional learned 3D gaze"]
+    DET --> EMO["FaceEmotion"]
+    DET --> REG["FaceRegions"]
+
+    LM --> EYE["EyeOpenness"]
+    EYE --> BLINK["BlinkDetector"]
+
+    LM --> GAZE["GazeDescriptor<br/>geometric iris features"]
+
+    LM --> MOUTH["MouthOpenness"]
+    MOUTH --> MM["MouthMovement<br/>movement + velocity"]
+
+    TRK --> TEMP["FaceTemporalAggregator"]
+    HP --> TEMP
+    EYE --> TEMP
+    BLINK --> TEMP
+    GAZE --> TEMP
+    MOUTH --> TEMP
+    MM --> TEMP
+    Q --> TEMP
+    EMO --> TEMP
+
+    DET --> EXP["FaceResultExporter"]
+    HP --> EXP
+    LM --> EXP
+    Q --> EXP
+    EYE --> EXP
+    BLINK --> EXP
+    GAZE --> EXP
+    G3D --> EXP
+    MOUTH --> EXP
+    MM --> EXP
+    EMO --> EXP
+    REG --> EXP
+    TEMP --> EXP
+
+    EXP --> JSON["JSON"]
+    EXP --> CSV["CSV"]
+```
+
+Static images support the non-temporal face-analysis components. Tracking-dependent measurements
+such as blink-event timing, mouth movement/velocity, and temporal-window summaries require a
+sequence with valid frame timing. These temporal quantities should not be synthesized for an
+independent image.
+
 </details>
 
 <details>
@@ -501,42 +733,43 @@ from physiotrack.signals import POS, bvp_to_hr, bandpass_filter
 from physiotrack.signals import FaceSkinExtractor, HeartRateEstimator
 
 # Low level: one rPPG method on an RGB skin trace, shape (3, N) with rows R, G, B
-bvp   = POS(fps=30).apply(rgb_trace)            # blood-volume-pulse candidate
+bvp   = POS(fps=30).apply(rgb_trace)
 clean = bandpass_filter(bvp, 0.75, 4.0, 30)
-hr_bpm, times = bvp_to_hr(clean, fps=30)        # per-window HR (bpm) + window-centre times
-latest = hr_bpm[-1]                             # a series, not a single number
+hr_bpm, times = bvp_to_hr(clean, fps=30)
+latest = hr_bpm[-1]
 
-# High level: SegFace face parsing -> rPPG on the skin (no plotter)
-fs  = FaceSkinExtractor()                        # SegFace (detects faces itself)
-est = HeartRateEstimator("POS", fps=30, window_sec=60)   # POS/CHROM/LGI/OMIT; bands configurable
-mask, skin_canvas = fs.extract(frame)            # skin ROI mask + image-res skin canvas
-est.update(frame, roi_mask=mask)                 # rPPG on the segmented skin; call per frame
-print(est.hr, est.snr)                           # HR (bpm), de Haan SNR (dB)
+# High level: SegFace face parsing -> rPPG on the skin
+fs  = FaceSkinExtractor()
+est = HeartRateEstimator("POS", fps=30, window_sec=60)
 
-# The same window also yields the downstream pulse analytics (no re-computation):
-print(est.hrv())                                 # {RMSSD, SDNN, pNN50, SD1, SD2, LF/HF, ...}
-print(est.respiration_rate())                    # breaths/min (RIAV; use "rsa" for RSA)
+mask, skin_canvas = fs.extract(frame)
+est.update(frame, roi_mask=mask)
 
-# Or step through the pulse-analysis chain explicitly:
-from physiotrack.signals import bvp_to_rri, correct_rr_artifacts, compute_hrv
-rri_ms, _   = bvp_to_rri(clean, fps=30)          # RR / inter-beat intervals (ms)
-rri_ms, _   = correct_rr_artifacts(rri_ms)       # Lipponen-Tarvainen (2019) beat correction
-hrv         = compute_hrv(rri_ms)                # time + frequency + non-linear HRV
-# Note: correction re-derives the series from the corrected beats, so its length can
-# change. Let compute_hrv rebuild the timestamps rather than reusing the originals.
+print(est.hr, est.snr)
+print(est.hrv())
+print(est.respiration_rate())
 ```
-(`update` also accepts a face `box` as a lightweight fallback when you don't run segmentation.)
 
-For on-frame overlays, wrap a (shared) estimator with `RPPGPlotter` (BVP pulse), `HeartRatePlotter`
-(bpm), `HRVPlotter` (HRV grid) and `RespirationPlotter` (breaths/min) — all read one
-`HeartRateEstimator`, so the rPPG is computed once. See
-[`examples/rppg_vitals.py`](examples/rppg_vitals.py) (all panels together); or enable them in the
-pipeline with `Video(..., rppg=True, hrv=True, respiration=True)`. Respiration also has a pose-based route
-(`respiration_from_motion`) that cross-validates the rPPG estimate. All HRV / artefact-correction
-formulas are validated against closed-form definitions, and the HRV, artefact-correction and
-pulse-peak paths are additionally cross-checked against NeuroKit2 as a reference implementation. Also includes motion features,
-filters/normalizers, and signal-agreement metrics (`compute_rmse`,
-`calculate_pearson_correlation`, `calculate_dtw_distance`, `hrv_errors`, …).
+Or step through the pulse-analysis chain explicitly:
+
+```python
+from physiotrack.signals import bvp_to_rri, correct_rr_artifacts, compute_hrv
+
+rri_ms, _ = bvp_to_rri(clean, fps=30)
+rri_ms, _ = correct_rr_artifacts(rri_ms)
+hrv = compute_hrv(rri_ms)
+```
+
+`update` also accepts a face `box` as a lightweight fallback when segmentation is not used.
+
+For on-frame overlays, wrap a shared estimator with `RPPGPlotter`, `HeartRatePlotter`,
+`HRVPlotter` and `RespirationPlotter`. All read the same `HeartRateEstimator`, so the rPPG is
+computed once.
+
+See [`examples/rppg_vitals.py`](examples/rppg_vitals.py), or enable the corresponding outputs in
+the video pipeline. Respiration also has a pose-based route (`respiration_from_motion`) that can
+cross-check the rPPG-derived estimate.
+
 </details>
 
 <details>
@@ -545,35 +778,36 @@ filters/normalizers, and signal-agreement metrics (`compute_rmse`,
 Two kinds of angle, both derived from pose keypoints:
 
 - **Interior joint angles** — 8 anatomical angles (left/right **shoulder, elbow, hip, knee**), the
-  angle *at* each joint. Good for any activity (e.g., gait-cycle joint-angle trajectories).
-- **Clinical range-of-motion (ROM)** — named physiotherapy movements (**hip flexion / extension /
-  abduction / adduction**), measured against a body reference axis. In the pipeline the values appear
-  in the ROM grid, and the movements are drawn as **colour-coded goniometric arcs** on a clean
-  **white-background skeleton panel** that mirrors the full room (so the person's position is
-  preserved and the main frame stays uncluttered). Both sit on the left, under the joint-angle grid.
-  Best for a controlled assessment (patient lying or standing).
+  angle *at* each joint.
+- **Clinical range-of-motion (ROM)** — named physiotherapy movements such as hip flexion,
+  extension, abduction and adduction, measured against a body reference axis.
 
-The measurement is **plotter-free** — run it straight on pose keypoints:
+The measurement is **plotter-free**:
 
 ```python
 import physiotrack as pt
-from physiotrack.signals import joint_angles, compute_rom_angles, JointAnglePlotter
+
+from physiotrack.signals import (
+    joint_angles,
+    compute_rom_angles,
+    JointAnglePlotter,
+)
 
 det = pt.Pose.Person().predict(frame).to_dict()["instances"]
-kps = det[0]["keypoints"]   # list of {"id", "x", "y", "confidence"} for one person
-joint_angles(kps)        # {'leftElbow': 152, 'leftKnee': 174, ...}   interior angles
-compute_rom_angles(kps)  # {'leftHipFlexion': 12, 'leftHipAbduction': 34, ...}  clinical ROM
+kps = det[0]["keypoints"]
 
-# Optional overlay (wraps the same functions): joint-angle grid + ROM grid (2-col L|R)
+joint_angles(kps)
+compute_rom_angles(kps)
+
 plotter = JointAnglePlotter(rom=True)
 plotter.update(result.to_dict()["instances"], frame_time=t)
 frame = plotter.attach_to_frame(frame, position="top_left")
 ```
 
-In the `Video` pipeline (see below): `plot_angles=True` shows the interior joint-angle grid;
-`rom=True` (or a list like `["leftHipFlexion", "rightHipFlexion"]`) adds the clinical ROM grid and a
-full-room **skeleton canvas** with color-matched arcs; `rom_render=False` keeps the ROM values in the
-grid but hides the skeleton canvas. The angle/ROM grids and skeleton stack together on the left.
+In the `Video` pipeline, `plot_angles=True` shows the interior joint-angle grid; `rom=True`
+(or a list of selected movements) adds the clinical ROM grid and skeleton visualization.
+`rom_render=False` keeps the numerical ROM values while hiding the skeleton panel.
+
 </details>
 
 <details>
@@ -582,41 +816,37 @@ grid but hides the skeleton canvas. The angle/ROM grids and skeleton stack toget
 ```python
 from physiotrack import Tracker, TrackerConfig, Video, Pose, Detection, Models
 
-tracker = Tracker(config=TrackerConfig(tracker="ocsort", classes=[0]))
+tracker = Tracker(
+    config=TrackerConfig(
+        tracker="ocsort",
+        classes=[0],
+    )
+)
 
 video = Video(
     source="input.mp4",
     detector=Detection.Person(),
-    pose=Pose.Custom(model=Models.Pose.ViTPose.WholeBody.b_wholebody),
+    pose=Pose.Custom(
+        model=Models.Pose.ViTPose.WholeBody.b_wholebody,
+    ),
     tracker=tracker,
     output_dir="output",
 )
-data = video.run(output_video="out.mp4", output_json="out.json")
+
+data = video.run(
+    output_video="out.mp4",
+    output_json="out.json",
+)
 ```
 
-The `Video` orchestrator composes any subset of the pipeline. Besides `detector=`, `pose=` and
-`tracker=` it accepts `segmenter=`, `depth=`, `face=`, `face_orientation=`, `floor_map=` (radar view),
-`ego_video=`, `plot_keypoint=` (keypoint-motion plot), and the kinematics overlays
-`plot_angles=True` (interior joint-angle panel, left), `rom=` (clinical ROM on a right-side skeleton
-panel — `True` for the default hip set or a list of movements), and `rom_render=False` (compute ROM
-without showing the skeleton panel). Overlay placement: the interior-angle panel sits on the **left**;
-the motion plot, radar, depth, ego and **ROM skeleton** views stack on the **right**.
+The `Video` orchestrator composes any subset of the whole-body pipeline. Besides `detector=`,
+`pose=` and `tracker=`, it accepts segmentation, depth, face orientation, floor-map, ego-video,
+motion and kinematic visualization options.
 
-Phone clips often decode sideways/upside-down (the rotation is stored as metadata, not in the
-pixels). Pass `orient=90/180/270` to rotate every frame upright; the default `orient=0` leaves frames
-untouched. There is no auto/metadata mode — the angle is explicit because that metadata is unreliable
-across builds. Still images need nothing here (OpenCV applies EXIF orientation on load).
+Phone clips often decode sideways or upside-down because rotation is stored as metadata rather
+than in the pixels. Pass `orient=90/180/270` to rotate every frame upright; the default
+`orient=0` leaves frames unchanged.
 
-```python
-# Full pipeline with the interior-angle panel and the clinical ROM skeleton panel
-Video(
-    source="input.mp4",
-    detector=Detection.Person(),
-    pose=Pose.Person(),
-    plot_angles=True,                 # interior joint-angle panel (left)
-    rom=True,                         # hip flexion + abduction → ROM skeleton panel (left)
-).run(output_video="out.mp4", output_json="out.json")
-```
 </details>
 
 ---
@@ -628,29 +858,37 @@ All weights are addressed through the `Models` registry and auto-downloaded on f
 ```python
 from physiotrack import Models
 
-Models.Detection.YOLO.FACE.m_face           # YOLO face detector
-Models.Detection.RTDETR.PERSON.x_person     # RT-DETR person detector
-Models.Pose.ViTPose.WholeBody.b_wholebody   # ViTPose whole-body
-Models.Pose.Sapiens.WholeBody.B1_TS_COCOHB  # Sapiens whole-body
-Models.Segmentation.SegFace.Face.swinb_celeba_512  # SegFace face parsing (19 parts)
-Models.Depth.DepthAnythingV2.vitb           # Depth-Anything-V2 base
-Models.Depth.ZipDepth.base                  # ZipDepth (lightweight monocular depth)
-Models.Pose3D.MotionBERT.mb_ft_h36m         # MotionBERT 3D lifter
-Models.Pose3D.Canonicalizer.Models._3DPCNetS2   # 3DPCNet pose canonicalizer
-Models.Pose3D.FaceOrientation.VR            # CMVS-FO-VR head-orientation
+Models.Detection.YOLO.FACE.m_face
+Models.Detection.RTDETR.PERSON.x_person
+Models.Pose.ViTPose.WholeBody.b_wholebody
+Models.Pose.Sapiens.WholeBody.B1_TS_COCOHB
+Models.Segmentation.SegFace.Face.swinb_celeba_512
+Models.Depth.DepthAnythingV2.vitb
+Models.Depth.ZipDepth.base
+Models.Pose3D.MotionBERT.mb_ft_h36m
+Models.Pose3D.Canonicalizer.Models._3DPCNetS2
+Models.Pose3D.FaceOrientation.VR
 ```
+
+The modular face-analysis subsystem also uses the current face detector, MediaPipe face landmark
+model, SegFace-based face-region analysis, EmotiEffLib-based facial emotion inference, and—when
+the `gaze` extra is installed—the `ptgaze` learned gaze backend. The learned gaze path remains
+separate from the original geometric `GazeDescriptor`.
 
 ### Pose framework comparison
 
-| Framework  | Variants         | Keypoints | Notes                                  |
-|------------|------------------|-----------|----------------------------------------|
-| YOLO-Pose  | COCO             | 17        | Fast, integrated detection + pose      |
-| ViTPose    | COCO, WholeBody  | up to 133 | Transformer-based, high accuracy       |
-| Sapiens    | WholeBody        | 133       | State-of-the-art whole-body estimation |
+| Framework | Variants | Keypoints | Notes |
+|-----------|----------|-----------|-------|
+| YOLO-Pose | COCO | 17 | Fast, integrated detection + pose |
+| ViTPose | COCO, WholeBody | up to 133 | Transformer-based, high accuracy |
+| Sapiens | WholeBody | 133 | State-of-the-art whole-body estimation |
 
 ### Canonicalization models (3DPCNet)
 
-The pose canonicalizer maps an arbitrary-viewpoint 3D pose to a **viewpoint-invariant canonical form**, so downstream kinematic analysis is robust to camera placement. Two model families are released (all use a Hybrid GCN-Transformer architecture); pick by your deployment scenario, or use `GEOMETRIC` for a training-free closed-form baseline.
+The pose canonicalizer maps an arbitrary-viewpoint 3D pose to a **viewpoint-invariant canonical
+form**, so downstream kinematic analysis is robust to camera placement. Two model families are
+released; select one according to the deployment scenario, or use `GEOMETRIC` for a training-free
+closed-form baseline.
 
 | Registry member | Training data | Test split | MPJPE ↓ | PA-MPJPE ↓ | Rot. err ↓ |
 |-----------------|---------------|------------|:------:|:----------:|:----------:|
@@ -659,7 +897,10 @@ The pose canonicalizer maps an arbitrary-viewpoint 3D pose to a **viewpoint-inva
 | `_3DPCNetTC48_byCam` | TotalCapture (48 augmented cams) | held-out cams 41–48 | **44.1** | **27.6** | **0.45°** |
 | `_3DPCNetTC48_byAction` | TotalCapture (48 augmented cams) | held-out action (rom3) | 46.2 | **27.6** | 1.24° |
 
-> MPJPE / PA-MPJPE in mm, rotation error in degrees (lower is better), reported on the TotalCapture test set. `S2` / `S3` are two split configurations of the MMFi-trained model; `TC48_byCam` / `TC48_byAction` are trained directly on TotalCapture with 48 augmented camera angles and use camera- vs. action-disjoint test splits. The TC48 models cut rotation error by roughly an order of magnitude and reduce PA-MPJPE by ~10 mm versus the cross-dataset MMFi models.
+> MPJPE / PA-MPJPE in mm, rotation error in degrees (lower is better), reported on the
+> TotalCapture test set. `S2` / `S3` are two split configurations of the MMFi-trained model;
+> `TC48_byCam` / `TC48_byAction` are trained directly on TotalCapture with 48 augmented camera
+> angles and use camera- vs. action-disjoint test splits.
 
 ### Model formats
 
@@ -674,6 +915,8 @@ The pose canonicalizer maps an arbitrary-viewpoint 3D pose to a **viewpoint-inva
 | Task | Returns | Key attributes |
 |------|---------|----------------|
 | detect / pose / segment / face | `Result` | `.boxes`, `.instances`, `.keypoints`, `.seg_map`, `.architecture`, `.meta`, `.plot()`, `.to_dict()`, `.from_dict()` |
+| modular face analysis | `Result` with per-face analysis features | face ID/box plus enabled head-pose, landmark, quality, eye/blink, gaze, mouth, emotion, region, and temporal outputs |
+| face-analysis export | JSON / CSV records through `FaceResultExporter` | frame-level and temporal-window numerical outputs |
 | depth | `DepthResult` | `.depth`, `.normalized()`, `.plot(colormap=...)` |
 | track | `TrackResult` | `.instances`, `.ids`, `.boxes`, `.plot(frame)` |
 | 3D lift (`Pose3D`) | `Pose3DResult` | `.poses` `(N,17,3)`, `.by_name(joint)`, `.fps`, `.view`, indexable/iterable by frame |
@@ -683,82 +926,175 @@ Each `Instance` exposes `.id`, `.box`, `.confidence`, `.cls` / `.cls_name`, `.ke
 (a `Keypoints` collection with `.by_name()` / `.by_id()`), `.mask`, and `.orientation` as
 applicable. `Keypoints` also offers the array views `.xy`, `.xyz`, and `.conf`.
 
-Every result carries a `.meta` ([`ResultMeta`](#result-objects)) recording where it came
-from — frame index, timestamp, source frame rate, model, device — and `to_dict()` /
-`from_dict()` round-trip, so a saved JSON can be reloaded into the object model rather than
-hand-parsed.
+Every result carries a `.meta` recording where it came from — frame index, timestamp, source frame
+rate, model, device — and supports dictionary serialization so saved numerical outputs can remain
+traceable to the processing context.
+
+---
+
+## Face-analysis validation & reproducibility
+
+The face-analysis branch includes dedicated validation packages under `validation/` for
+component-level scientific evaluation, isolated real-pipeline execution, integration testing,
+runtime characterization, and controlled robustness analysis.
+
+The validation coverage includes:
+
+- face detection;
+- face tracking;
+- facial landmarks;
+- face-region segmentation;
+- head pose;
+- eye openness and blink behavior;
+- geometric gaze descriptors;
+- learned 3D gaze estimation;
+- mouth openness;
+- mouth movement and velocity;
+- facial emotion recognition;
+- FaceQuality descriptors;
+- temporal aggregation;
+- native JSON/CSV export;
+- multi-person association;
+- static-image execution;
+- end-to-end `FaceAnalysis` integration;
+- runtime / processing-performance characterization;
+- controlled image-perturbation robustness testing.
+
+The validation methodology distinguishes between different forms of evidence:
+
+- **Component benchmark validation** evaluates predictive or numerical performance against an
+  external reference or controlled ground truth when an appropriate benchmark exists.
+- **Isolated component execution** verifies that the current production component operates through
+  the real `FaceAnalysis` pipeline and produces genuine numerical outputs.
+- **Integration validation** verifies coexistence, configuration behavior, per-person association,
+  temporal state, native export, static-image handling, multi-person execution, and complete
+  pipeline operation.
+- **Runtime evaluation** characterizes processing performance and does not constitute an accuracy
+  metric.
+- **Controlled robustness evaluation** characterizes deterministic behavior under defined image
+  perturbations and is not a universal population-level robustness claim.
+
+Integration availability must not be interpreted as predictive accuracy. A component producing a
+valid output for every evaluated face means that the software path was operational on that fixture;
+scientific accuracy remains established by the corresponding component-specific benchmark or
+controlled validation protocol.
+
+The validation scripts use repository-relative paths and keep benchmark datasets read-only.
+Final validation packages preserve numerical result tables, summaries, figures, qualitative
+evidence, and reproducible execution scripts.
 
 ---
 
 ## Scope & Limitations
 
-**PhysioTrack is research software. It is not a medical device**, has not been evaluated by
-any regulatory body, and must not be used for diagnosis, screening, triage, or treatment
-decisions. Read the following before relying on any number it produces.
+**PhysioTrack is research software. It is not a medical device**, has not been evaluated by any
+regulatory body, and must not be used for diagnosis, screening, triage, or treatment decisions.
+Read the following before relying on any number it produces.
 
-**Input.** Monocular **RGB** video only. There is no RGB-D, infrared, or thermal capture
-path; depth is *estimated* from colour frames, not sensed.
+**Input.** Monocular **RGB** video only. There is no RGB-D, infrared, or thermal capture path;
+depth is *estimated* from colour frames, not sensed.
 
 **Heart rate (rPPG).** Requires adequate, stable lighting, visible facial skin, and limited
-subject motion. Accuracy degrades with motion, illumination change, video compression, and
-low frame rate, and rPPG is known to be sensitive to skin tone. Always interpret a heart
-rate alongside its `snr` — a value is reported whenever the analysis window is full,
-regardless of signal quality.
+subject motion. Accuracy degrades with motion, illumination change, video compression, and low
+frame rate, and rPPG is known to be sensitive to skin tone. Always interpret a heart rate
+alongside its `snr` — a value is reported whenever the analysis window is full, regardless of
+signal quality.
 
-**HRV is not validated.** Heart-rate variability is far more demanding than heart rate: the
-heart rate is a spectral peak and tolerates a mis-detected beat, whereas every HRV index is
-built from the intervals *between* beats, so one missed or spurious beat distorts it. The
-frequency-domain indices need **at least 60 s** of clean pulse. PhysioTrack computes HRV and
-warns when the beat-derived rate disagrees with the spectral rate, but **we make no accuracy
-claim for HRV** — treat it as exploratory until validated against a contact reference on your
-own data.
+**HRV is not validated.** Heart-rate variability is far more demanding than heart rate: the heart
+rate is a spectral peak and tolerates a mis-detected beat, whereas every HRV index is built from
+the intervals *between* beats, so one missed or spurious beat distorts it. The frequency-domain
+indices need **at least 60 s** of clean pulse. PhysioTrack computes HRV and warns when the
+beat-derived rate disagrees with the spectral rate, but **we make no accuracy claim for HRV** —
+treat it as exploratory until validated against a contact reference on your own data.
 
 **Depth is relative, not metric.** Larger means nearer, on an arbitrary scale that is not
 comparable between frames. There is no camera calibration or metric scale recovery.
 
-**3D pose is monocular-lifted, not triangulated**, runs offline from a saved 2D-pose file
-rather than streaming, and is single-subject: in a multi-person frame only the first subject
-receives 3D keypoints.
+**3D pose is monocular-lifted, not triangulated**, runs offline from a saved 2D-pose file rather
+than streaming, and is single-subject: in a multi-person frame only the first subject receives 3D
+keypoints.
 
 **Kinematics are image-plane measurements.** Joint angles and range of motion come from pixel
-coordinates and velocities are in pixels per second, so they are **not comparable across
-subjects, camera distances, or resolutions**. Range of motion covers two geometrically
-distinct measurements per hip (one per anatomical plane), not four independent clinical
-movements — a single image-plane angle cannot separate flexion from extension without a
-signed convention.
+coordinates and velocities are in pixels per second, so they are **not comparable across subjects,
+camera distances, or resolutions**. Range of motion covers two geometrically distinct
+measurements per hip rather than four independent clinical movements without an additional signed
+convention.
 
-**Multi-person analysis needs a tracker.** Without one, instance ids are per-frame indices,
-so any cross-frame quantity (velocity, acceleration) would mix subjects together. Attach a
-`Tracker` to get persistent ids.
+**Face analysis combines heterogeneous measurements.** A valid numerical output is not, by
+itself, an accuracy guarantee. The face-analysis stack includes geometric, learned, temporal, and
+descriptor-based quantities that have different interpretations.
 
-**Privacy.** The library performs no anonymization. It processes identifiable faces and
-derives physiological signals from them; consent, retention, and data protection are the
+**Learned gaze estimation depends on successful face localization and association.** The learned
+`GazeEstimator` is distinct from the geometric `GazeDescriptor`: one estimates normalized 3D gaze
+direction, while the other describes landmark/iris geometry.
+
+**Mouth openness is a normalized landmark-derived quantity**, not a direct physical percentage of
+jaw opening. Mouth movement and velocity are temporal quantities and require ordered frames with a
+known frame rate.
+
+**FaceQuality is descriptor-based.** Detector confidence, normalized brightness,
+Laplacian-variance sharpness, and face-area ratio are interpretable numerical descriptors rather
+than a universal perceptual face-quality score.
+
+**Temporal face analysis requires stable tracking and frame timing.** Independent static images
+cannot provide blink-event timing, mouth velocity, or temporal-window summaries.
+
+**Multi-person analysis needs a tracker.** Without one, instance ids are per-frame indices, so any
+cross-frame quantity can mix subjects. Attach a tracker to obtain persistent identities.
+
+**Privacy.** The library performs no anonymization. It processes identifiable faces and derives
+physiological and behavioral signals from them; consent, retention, and data protection are the
 responsibility of the deploying party.
 
 ---
 
 ## Project Layout
 
-```
+```text
 src/physiotrack/
 ├── capture/        # Video orchestrator (end-to-end pipeline)
 ├── detect/         # Detection
 ├── pose/           # Pose 2D, Pose3D, canonicalizer, evaluation
 ├── segment/        # Segmentation
 ├── depth/          # Depth estimation
-├── face/           # Face detection + orientation
+├── face/           # Modular face analysis:
+│                   # detection, tracking, head pose, landmarks, quality,
+│                   # eyes/blink, geometric + learned gaze, mouth dynamics,
+│                   # emotion, face regions, temporal aggregation, export
 ├── trackers/       # OC-SORT, ByteTrack, StrongSORT, BoostTrack
-├── signals/        # rPPG (POS/CHROM/LGI/OMIT) + RR intervals/HRV/respiration, motion (joint angles, ROM), filters, plotting
+├── signals/        # rPPG + RR intervals/HRV/respiration, motion,
+│                   # joint angles, ROM, filters and plotting
 ├── core/           # inference loop, radar/floor view, ego view, depth view
-├── modules/        # Neural backends (ViTPose, Sapiens, YOLO, DepthAnythingV2, ZipDepth,
-│                   #   MotionBERT, DDHPose, 3DCPNet, 6DRepNet360, SegFace)
-├── results.py      # Unified Result / DepthResult / TrackResult / Instance / Keypoints
+├── modules/        # Neural backends (ViTPose, Sapiens, YOLO,
+│                   # DepthAnythingV2, ZipDepth, MotionBERT, DDHPose,
+│                   # 3DPCNet, 6DRepNet360, SegFace)
+├── results.py      # Unified Result / DepthResult / TrackResult /
+│                   # Instance / Keypoints
 └── models.py       # Models registry + Hugging Face auto-download
+
+validation/
+├── face_detection/
+├── face_tracking/
+├── face_landmarks/
+├── face_regions/
+├── head_pose/
+├── eye_openness_and_blink/
+├── gaze_estimation/
+├── mouth_openness/
+├── mouth_movement_velocity/
+├── emotion_recognition/
+├── face_quality/
+├── robustness/
+└── integration/
 ```
 
-See [`examples/`](examples/) for runnable scripts covering each subsystem, and
+The `validation/` tree contains the component-level benchmark packages, isolated execution
+evidence, integration fixtures, quantitative tables, figures, qualitative outputs, and supporting
+reproducibility documentation used for the face-analysis validation work.
+
+See [`examples/`](examples/) for runnable scripts covering the wider Physiotrack subsystems, and
 [`docs/paper/API_REDESIGN.md`](https://github.com/tharindu326/physiotrack/blob/main/docs/paper/API_REDESIGN.md)
-for the full public-API specification.
+for the public-API design specification.
 
 ---
 
@@ -812,8 +1148,9 @@ If you use Physiotrack in your research, please cite the relevant papers:
 
 Physiotrack is an open-source project and welcomes contributions: new models, documentation,
 bug fixes, or examples. Start with [CONTRIBUTING.md](CONTRIBUTING.md), which covers the
-development setup, the Conventional Commits our releases are generated from, the
-Google-style docstring convention the documentation is built from, and the code standards.
+development setup, the Conventional Commits our releases are generated from, the Google-style
+docstring convention the documentation is built from, and the code standards.
+
 Then open an issue or pull request on
 [GitHub](https://github.com/tharindu326/physiotrack).
 
@@ -825,38 +1162,49 @@ Then open an issue or pull request on
 
 Every avatar is someone who has contributed code, documentation, or fixes — the grid updates
 itself from the GitHub API. If your name or avatar looks wrong, a commit used a different git
-identity; add yourself to [`.mailmap`](.mailmap) and it will be consolidated everywhere.
+identity; add yourself to `.mailmap` and it will be consolidated everywhere.
 
 ### Reproducing the published numbers
 
-The scripts behind the figures and benchmarks live in
-[`examples/evaluation/`](examples/evaluation/), so every reported value can be regenerated
-rather than taken on trust:
+The scripts behind the wider Physiotrack figures and benchmarks live in
+[`examples/evaluation/`](examples/evaluation/), so reported values can be regenerated rather than
+taken on trust:
 
 ```bash
-python examples/evaluation/runtime_benchmark.py   # per-stage FPS / ms-per-frame, CPU and GPU
-python examples/evaluation/rppg_figure.py         # rPPG figure + the vitals it reports
-python examples/evaluation/pipeline_figure.py     # full-pipeline overlay figure
+python examples/evaluation/runtime_benchmark.py
+python examples/evaluation/rppg_figure.py
+python examples/evaluation/pipeline_figure.py
 ```
 
-Each writes a JSON alongside its output recording the hardware, library version, and every
-measured value, so a number can be traced to a specific run.
+Each writes a JSON alongside its output recording the hardware, library version, and measured
+values, so a number can be traced to a specific run.
+
+The face-analysis validation packages are maintained separately under `validation/` and preserve
+their own reproducible scripts, numerical results, summaries, figures, and qualitative evidence.
 
 ---
 
 ## License
 
-Licensed under the **GNU General Public License v3.0**. See the [LICENSE](LICENSE) file for details.
+Licensed under the **GNU General Public License v3.0**. See the [LICENSE](LICENSE) file for
+details.
 
 ---
 
 ## Authors
 
 **Developed by**
+
 - M.Sc. Tharindu Ekanayake
 - D.Sc. (Tech) Constantino Álvarez Casado *(PI)*
 
+**Face-analysis thesis contribution**
+
+- **M.Sc Mahdi Muhannad** — modular face-analysis pipeline development, component validation, integration,
+  reproducibility evaluation, runtime characterization, and controlled robustness assessment.
+
 **Affiliation**
+
 Multimodal Sensing Lab (MMSLab) · Center for Machine Vision and Signal Processing (CMVS) ·
 University of Oulu, Finland
 
