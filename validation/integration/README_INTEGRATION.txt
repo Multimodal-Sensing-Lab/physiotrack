@@ -26,13 +26,17 @@ cannot be established from isolated benchmark results alone:
    face in multi-person video.
 5. Whether the framework's native frame and window exports preserve the
    expected analysis structure and numerical measurements, including FaceQuality
-   confidence, brightness, sharpness, and face-area ratio where applicable.
-6. Whether the complete configured pipeline can process an entire test video
+   confidence, brightness, sharpness, face-area ratio, and Emotion outputs where
+   applicable.
+6. Whether Emotion is propagated as a real per-face numerical output, including
+   an eight-class score vector, predicted label, and confidence, rather than only
+   as an availability flag.
+7. Whether the complete configured pipeline can process an entire test video
    without dropped frames, missing face records, broken tracking, or missing
    enabled modules.
-7. Whether static images can be processed without fabricating outputs that
+8. Whether static images can be processed without fabricating outputs that
    require a temporal sequence.
-8. Whether batch-oriented integration scripts continue processing remaining
+9. Whether batch-oriented integration scripts continue processing remaining
    media after an individual media failure and preserve media-level failure
    accounting in the generated results.
 
@@ -172,7 +176,7 @@ pipeline and its connected outputs, including:
 - Learned gaze estimation
 - Mouth measurements
 - Mouth motion
-- Emotion output
+- Emotion Recognition label, confidence, and eight-class probability scores
 - Face-region segmentation
 - Temporal summaries
 - Per-frame native export
@@ -583,6 +587,10 @@ The remaining configured modules passed in both runs. FaceQuality was available
 in all 858 exported face records across the two runs, with numerical confidence,
 brightness, sharpness, and face-area-ratio values preserved in the frame table.
 
+Emotion was available in all applicable face records in both runs, with
+numerical class scores, predicted labels, and confidence values preserved.
+The Emotion output remained internally consistent across the two configurations.
+
 Overall status:
 PASS
 
@@ -655,6 +663,10 @@ True
 
 Frame MouthMotion movement/velocity numerical checks:
 PASS
+
+Frame Emotion output:
+Available for all applicable records with numerical class scores, predicted
+label, and confidence preserved consistently.
 
 Window Eye Openness summaries are finite:
 True
@@ -731,10 +743,14 @@ PASS at 25.0 FPS with per-person temporal state preserved independently
 
 Both tracked persons were present throughout the evaluated video. The
 configured modules were available for 344/344 person-frames for each identity
-in this fixture. Learned gaze estimation and FaceQuality were therefore
+in this fixture. Learned gaze estimation, FaceQuality, and Emotion were therefore
 available for 688/688 evaluated face instances. FaceQuality produced numerical
 confidence, brightness, sharpness, and face-area-ratio values for both tracked
 identities.
+
+Emotion produced independent per-face numerical outputs for both tracked
+identities, including predicted label, confidence, and class scores, with no
+evidence of cross-person substitution in the accepted fixture.
 
 Overall status:
 PASS
@@ -780,6 +796,10 @@ temporal records across the entire video, including real numerical facial
 measurements and temporal outputs. FaceQuality was available for 1127/1127
 face records and its numerical confidence, brightness, sharpness, and
 face-area-ratio outputs were preserved in the frame export.
+
+Emotion was available for all applicable whole-project face records, with
+predicted label, confidence, and class-score outputs preserved throughout the
+video.
 
 Overall analysis status:
 PASS
@@ -876,6 +896,10 @@ PASS using the measured 59.94005994005994 FPS
 Temporal numerical consistency:
 PASS
 
+Emotion output:
+Available for all applicable face samples with numerical class scores, predicted
+label, and confidence preserved consistently.
+
 Overall status:
 PASS
 
@@ -921,10 +945,13 @@ images because they require temporal sequence input:
 All 23 detected face records contained the expected static numerical outputs.
 FaceQuality was available for 23/23 detected faces and exported numerical
 confidence, brightness, sharpness, and face-area-ratio values for every face.
+Emotion was also available for 23/23 detected faces with an eight-class score
+vector, predicted label, and confidence for every face.
 
 Static numerical checks included finite EyeOpenness, FaceQuality descriptors,
 gaze descriptors, learned gaze-estimation vectors, MouthOpenness, and normalized
-emotion probabilities where the corresponding module was available.
+Emotion probabilities where applicable. Emotion labels, confidence values, and
+class scores were preserved as numerical outputs rather than availability flags.
 
 Temporal-only outputs were absent or explicitly neutral as required:
 
@@ -957,10 +984,45 @@ single-person test, 429/429 records in native export, 688/688 multi-person face
 instances, 1127/1127 whole-project video face records, 1127/1127 final
 whole-project face samples, and 23/23 static-image face records.
 
+Emotion is included in the accepted integrated configuration and produced
+numerical per-face outputs in all applicable integration paths, including
+predicted labels, confidence values, and class-score vectors.
+
 The integration evidence supports software operation, numerical export,
 association, accounting, and internal consistency. It does not replace the
 separate scientific benchmark or controlled validation evidence for individual
 components.
+
+Independent Final Numerical Audit
+-------------------------------
+The accepted final integration outputs were independently reviewed at the raw
+CSV/JSON level rather than accepted solely from console PASS messages.
+
+The final audit confirmed:
+
+- Complete frame accounting for all evaluated videos.
+- No missing frame indices in the accepted full-video runs.
+- No duplicate frame/person rows in the audited frame exports.
+- Finite required numerical outputs; no unexpected NaN or Inf values.
+- Eye mean openness equal to the mean of the two eye-openness values within
+  floating-point precision.
+- Mouth openness equal to mouth height divided by mouth width within
+  floating-point precision.
+- Mouth velocity equal to mouth movement multiplied by measured FPS within
+  floating-point precision.
+- Learned gaze vectors with unit norm within floating-point precision.
+- Internal consistency of categorical probability outputs, including Emotion
+  class scores, predicted labels, and confidence values.
+- Temporal windows growing according to measured FPS and respecting the
+  configured approximately five-second window.
+- JSON/CSV export consistency for the native-export and whole-project analysis
+  records.
+- Stable tracked identities in the accepted single-person and multi-person
+  fixtures, with no observed duplicate track assignment within a frame.
+- Distinct per-person numerical outputs in the multi-person fixture.
+
+These checks confirm that the accepted integration evidence contains real
+numerical component outputs rather than availability flags alone.
 
 Result Organization
 -------------------
@@ -1031,6 +1093,12 @@ The results establish the following system-level properties:
 - FaceQuality operates with the other configured modules and preserves numerical
   confidence, brightness, sharpness, and face-area-ratio values in video,
   multi-person, native-export, whole-project, and static-image integration runs.
+- Emotion operates with the complete configured pipeline and preserves a real
+  per-face eight-class score vector, predicted label, and confidence in video,
+  multi-person, native-export, whole-project, and static-image integration runs.
+- Emotion score vectors, predicted labels, and confidence values are internally
+  consistent, and multi-person execution preserves distinct per-person Emotion
+  outputs.
 - MouthMotion exports preserve real numerical movement and velocity values,
   use measured video timing, and maintain independent temporal state per
   tracked identity.
@@ -1051,10 +1119,56 @@ These conclusions concern software integration and execution behavior. They do
 not imply that every module has 100% predictive accuracy. Predictive accuracy
 must be interpreted from the separate component-level benchmark validations.
 
-Where a component has not yet received its own scientific benchmark
-validation, integration results support only the statement that the component
-is integrated and operational, not that its predictive accuracy has been
-scientifically established.
+Integration results remain system-level evidence even when the corresponding
+component has a separate scientific validation. Predictive performance must
+always be reported from the dedicated component-level benchmark or controlled
+validation package rather than inferred from integration availability.
+
+Related Final System-Level Evidence
+-----------------------------------
+Two additional validation packages complement the seven-script integration
+suite but are intentionally maintained outside the integration result ownership
+described above.
+
+Runtime / Processing Performance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The dedicated final runtime benchmark processed the three accepted integration
+videos with the complete final pipeline configuration:
+
+- Total frames: 1900
+- Successful frames: 1900
+- Failed frames: 0
+- Total detected faces: 2244
+- Effective processing rate: approximately 0.6742 FPS
+- Mean processing time: approximately 1483.26 ms/frame
+- Median processing time: approximately 1287.19 ms/frame
+- 95th percentile processing time: approximately 2454.94 ms/frame
+- Input-media read-only verification: PASS
+
+Runtime performance is hardware-dependent and is reported as execution
+performance rather than predictive accuracy.
+
+Controlled Robustness
+~~~~~~~~~~~~~~~~~~~~~
+The separate controlled robustness package evaluates the final static pipeline
+on one accepted frontal reference image under seven deterministic conditions:
+
+- baseline
+- dim lighting
+- overexposed lighting
+- Gaussian blur
+- motion blur
+- reduced face scale
+- partial occlusion
+
+All seven cases remained detectable, all ten evaluated static modules remained
+available, no execution failure occurred, and no invalid numerical case was
+observed. The robustness package records condition-dependent numerical drift
+rather than assigning an arbitrary universal robustness score.
+
+This controlled robustness study is a single-image perturbation study. It is
+not a population-level robustness benchmark and is interpreted together with
+the broader real-media integration tests documented in this README.
 
 Evaluation Scope and Limitations
 --------------------------------
@@ -1116,7 +1230,9 @@ To reproduce the integration validation on another machine:
 8. Verify that numerical measurements are present in the frame/window exports
    where the corresponding module is applicable, including FaceQuality
    confidence, brightness, sharpness, and face-area ratio.
-9. Preserve the final result directories as integration evidence.
+9. Verify Emotion label, confidence, and eight-class score-vector consistency in
+   the applicable frame-level exports.
+10. Preserve the final result directories as integration evidence.
 
 Runtime can vary across machines and is not a scientific reproducibility
 target. The principal reproducibility targets are processed-frame counts, face
@@ -1145,6 +1261,9 @@ The repository should preserve:
 - Final result summaries
 - Numerical frame/window exports required to demonstrate the documented runs
 - Media-level summary files required to preserve batch PASS/FAIL accounting
+- Final audited numerical exports demonstrating Emotion integration
+- The separate runtime-performance and controlled-robustness packages referenced
+  by this README
 
 Obsolete result-directory layouts, temporary diagnostic outputs, caches,
 intentional failure fixtures, and superseded intermediate files should not be
@@ -1152,3 +1271,35 @@ retained in the final integration package.
 
 The integration scripts must remain isolated from benchmark datasets and must
 not modify files outside validation/integration during normal validation runs.
+
+Final Integration Status
+------------------------
+Runtime configuration smoke test:
+ACCEPTED
+
+Single-person end-to-end integration:
+ACCEPTED
+
+Native export integration:
+ACCEPTED
+
+Multi-person end-to-end integration:
+ACCEPTED
+
+Whole-project video analysis:
+ACCEPTED
+
+Final whole-project end-to-end integration:
+ACCEPTED
+
+Static-image end-to-end integration:
+ACCEPTED
+
+Independent raw numerical audit:
+PASS
+
+Emotion integration:
+ACCEPTED
+
+Complete seven-script integration suite:
+CLOSED
