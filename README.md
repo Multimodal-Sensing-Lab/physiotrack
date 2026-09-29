@@ -1073,19 +1073,20 @@ src/physiotrack/
 └── models.py       # Models registry + Hugging Face auto-download
 
 validation/
-├── face_detection/
-├── face_tracking/
-├── face_landmarks/
-├── face_regions/
-├── head_pose/
-├── eye_openness_and_blink/
-├── gaze_estimation/
-├── mouth_openness/
-├── mouth_movement_velocity/
 ├── emotion_recognition/
+├── eye_openness_and_blink/
+├── face_detection/
+├── face_landmarks/
 ├── face_quality/
+├── face_regions/
+├── face_tracking/
+├── gaze_estimation/
+├── head_pose/
+├── integration/
+├── mouth_movement_velocity/
+├── mouth_openness/
 ├── robustness/
-└── integration/
+└── temporal_aggregation/
 ```
 
 The `validation/` tree contains the component-level benchmark packages, isolated execution
