@@ -50,15 +50,22 @@ mouth_openness_component_test.py
 
 Datasets and Scope
 ------------------
-The evaluation uses two paired resources:
-
 FELT speech annotations:
 
+Official source:
+https://zenodo.org/records/13243600
+
+Project-relative location:
 datasets/FELT/raw_motion_speech/
 
 RAVDESS speech videos:
 
+Official source:
+https://zenodo.org/records/1188976
+
+Project-relative location:
 datasets/RAVDESS/Video_Speech/
+
 
 The evaluated scope is the speech subset represented by 24 actors and 60
 paired trials per actor:
