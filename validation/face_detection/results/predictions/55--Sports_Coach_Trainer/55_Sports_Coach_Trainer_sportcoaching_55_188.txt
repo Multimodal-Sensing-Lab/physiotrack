@@ -1,0 +1,4 @@
+55--Sports_Coach_Trainer/55_Sports_Coach_Trainer_sportcoaching_55_188.jpg
+2
+226.029 55.667 102.862 132.744 0.826614
+535.984 107.741 81.411 145.324 0.812126

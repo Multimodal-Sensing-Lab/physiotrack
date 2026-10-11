@@ -1,0 +1,4 @@
+Difficulty,Average Precision,Evaluated Faces
+Easy,0.958883,7211
+Medium,0.948828,13319
+Hard,0.87183,31958

@@ -1,0 +1,10 @@
+sequence,source_video,clip_start_frame,clip_end_frame,clip_start_seconds,clip_end_seconds,clip_duration_seconds,clip_exact_switches,clip_detected_observations,clip_misses,clip_false_positives,selection_rule,sequence_recall_percent,sequence_precision_percent,sequence_f1_percent,sequence_faf,sequence_ids,sequence_fragmentations,sequence_mota_percent,sequence_motp_percent,sequence_idf1_percent,annotated_video
+T-ara,T-ara.mov,2689,4486,89.690,149.683,59.993,114,5134,706,154,"Maximize exact MOTMetrics SWITCH events; tie-break by more detections, fewer misses, then fewer false positives.",87.4045,96.6512,91.7956,0.096767,267,311,82.5384,94.7273,5.7901,results/qualitative/annotated_videos/T-ara_face_tracking_qualitative.mp4
+
+representative_role,frame_no,gt_faces,matches,switches,misses,false_positives,detections,mean_iou,representative_frame
+stable_multi_face,3898,6,6,0,0,0,6,0.988138,results/qualitative/representative_frames/T-ara_stable_multi_face_frame_3898.png
+identity_switch,2747,6,0,6,0,0,6,0.975237,results/qualitative/representative_frames/T-ara_identity_switch_frame_2747.png
+false_negative,2744,6,0,0,6,0,0,0.000000,results/qualitative/representative_frames/T-ara_false_negative_frame_2744.png
+false_positive,3485,3,2,0,1,2,2,0.980452,results/qualitative/representative_frames/T-ara_false_positive_frame_3485.png
+crowded_tracking,2697,6,5,1,0,0,6,0.976395,results/qualitative/representative_frames/T-ara_crowded_tracking_frame_2697.png
+localization_challenge,3566,1,1,0,0,0,1,0.677620,results/qualitative/representative_frames/T-ara_localization_challenge_frame_3566.png

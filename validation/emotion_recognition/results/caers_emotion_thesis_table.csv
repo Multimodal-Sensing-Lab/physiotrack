@@ -1,0 +1,2 @@
+Dataset,Samples,Availability (%),Accuracy (%),Macro F1 (%),Weighted F1 (%),Contempt Predictions,Contempt Rate (%)
+CAER-S annotated target-face subset,13942,100.0,26.48113613541816,25.262265546756364,25.410007791119778,523,3.7512552001147617

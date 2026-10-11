@@ -1,0 +1,14 @@
+metric,value
+videos_discovered,2
+videos_passed,2
+videos_failed,0
+processed_frames,773
+face_records,1117
+temporal_available_records,1117
+failed_frame_rows,0
+total_checks,55850
+passed_checks,55850
+failed_checks,0
+max_numeric_absolute_error,2.131628207280301e-14
+runtime_sec,194.75313050000113
+overall_status,PASS

@@ -1,0 +1,1872 @@
+{
+  "test_type": "image_end_to_end_integration",
+  "images": [
+    {
+      "image": "test_data/images/emotion_angry.png",
+      "resolution": {
+        "width": 459,
+        "height": 615
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_happy.png",
+      "resolution": {
+        "width": 455,
+        "height": 610
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_neutral.png",
+      "resolution": {
+        "width": 438,
+        "height": 609
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_sad.png",
+      "resolution": {
+        "width": 443,
+        "height": 614
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_surprise.png",
+      "resolution": {
+        "width": 452,
+        "height": 613
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/eyes_1.png",
+      "resolution": {
+        "width": 839,
+        "height": 912
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/eyes_2.png",
+      "resolution": {
+        "width": 740,
+        "height": 542
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/frontal_1.png",
+      "resolution": {
+        "width": 843,
+        "height": 1004
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/frontal_2.png",
+      "resolution": {
+        "width": 713,
+        "height": 772
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_center.png",
+      "resolution": {
+        "width": 1205,
+        "height": 1154
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_down.png",
+      "resolution": {
+        "width": 1099,
+        "height": 1158
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_left.png",
+      "resolution": {
+        "width": 624,
+        "height": 471
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_right.png",
+      "resolution": {
+        "width": 1074,
+        "height": 969
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_up.png",
+      "resolution": {
+        "width": 1162,
+        "height": 1212
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/mouth_1.png",
+      "resolution": {
+        "width": 950,
+        "height": 1004
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/mouth_2.png",
+      "resolution": {
+        "width": 884,
+        "height": 904
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/multi_1.png",
+      "resolution": {
+        "width": 961,
+        "height": 1159
+      },
+      "detected_faces": 3,
+      "frame_records": 3,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 3,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 3,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/multi_2.png",
+      "resolution": {
+        "width": 963,
+        "height": 654
+      },
+      "detected_faces": 3,
+      "frame_records": 3,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 3,
+          "total_face_samples": 3,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 3,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 3,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/pose_1.png",
+      "resolution": {
+        "width": 819,
+        "height": 830
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    }
+  ],
+  "image_count": 19,
+  "passed_images": 19,
+  "failed_images": 0,
+  "total_detected_faces": 23,
+  "total_exported_face_records": 23,
+  "evaluated_static_modules": [
+    "detection",
+    "landmarks",
+    "quality",
+    "head_pose",
+    "eyes",
+    "gaze",
+    "gaze_estimation",
+    "mouth",
+    "emotion",
+    "regions"
+  ],
+  "not_applicable_modules": {
+    "tracking": "Requires temporal sequence input and is not evaluated from a single image.",
+    "blink": "Requires temporal sequence input and is not evaluated from a single image.",
+    "mouth_motion": "Requires temporal sequence input and is not evaluated from a single image.",
+    "temporal": "Requires temporal sequence input and is not evaluated from a single image."
+  },
+  "overall_status": "PASS"
+}

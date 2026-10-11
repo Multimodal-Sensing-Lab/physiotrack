@@ -1,0 +1,11 @@
+MPIIFaceGaze Gaze Estimation Result Audit
+
+Audit status: PASS
+Participants checked: 15
+Per-sample rows checked: 37667
+Successful predictions checked: 37629
+Per-person count consistency: PASS
+Summary count consistency: PASS
+Failure accounting: PASS
+Per-person angular statistics recomputation: PASS
+Overall angular statistics recomputation: PASS

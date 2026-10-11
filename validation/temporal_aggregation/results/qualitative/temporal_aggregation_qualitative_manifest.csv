@@ -1,0 +1,8 @@
+case_id,case_name,figure_file,description,status
+case_01,Window growth,case_01_window_growth.png,Window-frame growth and rolling yaw mean before the configured temporal window reaches full capacity.,PASS
+case_02,Sliding-window replacement,case_02_sliding_window.png,Replacement of old samples after the temporal window reaches its configured maximum size.,PASS
+case_03,Per-person isolation,case_03_person_isolation.png,Independent rolling state for two tracked person IDs with deliberately opposite yaw trajectories.,PASS
+case_04,Temporal reset,case_04_reset_behavior.png,Per-person reset followed by a clean temporal restart without leakage from pre-reset values.,PASS
+case_05,Blink-event aggregation,case_05_blink_events.png,Blink-event counting within the current sliding temporal window against independently derived event counts.,PASS
+case_06,Dominant emotion,case_06_dominant_emotion.png,Rolling dominant-emotion behavior compared with an independently derived categorical majority.,PASS
+case_07,Face Quality aggregation,case_07_quality_brightness.png,Temporal aggregation of Face Quality brightness using the current rolling-window implementation.,PASS

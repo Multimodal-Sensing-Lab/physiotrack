@@ -1,0 +1,112 @@
+{
+  "test": "face_pipeline_runtime_performance",
+  "evidence_type": "system_runtime_performance",
+  "scientific_accuracy_evidence": false,
+  "timing_scope": {
+    "pipeline_processing": "Per-frame time around FaceAnalysis.predict(frame). Video decoding and output-file writing are excluded from processing_seconds.",
+    "wall_time": "Wall-clock time for the video processing loop, including video-frame reads and FaceAnalysis.predict calls. Final CSV/JSON writing is excluded.",
+    "initialization": "FaceAnalysis construction is measured separately and is not included in processing_seconds."
+  },
+  "configuration": {
+    "active_components": [
+      "face_detection",
+      "tracking",
+      "head_pose",
+      "landmarks",
+      "quality",
+      "eyes",
+      "blink",
+      "gaze",
+      "gaze_estimation",
+      "mouth",
+      "mouth_motion",
+      "emotion",
+      "regions",
+      "temporal"
+    ],
+    "gaze_estimation_mode": "eth-xgaze",
+    "gaze_estimation_min_iou": 0.1
+  },
+  "run_mode": {
+    "full_run": true,
+    "smoke_test_frames_per_video": null
+  },
+  "preflight": [
+    {
+      "scenario": "single_person",
+      "video": "test_data/single_person/face_blink_pose.mp4",
+      "input_fps": 25.0,
+      "reported_frames": 429,
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "scenario": "multi_person",
+      "video": "test_data/multi_person/multi_person2.mp4",
+      "input_fps": 25.0,
+      "reported_frames": 344,
+      "width": 2160,
+      "height": 3840
+    },
+    {
+      "scenario": "whole_project",
+      "video": "test_data/whole_project/istockphoto-1370809321-640_adpp_is.mp4",
+      "input_fps": 59.94005994005994,
+      "reported_frames": 1127,
+      "width": 768,
+      "height": 432
+    }
+  ],
+  "execution": {
+    "videos": 3,
+    "video_execution_failures": 0,
+    "frames_read": 1900,
+    "successful_frames": 1900,
+    "failed_frames": 0,
+    "total_faces": 2244,
+    "processing_seconds": 2818.1880193997786,
+    "wall_seconds": 2826.911463200013,
+    "effective_processing_fps": 0.6741920648731821,
+    "wall_fps": 0.6721116047437985,
+    "mean_ms_per_frame": 1483.2568523156729,
+    "median_ms_per_frame": 1287.1877499928814,
+    "p90_ms_per_frame": 2432.89422999369,
+    "p95_ms_per_frame": 2454.940920003719
+  },
+  "dataset": {
+    "source": "validation/integration/test_data",
+    "read_only_verified": true
+  },
+  "environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "system": "Windows",
+    "release": "10",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "python_version": "3.11.15",
+    "python_executable": "python.exe",
+    "logical_cpu_count": 16,
+    "memory_gib": 15.263309478759766,
+    "gpu": {
+      "cuda_available": false,
+      "cuda_device_count": 0,
+      "device_names": []
+    },
+    "packages": {
+      "numpy": "2.4.4",
+      "opencv-python": "5.0.0.93",
+      "opencv-contrib-python": "5.0.0.93",
+      "onnxruntime": "1.28.0",
+      "mediapipe": "1.0.0",
+      "torch": "2.13.0+cpu",
+      "torchvision": "0.28.0+cpu",
+      "ptgaze": "0.3.0",
+      "emotiefflib": "1.1.1",
+      "ultralytics": "8.4.117",
+      "opencv_runtime": "5.0.0",
+      "numpy_runtime": "2.4.4"
+    }
+  },
+  "interpretation": "This package measures computational processing performance of the final full PhysioTrack face-analysis configuration. It is not a predictive-accuracy benchmark. Per-video runtime results must be interpreted with their native resolution, source FPS, face count, and scenario because the accepted integration videos have different workloads.",
+  "status": "PASS"
+}

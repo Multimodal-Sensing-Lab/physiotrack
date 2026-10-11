@@ -1,0 +1,4 @@
+8--Election_Campain/8_Election_Campain_Election_Campaign_8_173.jpg
+2
+729.054 144.020 179.814 250.892 0.889565
+235.927 33.683 199.040 291.129 0.877542

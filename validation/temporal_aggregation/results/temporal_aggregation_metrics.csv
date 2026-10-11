@@ -1,0 +1,8 @@
+metric,value
+validation_cases,8
+total_checks,150
+passed_checks,150
+failed_checks,0
+pass_rate,1.0
+max_numeric_absolute_error,0.0
+overall_status,PASS

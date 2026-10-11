@@ -1,0 +1,794 @@
+from pathlib import Path
+import os
+import shutil
+import tempfile
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+RESULTS_DIR = SCRIPT_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
+INPUT_CSV = (
+    RESULTS_DIR
+    / "celebamaskhq_class_metrics.csv"
+)
+
+CONFUSION_MATRIX_CSV = (
+    RESULTS_DIR
+    / "celebamaskhq_confusion_matrix.csv"
+)
+
+SUMMARY_PATH = (
+    RESULTS_DIR
+    / "celebamaskhq_segmentation_summary.txt"
+)
+
+FIGURE_PATH = (
+    FIGURES_DIR
+    / "celebamaskhq_per_class_metrics.png"
+)
+
+CONFUSION_MATRIX_FIGURE_PATH = (
+    FIGURES_DIR
+    / "celebamaskhq_normalized_confusion_matrix.png"
+)
+
+TABLE_CSV_PATH = (
+    RESULTS_DIR
+    / "celebamaskhq_thesis_table.csv"
+)
+
+TABLE_MD_PATH = (
+    RESULTS_DIR
+    / "celebamaskhq_thesis_table.md"
+)
+
+SUMMARY_TABLE_CSV_PATH = (
+    RESULTS_DIR
+    / "celebamaskhq_summary_table.csv"
+)
+
+SUMMARY_TABLE_MD_PATH = (
+    RESULTS_DIR
+    / "celebamaskhq_summary_table.md"
+)
+
+
+def load_metrics():
+    if not INPUT_CSV.exists():
+        raise FileNotFoundError(
+            f"Metrics file not found: {INPUT_CSV}"
+        )
+
+    dataframe = pd.read_csv(
+        INPUT_CSV
+    )
+
+    required_columns = {
+        "class_id",
+        "class_name",
+        "gt_pixels",
+        "pred_pixels",
+        "iou",
+        "dice",
+    }
+
+    missing_columns = (
+        required_columns
+        - set(dataframe.columns)
+    )
+
+    if missing_columns:
+        raise ValueError(
+            "Missing required columns: "
+            + ", ".join(
+                sorted(missing_columns)
+            )
+        )
+
+    expected_classes = [
+        "background",
+        "neck",
+        "skin",
+        "cloth",
+        "l_ear",
+        "r_ear",
+        "l_brow",
+        "r_brow",
+        "l_eye",
+        "r_eye",
+        "nose",
+        "mouth",
+        "l_lip",
+        "u_lip",
+        "hair",
+        "eye_g",
+        "hat",
+        "ear_r",
+        "neck_l",
+    ]
+
+    if dataframe["class_name"].tolist() != expected_classes:
+        raise ValueError(
+            "Unexpected CelebAMask-HQ class order in metrics CSV."
+        )
+
+    return dataframe
+
+
+def load_confusion_matrix():
+    if not CONFUSION_MATRIX_CSV.exists():
+        raise FileNotFoundError(
+            "Confusion matrix file not found: "
+            f"{CONFUSION_MATRIX_CSV}"
+        )
+
+    dataframe = pd.read_csv(
+        CONFUSION_MATRIX_CSV,
+        index_col=0,
+    )
+
+    expected_classes = [
+        "background",
+        "neck",
+        "skin",
+        "cloth",
+        "l_ear",
+        "r_ear",
+        "l_brow",
+        "r_brow",
+        "l_eye",
+        "r_eye",
+        "nose",
+        "mouth",
+        "l_lip",
+        "u_lip",
+        "hair",
+        "eye_g",
+        "hat",
+        "ear_r",
+        "neck_l",
+    ]
+
+    if dataframe.index.tolist() != expected_classes:
+        raise ValueError(
+            "Unexpected CelebAMask-HQ ground-truth class order "
+            "in confusion matrix CSV."
+        )
+
+    if dataframe.columns.tolist() != expected_classes:
+        raise ValueError(
+            "Unexpected CelebAMask-HQ predicted class order "
+            "in confusion matrix CSV."
+        )
+
+    dataframe = dataframe.apply(
+        pd.to_numeric,
+        errors="raise",
+    )
+
+    if (dataframe.to_numpy() < 0).any():
+        raise ValueError(
+            "Confusion matrix contains negative pixel counts."
+        )
+
+    row_sums = dataframe.sum(
+        axis=1
+    )
+
+    if (row_sums <= 0).any():
+        raise ValueError(
+            "Confusion matrix contains an empty ground-truth class row."
+        )
+
+    return dataframe
+
+def load_summary_metrics():
+    if not SUMMARY_PATH.exists():
+        raise FileNotFoundError(
+            f"Summary file not found: {SUMMARY_PATH}"
+        )
+
+    metrics = {}
+
+    with SUMMARY_PATH.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            if line.startswith(
+                "Pixel accuracy:"
+            ):
+                metrics[
+                    "Pixel Accuracy (%)"
+                ] = (
+                    float(
+                        line.split(
+                            ":",
+                            1,
+                        )[1].strip()
+                    )
+                    * 100.0
+                )
+
+            elif line.startswith(
+                "All-class mIoU:"
+            ):
+                metrics[
+                    "All-class mIoU (%)"
+                ] = (
+                    float(
+                        line.split(
+                            ":",
+                            1,
+                        )[1].strip()
+                    )
+                    * 100.0
+                )
+
+            elif line.startswith(
+                "Foreground mIoU:"
+            ):
+                metrics[
+                    "Foreground mIoU (%)"
+                ] = (
+                    float(
+                        line.split(
+                            ":",
+                            1,
+                        )[1].strip()
+                    )
+                    * 100.0
+                )
+
+            elif line.startswith(
+                "All-class mean Dice:"
+            ):
+                metrics[
+                    "All-class Mean Dice (%)"
+                ] = (
+                    float(
+                        line.split(
+                            ":",
+                            1,
+                        )[1].strip()
+                    )
+                    * 100.0
+                )
+
+            elif line.startswith(
+                "Foreground mean Dice:"
+            ):
+                metrics[
+                    "Foreground Mean Dice (%)"
+                ] = (
+                    float(
+                        line.split(
+                            ":",
+                            1,
+                        )[1].strip()
+                    )
+                    * 100.0
+                )
+
+    required_metrics = {
+        "Pixel Accuracy (%)",
+        "All-class mIoU (%)",
+        "Foreground mIoU (%)",
+        "All-class Mean Dice (%)",
+        "Foreground Mean Dice (%)",
+    }
+
+    missing_metrics = (
+        required_metrics
+        - set(metrics)
+    )
+
+    if missing_metrics:
+        raise ValueError(
+            "Missing summary metrics: "
+            + ", ".join(
+                sorted(missing_metrics)
+            )
+        )
+
+    return metrics
+
+
+def create_figure(dataframe):
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    labels = dataframe[
+        "class_name"
+    ].tolist()
+
+    iou = (
+        dataframe["iou"]
+        .astype(float)
+        .to_numpy()
+        * 100.0
+    )
+
+    dice = (
+        dataframe["dice"]
+        .astype(float)
+        .to_numpy()
+        * 100.0
+    )
+
+    x_positions = list(
+        range(len(dataframe))
+    )
+
+    bar_width = 0.38
+
+    figure, axis = plt.subplots(
+        figsize=(13, 6.5)
+    )
+
+    axis.bar(
+        [
+            position
+            - bar_width / 2
+            for position in x_positions
+        ],
+        iou,
+        width=bar_width,
+        label="IoU",
+    )
+
+    axis.bar(
+        [
+            position
+            + bar_width / 2
+            for position in x_positions
+        ],
+        dice,
+        width=bar_width,
+        label="Dice",
+    )
+
+    axis.set_title(
+        "CelebAMask-HQ Face Region Segmentation"
+    )
+
+    axis.set_xlabel(
+        "Semantic class"
+    )
+
+    axis.set_ylabel(
+        "Score (%)"
+    )
+
+    axis.set_xticks(
+        x_positions
+    )
+
+    axis.set_xticklabels(
+        labels,
+        rotation=45,
+        ha="right",
+    )
+
+    axis.set_ylim(
+        0,
+        100,
+    )
+
+    axis.grid(
+        axis="y",
+        alpha=0.25,
+    )
+
+    axis.legend()
+
+    figure.tight_layout()
+
+    figure.savefig(
+        FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        figure
+    )
+
+
+def create_confusion_matrix_figure(dataframe):
+    FIGURES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    row_sums = dataframe.sum(
+        axis=1
+    )
+
+    normalized = dataframe.div(
+        row_sums,
+        axis=0,
+    ) * 100.0
+
+    labels = normalized.columns.tolist()
+
+    figure, axis = plt.subplots(
+        figsize=(12, 10)
+    )
+
+    image = axis.imshow(
+        normalized.to_numpy(),
+        aspect="auto",
+        vmin=0.0,
+        vmax=100.0,
+    )
+
+    axis.set_title(
+        "CelebAMask-HQ Normalized Confusion Matrix"
+    )
+
+    axis.set_xlabel(
+        "Predicted class"
+    )
+
+    axis.set_ylabel(
+        "Ground-truth class"
+    )
+
+    axis.set_xticks(
+        range(len(labels))
+    )
+
+    axis.set_xticklabels(
+        labels,
+        rotation=45,
+        ha="right",
+    )
+
+    axis.set_yticks(
+        range(len(labels))
+    )
+
+    axis.set_yticklabels(
+        labels
+    )
+
+    colorbar = figure.colorbar(
+        image,
+        ax=axis,
+        fraction=0.046,
+        pad=0.04,
+    )
+
+    colorbar.set_label(
+        "Row-normalized pixels (%)"
+    )
+
+    figure.tight_layout()
+
+    figure.savefig(
+        CONFUSION_MATRIX_FIGURE_PATH,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        figure
+    )
+
+def create_markdown_table(table):
+    markdown_lines = [
+        "| Class | IoU (%) | Dice (%) |",
+        "| --- | ---: | ---: |",
+    ]
+
+    for _, row in table.iterrows():
+        markdown_lines.append(
+            f"| {row['Class']} | "
+            f"{row['IoU (%)']:.2f} | "
+            f"{row['Dice (%)']:.2f} |"
+        )
+
+    TABLE_MD_PATH.write_text(
+        "\n".join(markdown_lines) + "\n",
+        encoding="utf-8",
+    )
+
+
+def create_thesis_table(dataframe):
+    table = dataframe[
+        [
+            "class_name",
+            "iou",
+            "dice",
+        ]
+    ].copy()
+
+    table.columns = [
+        "Class",
+        "IoU (%)",
+        "Dice (%)",
+    ]
+
+    table["IoU (%)"] = (
+        table["IoU (%)"]
+        .astype(float)
+        * 100.0
+    )
+
+    table["Dice (%)"] = (
+        table["Dice (%)"]
+        .astype(float)
+        * 100.0
+    )
+
+    table["IoU (%)"] = (
+        table["IoU (%)"]
+        .round(2)
+    )
+
+    table["Dice (%)"] = (
+        table["Dice (%)"]
+        .round(2)
+    )
+
+    table.to_csv(
+        TABLE_CSV_PATH,
+        index=False,
+    )
+
+    create_markdown_table(
+        table
+    )
+
+    return table
+
+
+def create_summary_table(
+    summary_metrics,
+):
+    table = pd.DataFrame(
+        [
+            {
+                "Metric": metric,
+                "Value (%)": round(
+                    value,
+                    4,
+                ),
+            }
+            for metric, value
+            in summary_metrics.items()
+        ]
+    )
+
+    table.to_csv(
+        SUMMARY_TABLE_CSV_PATH,
+        index=False,
+    )
+
+    markdown_lines = [
+        "| Metric | Value (%) |",
+        "| --- | ---: |",
+    ]
+
+    for _, row in table.iterrows():
+        markdown_lines.append(
+            f"| {row['Metric']} | "
+            f"{row['Value (%)']:.4f} |"
+        )
+
+    SUMMARY_TABLE_MD_PATH.write_text(
+        "\n".join(markdown_lines) + "\n",
+        encoding="utf-8",
+    )
+
+    return table
+
+
+def run_plot_generation():
+    dataframe = load_metrics()
+
+    confusion_matrix = (
+        load_confusion_matrix()
+    )
+
+    summary_metrics = (
+        load_summary_metrics()
+    )
+
+    create_figure(
+        dataframe
+    )
+
+    create_confusion_matrix_figure(
+        confusion_matrix
+    )
+
+    class_table = (
+        create_thesis_table(
+            dataframe
+        )
+    )
+
+    summary_table = (
+        create_summary_table(
+            summary_metrics
+        )
+    )
+
+    print(
+        f"Classes: {len(dataframe)}"
+    )
+
+    print()
+    print(
+        "=== Per-Class Thesis Table ==="
+    )
+
+    print(
+        class_table.to_string(
+            index=False
+        )
+    )
+
+    print()
+    print(
+        "=== Overall Summary Table ==="
+    )
+
+    print(
+        summary_table.to_string(
+            index=False
+        )
+    )
+
+    print()
+    print(
+        f"Saved figure: {FIGURE_PATH}"
+    )
+
+    print(
+        "Saved normalized confusion matrix figure: "
+        f"{CONFUSION_MATRIX_FIGURE_PATH}"
+    )
+
+    print(
+        f"Saved per-class CSV table: "
+        f"{TABLE_CSV_PATH}"
+    )
+
+    print(
+        f"Saved per-class Markdown table: "
+        f"{TABLE_MD_PATH}"
+    )
+
+    print(
+        f"Saved summary CSV table: "
+        f"{SUMMARY_TABLE_CSV_PATH}"
+    )
+
+    print(
+        f"Saved summary Markdown table: "
+        f"{SUMMARY_TABLE_MD_PATH}"
+    )
+
+
+
+def validate_staged_plot_outputs(staged_paths):
+    """Validate newly generated plot and table artifacts before final replacement."""
+    for path in staged_paths:
+        if not path.is_file():
+            raise RuntimeError(f"Staged plot output was not created: {path.name}")
+
+    class_table = pd.read_csv(TABLE_CSV_PATH)
+    if list(class_table.columns) != ["Class", "IoU (%)", "Dice (%)"] or len(class_table) != 19:
+        raise RuntimeError("Staged per-class thesis table is invalid.")
+
+    expected_classes = [
+        "background", "neck", "skin", "cloth", "l_ear", "r_ear", "l_brow", "r_brow",
+        "l_eye", "r_eye", "nose", "mouth", "l_lip", "u_lip", "hair", "eye_g", "hat",
+        "ear_r", "neck_l",
+    ]
+    if class_table["Class"].tolist() != expected_classes:
+        raise RuntimeError("Staged per-class thesis table class order is incorrect.")
+
+    summary_table = pd.read_csv(SUMMARY_TABLE_CSV_PATH)
+    expected_metrics = [
+        "Pixel Accuracy (%)",
+        "All-class mIoU (%)",
+        "Foreground mIoU (%)",
+        "All-class Mean Dice (%)",
+        "Foreground Mean Dice (%)",
+    ]
+    if summary_table["Metric"].tolist() != expected_metrics:
+        raise RuntimeError("Staged summary table metric order is incorrect.")
+
+    for path in (TABLE_MD_PATH, SUMMARY_TABLE_MD_PATH):
+        if not path.read_text(encoding="utf-8").strip():
+            raise RuntimeError(f"Staged Markdown table is empty: {path.name}")
+
+    for path in (FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH):
+        image = plt.imread(path)
+        if image.ndim < 2 or image.shape[0] <= 0 or image.shape[1] <= 0:
+            raise RuntimeError(f"Staged figure is unreadable: {path.name}")
+
+
+def replace_owned_plot_outputs(staged_paths, final_paths, staging_dir):
+    """Replace only plot-owned outputs with rollback on commit failure."""
+    backup_dir = staging_dir / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backups = []
+    installed = []
+    try:
+        for final_path in final_paths:
+            if final_path.exists():
+                backup_path = backup_dir / final_path.name
+                os.replace(final_path, backup_path)
+                backups.append((backup_path, final_path))
+        for staged_path, final_path in zip(staged_paths, final_paths):
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(staged_path, final_path)
+            installed.append(final_path)
+    except Exception:
+        for final_path in installed:
+            if final_path.exists(): final_path.unlink()
+        for backup_path, final_path in reversed(backups):
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            if backup_path.exists(): os.replace(backup_path, final_path)
+        raise
+
+
+def main():
+    """Generate quantitative tables and figures transactionally."""
+    global FIGURES_DIR, FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH
+    global TABLE_CSV_PATH, TABLE_MD_PATH, SUMMARY_TABLE_CSV_PATH, SUMMARY_TABLE_MD_PATH
+
+    final_figures_dir = FIGURES_DIR
+    final_paths = [
+        FIGURE_PATH,
+        CONFUSION_MATRIX_FIGURE_PATH,
+        TABLE_CSV_PATH,
+        TABLE_MD_PATH,
+        SUMMARY_TABLE_CSV_PATH,
+        SUMMARY_TABLE_MD_PATH,
+    ]
+    staging_dir = Path(tempfile.mkdtemp(prefix=".celebamaskhq_segmentation_plot_", dir=RESULTS_DIR))
+    FIGURES_DIR = staging_dir / "figures"
+    FIGURE_PATH = FIGURES_DIR / final_paths[0].name
+    CONFUSION_MATRIX_FIGURE_PATH = FIGURES_DIR / final_paths[1].name
+    TABLE_CSV_PATH = staging_dir / final_paths[2].name
+    TABLE_MD_PATH = staging_dir / final_paths[3].name
+    SUMMARY_TABLE_CSV_PATH = staging_dir / final_paths[4].name
+    SUMMARY_TABLE_MD_PATH = staging_dir / final_paths[5].name
+    staged_paths = [
+        FIGURE_PATH,
+        CONFUSION_MATRIX_FIGURE_PATH,
+        TABLE_CSV_PATH,
+        TABLE_MD_PATH,
+        SUMMARY_TABLE_CSV_PATH,
+        SUMMARY_TABLE_MD_PATH,
+    ]
+    try:
+        run_plot_generation()
+        print()
+        print("Validating staged plot outputs...")
+        validate_staged_plot_outputs(staged_paths)
+        replace_owned_plot_outputs(staged_paths, final_paths, staging_dir)
+    finally:
+        FIGURES_DIR = final_figures_dir
+        FIGURE_PATH, CONFUSION_MATRIX_FIGURE_PATH, TABLE_CSV_PATH, TABLE_MD_PATH, SUMMARY_TABLE_CSV_PATH, SUMMARY_TABLE_MD_PATH = final_paths
+        if staging_dir.exists(): shutil.rmtree(staging_dir)
+    print()
+    print("Committed final plot and table outputs.")
+
+
+if __name__ == "__main__":
+    main()

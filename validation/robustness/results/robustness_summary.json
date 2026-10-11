@@ -1,0 +1,128 @@
+{
+  "test": "controlled_static_robustness",
+  "evidence_type": "controlled_robustness_behavior",
+  "scientific_accuracy_evidence": false,
+  "protocol": {
+    "source_population": "Seven deterministic stress-test images generated from one accepted frontal integration image.",
+    "primary_face_selection": "Highest detector-confidence face within each generated single-person stress-test image.",
+    "comparison": "Each stress condition is compared descriptively with the unmodified baseline. No arbitrary robustness pass/fail threshold is imposed on prediction drift.",
+    "temporal_scope": "Static-image compatible components only. Tracking, blink, mouth motion, and temporal aggregation are intentionally not evaluated from these single-image controlled inputs."
+  },
+  "configuration": {
+    "active_components": [
+      "detection",
+      "landmarks",
+      "quality",
+      "head_pose",
+      "eyes",
+      "gaze",
+      "gaze_estimation",
+      "mouth",
+      "emotion",
+      "regions"
+    ],
+    "not_applicable_static_input_components": [
+      "tracking",
+      "blink",
+      "mouth_motion",
+      "temporal"
+    ],
+    "gaze_estimation_mode": "eth-xgaze",
+    "gaze_estimation_min_iou": 0.1
+  },
+  "execution": {
+    "cases": 7,
+    "detected_cases": 7,
+    "no_face_cases": 0,
+    "execution_failed_cases": 0,
+    "invalid_numeric_cases": 0,
+    "input_read_only_verified": true
+  },
+  "baseline": {
+    "detected_faces": 1,
+    "detector_confidence": 0.9095245599746704,
+    "emotion_label": "Anger",
+    "available_static_modules": 10
+  },
+  "cases": [
+    {
+      "case_id": "baseline",
+      "condition": "baseline",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.9095245599746704,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "dim_lighting",
+      "condition": "dim lighting",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.9109304547309875,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "overexposed_lighting",
+      "condition": "overexposed lighting",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.9117920398712158,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "gaussian_blur",
+      "condition": "gaussian blur",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.901819109916687,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "motion_blur",
+      "condition": "motion blur",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.9047748446464539,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "small_face",
+      "condition": "small face",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.9035259485244751,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    },
+    {
+      "case_id": "partial_occlusion",
+      "condition": "partial occlusion",
+      "status": "DETECTED",
+      "detected_faces": 1,
+      "available_static_modules": 10,
+      "total_static_modules": 10,
+      "detector_confidence": 0.8989097476005554,
+      "emotion_label": "Anger",
+      "emotion_changed_vs_baseline": false
+    }
+  ],
+  "interpretation": "This evaluation characterizes deterministic degradation behavior under controlled image perturbations. A NO_FACE outcome is an observed robustness limitation, not a script execution failure. The test does not provide predictive accuracy or a universal robustness score.",
+  "execution_status": "PASS"
+}

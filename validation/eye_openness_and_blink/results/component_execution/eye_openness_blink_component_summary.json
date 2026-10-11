@@ -1,0 +1,74 @@
+{
+  "component": "PhysioTrack EyeOpenness + BlinkDetector",
+  "execution_type": "isolated component execution; not an accuracy benchmark",
+  "dataset": "MPEBlink 2.0 test",
+  "pipeline": "PhysioTrack FaceAnalysis",
+  "device": "cpu",
+  "controlled_input": "MPEBlink per-person ground-truth face bounding boxes",
+  "required_prerequisite": "PhysioTrack FaceLandmarks",
+  "enabled_components": [
+    "landmarks",
+    "eyes",
+    "blink"
+  ],
+  "disabled_components": [
+    "tracking",
+    "head_pose",
+    "quality",
+    "gaze",
+    "gaze_estimation",
+    "mouth",
+    "mouth_motion",
+    "emotion",
+    "regions",
+    "temporal"
+  ],
+  "geometry_note": "EyeOpenness is produced by the current PhysioTrack image-dimension-aware implementation.",
+  "temporal_note": "Blink state is isolated per benchmark video and no accuracy metric is recomputed here.",
+  "blink_threshold": 0.22,
+  "min_closed_frames": 3,
+  "videos": 212,
+  "annotation_frames": 219706,
+  "person_sequences": 687,
+  "person_frame_samples": 596209,
+  "valid_bbox_annotations": 495858,
+  "missing_bbox_annotations": 100341,
+  "invalid_bbox_annotations": 10,
+  "eye_openness_available_rows": 389922,
+  "blink_available_rows": 389922,
+  "blink_event_pulses": 5987,
+  "status_counts": {
+    "NO_EYE_OUTPUT": 105936,
+    "OK": 389922,
+    "MISSING_BOX": 100341,
+    "INVALID_BOX": 10
+  },
+  "execution_failures": 0,
+  "runtime_seconds": 5977.593715200001,
+  "result_output_policy": {
+    "git_safe_max_file_size_mib": 90.0,
+    "split_only_at_complete_video_boundaries": true,
+    "result_file_count": 2,
+    "files": [
+      {
+        "filename": "eye_openness_blink_component_results_part001.csv",
+        "part_number": 1,
+        "row_count": 293689,
+        "first_video_id": 1,
+        "last_video_id": 187,
+        "size_bytes": 52767776,
+        "size_mib": 50.323272705078125
+      },
+      {
+        "filename": "eye_openness_blink_component_results_part002.csv",
+        "part_number": 2,
+        "row_count": 302520,
+        "first_video_id": 188,
+        "last_video_id": 212,
+        "size_bytes": 52872002,
+        "size_mib": 50.42267036437988
+      }
+    ]
+  },
+  "overall_status": "PASS"
+}

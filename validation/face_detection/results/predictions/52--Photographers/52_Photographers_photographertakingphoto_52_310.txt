@@ -1,0 +1,4 @@
+52--Photographers/52_Photographers_photographertakingphoto_52_310.jpg
+2
+638.310 175.792 74.267 112.539 0.690052
+608.919 172.745 72.572 112.211 0.057691

@@ -1,0 +1,69 @@
+{
+  "component": "FaceEmotion",
+  "evidence_type": "isolated_component_execution",
+  "scientific_accuracy_evidence": false,
+  "execution_path": "FaceAnalysis",
+  "active_components": [
+    "Face detector",
+    "FaceEmotion"
+  ],
+  "disabled_optional_components": [
+    "tracking",
+    "head_pose",
+    "landmarks",
+    "quality",
+    "eyes",
+    "blink",
+    "gaze",
+    "gaze_estimation",
+    "mouth",
+    "mouth_motion",
+    "regions",
+    "temporal"
+  ],
+  "model": {
+    "name": "enet_b0_8_best_afew",
+    "engine": "onnx",
+    "classes": [
+      "Anger",
+      "Contempt",
+      "Disgust",
+      "Fear",
+      "Happiness",
+      "Neutral",
+      "Sadness",
+      "Surprise"
+    ]
+  },
+  "dataset": {
+    "name": "CAER-S",
+    "population": "annotated target-face test subset image population",
+    "images": 13942,
+    "ground_truth_used_for_accuracy": false,
+    "read_only_verified": true
+  },
+  "execution": {
+    "total_images": 13942,
+    "total_rows": 23746,
+    "detected_face_rows": 23745,
+    "emotion_available_rows": 23745,
+    "images_with_emotion": 13941,
+    "status_counts": {
+      "EMOTION_AVAILABLE": 23745,
+      "EMOTION_UNAVAILABLE": 0,
+      "INVALID_FACE_BOX": 0,
+      "NO_FACE": 1,
+      "EXECUTION_FAILED": 0
+    },
+    "runtime_seconds": 4431.715278000003
+  },
+  "numerical_consistency": {
+    "maximum_confidence_absolute_error": 0.0,
+    "maximum_score_absolute_error": 0.0,
+    "minimum_score_sum": 0.9999998093117028,
+    "maximum_score_sum": 1.0000001614828826,
+    "tolerance": 1e-06
+  },
+  "interpretation": "This test verifies real numerical execution and export of FaceEmotion through the current FaceAnalysis path with only the unavoidable face detector and Emotion Recognition active. It is software execution evidence and does not replace the controlled scientific CAER-S Emotion Recognition validation.",
+  "status": "PASS"
+}
