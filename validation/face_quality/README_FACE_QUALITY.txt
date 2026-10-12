@@ -523,14 +523,6 @@ Preserve:
 - results/component_execution/face_quality_component_results.csv
 - results/component_execution/face_quality_component_summary.json
 
-Console evidence worth preserving includes:
-
-- successful full controlled evaluator staging validation and commit
-- successful plot-stage validation and commit
-- successful qualitative-stage validation and commit
-- successful isolated component preflight
-- successful isolated component smoke test
-- successful full isolated component staging validation and commit
 
 
 Validation Status
@@ -543,5 +535,4 @@ Qualitative validation evidence: PASS
 
 Isolated real PhysioTrack FaceQuality execution: PASS
 
-Final component closure requires the accompanying internal academic
-documentation and final package audit.
+

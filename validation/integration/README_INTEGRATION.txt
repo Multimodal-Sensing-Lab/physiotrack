@@ -61,14 +61,15 @@ validation/integration/
 |-- whole_project_video_analysis.py
 |-- whole_project_final_e2e_test.py
 |-- face_pipeline_image_e2e_test.py
+|-- face_pipeline_runtime_benchmark.py
 |-- README_INTEGRATION.txt
 |-- test_data/
 |   |-- single_person/
-|   |   `-- face_blink_pose.mp4
+|   |   `-- ravdess_single_person.mp4
 |   |-- multi_person/
 |   |   `-- multi_person2.mp4
 |   |-- whole_project/
-|   |   `-- istockphoto-1370809321-640_adpp_is.mp4
+|   |   `-- ravdess_whole_project.mp4
 |   `-- images/
 |       `-- <integration image fixtures>
 `-- results/
@@ -78,7 +79,8 @@ validation/integration/
     |-- multi_person_e2e/
     |-- whole_project_video_analysis/
     |-- whole_project_e2e/
-    `-- image_e2e/
+    |-- image_e2e/
+    `-- runtime_performance/
 
 Test Data
 ---------
@@ -88,7 +90,7 @@ physiotrack/validation/integration/test_data/
 
 The current video fixtures are:
 
-single_person/face_blink_pose.mp4
+single_person/ravdess_single_person.mp4
     Single-person video used for runtime configuration checks, the
     single-person end-to-end comparison, and native export validation.
     Source dataset: RAVDESS.
@@ -98,7 +100,7 @@ multi_person/multi_person2.mp4
     feature generation, and gaze-estimation association.
     Source dataset: MPEBlink2.
 
-whole_project/istockphoto-1370809321-640_adpp_is.mp4
+whole_project/ravdess_whole_project.mp4
     Full-pipeline video used for whole-project analysis and the final complete
     end-to-end integration test.
     Source dataset: RAVDESS.
@@ -558,13 +560,21 @@ run to staging, validates the staged files, and only then replaces the final
 result directory that it owns. If execution or validation fails, the previously
 accepted final outputs are preserved.
 
+The complementary full runtime-performance benchmark can then be executed with:
+
+python face_pipeline_runtime_benchmark.py
+
+Its outputs are stored under results/runtime_performance/ and are reported
+separately from the seven-script integration PASS/FAIL suite because runtime
+performance is execution evidence rather than predictive-accuracy evidence.
+
 Reported Integration Results
 ----------------------------
 Runtime configuration smoke test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Test video:
-face_blink_pose.mp4
+ravdess_single_person.mp4
 
 Each configuration processed 5 frames and 5 detected faces.
 
@@ -617,7 +627,7 @@ Single-person end-to-end integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Test video:
-face_blink_pose.mp4
+ravdess_single_person.mp4
 
 Video FPS:
 29.97002997002997
@@ -661,7 +671,7 @@ Native export integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Test video:
-face_blink_pose.mp4
+ravdess_single_person.mp4
 
 Video FPS:
 29.97002997002997
@@ -847,7 +857,7 @@ Whole-project video analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Test video:
-istockphoto-1370809321-640_adpp_is.mp4
+ravdess_whole_project.mp4
 
 Resolution:
 1280 x 720
@@ -906,7 +916,7 @@ Final whole-project end-to-end integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Test video:
-istockphoto-1370809321-640_adpp_is.mp4
+ravdess_whole_project.mp4
 
 Resolution:
 1280 x 720
@@ -1058,7 +1068,7 @@ temporal quantity was fabricated from an independent static image.
 Overall status:
 PASS
 
-Current Acceptance Summary
+Integration Acceptance Summary
 --------------------------
 The complete seven-script integration suite passed on the documented fixtures.
 The accepted run confirms that the currently configured components are
@@ -1165,6 +1175,11 @@ image_e2e/
     image_e2e_results.json
     image_e2e_summary.json
 
+runtime_performance/
+    face_pipeline_runtime_frame_times.csv
+    face_pipeline_runtime_results.csv
+    face_pipeline_runtime_summary.json
+
 Interpretation
 --------------
 The integration suite demonstrates that the configured PhysioTrack
@@ -1234,14 +1249,14 @@ integration videos with the complete final pipeline configuration:
 - Failed frames: 0
 - Video execution failures: 0
 - Total detected faces: 2347
-- Processing time: 3763.9636661000095 s
-- Wall time: 3766.6400374999994 s
-- Effective processing rate: approximately 0.245220 FPS
-- Wall-clock processing rate: approximately 0.245046 FPS
-- Mean processing time: approximately 4077.97 ms/frame
-- Median processing time: approximately 3578.99 ms/frame
-- 90th percentile processing time: approximately 5673.03 ms/frame
-- 95th percentile processing time: approximately 5751.61 ms/frame
+- Processing time: 3160.6545598999865 s
+- Wall time: 3163.0992822999997 s
+- Effective processing rate: approximately 0.292028 FPS
+- Wall-clock processing rate: approximately 0.291802 FPS
+- Mean processing time: approximately 3424.33 ms/frame
+- Median processing time: approximately 3463.19 ms/frame
+- 90th percentile processing time: approximately 4933.23 ms/frame
+- 95th percentile processing time: approximately 5021.52 ms/frame
 - Input-media read-only verification: PASS
 
 Runtime performance is hardware- and workload-dependent and is reported as
@@ -1323,16 +1338,18 @@ To reproduce the integration validation on another machine:
 3. Ensure the documented integration fixtures are available under
    validation/integration/test_data/ in the appropriate subdirectories.
 4. Change to validation/integration/.
-5. Run the seven scripts in the documented order.
-6. Confirm that each clean fixture run completes without an exception.
-7. Verify the generated result counts and PASS conditions against the values in
+5. Run the seven integration scripts in the documented order.
+6. Run face_pipeline_runtime_benchmark.py when reproducing the documented
+   runtime-performance evidence.
+7. Confirm that each clean fixture run completes without an exception.
+8. Verify the generated result counts and PASS conditions against the values in
    this README.
-8. Verify that numerical measurements are present in the frame/window exports
+9. Verify that numerical measurements are present in the frame/window exports
    where the corresponding module is applicable, including FaceQuality
    confidence, brightness, sharpness, and face-area ratio.
-9. Verify Emotion label, confidence, and eight-class score-vector consistency in
-   the applicable frame-level exports.
-10. Preserve the final result directories as integration evidence.
+10. Verify Emotion label, confidence, and eight-class score-vector consistency in
+    the applicable frame-level exports.
+11. Preserve the final result directories as integration evidence.
 
 Runtime can vary across machines and is not a scientific reproducibility
 target. The principal reproducibility targets are processed-frame counts, face
@@ -1356,6 +1373,7 @@ Repository Preservation
 The repository should preserve:
 
 - The seven integration scripts
+- The complementary face_pipeline_runtime_benchmark.py performance script
 - README_INTEGRATION.txt
 - Redistributable integration test fixtures
 - Final result summaries
@@ -1401,5 +1419,4 @@ PASS
 Emotion integration:
 ACCEPTED
 
-Complete seven-script integration suite:
-CLOSED
+

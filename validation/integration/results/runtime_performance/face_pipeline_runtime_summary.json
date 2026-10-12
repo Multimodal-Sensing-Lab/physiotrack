@@ -34,7 +34,7 @@
   "preflight": [
     {
       "scenario": "single_person",
-      "video": "test_data/single_person/face_blink_pose.mp4",
+      "video": "test_data/single_person/ravdess_single_person.mp4",
       "input_fps": 29.97002997002997,
       "reported_frames": 99,
       "width": 1280,
@@ -50,7 +50,7 @@
     },
     {
       "scenario": "whole_project",
-      "video": "test_data/whole_project/istockphoto-1370809321-640_adpp_is.mp4",
+      "video": "test_data/whole_project/ravdess_whole_project.mp4",
       "input_fps": 29.97002997002997,
       "reported_frames": 112,
       "width": 1280,
@@ -64,14 +64,14 @@
     "successful_frames": 923,
     "failed_frames": 0,
     "total_faces": 2347,
-    "processing_seconds": 3763.9636661000095,
-    "wall_seconds": 3766.6400374999994,
-    "effective_processing_fps": 0.2452202204588113,
-    "wall_fps": 0.24504598018679138,
-    "mean_ms_per_frame": 4077.967135536305,
-    "median_ms_per_frame": 3578.985800000737,
-    "p90_ms_per_frame": 5673.026300000856,
-    "p95_ms_per_frame": 5751.610399999663
+    "processing_seconds": 3160.6545598999865,
+    "wall_seconds": 3163.0992822999997,
+    "effective_processing_fps": 0.2920281171217923,
+    "wall_fps": 0.2918024120092919,
+    "mean_ms_per_frame": 3424.327800541697,
+    "median_ms_per_frame": 3463.1853999999294,
+    "p90_ms_per_frame": 4933.231260000321,
+    "p95_ms_per_frame": 5021.515279999585
   },
   "dataset": {
     "source": "validation/integration/test_data",

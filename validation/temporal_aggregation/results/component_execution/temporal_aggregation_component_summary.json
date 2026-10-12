@@ -25,7 +25,7 @@
   "output_directory": "validation/temporal_aggregation/results/component_execution",
   "videos": [
     {
-      "video": "validation/integration/test_data/single_person/face_blink_pose.mp4",
+      "video": "validation/integration/test_data/single_person/ravdess_single_person.mp4",
       "status": "PASS",
       "fps": 29.97002997002997,
       "reported_frames": 99,
@@ -65,7 +65,7 @@
     "passed_checks": 111750,
     "failed_checks": 0,
     "max_numeric_absolute_error": 3.197442310920451e-14,
-    "runtime_sec": 234.41603370000303,
+    "runtime_sec": 321.320151599999,
     "overall_status": "PASS"
   },
   "overall_status": "PASS"

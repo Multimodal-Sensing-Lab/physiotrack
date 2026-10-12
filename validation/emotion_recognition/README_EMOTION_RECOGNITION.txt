@@ -1018,7 +1018,7 @@ Final reproducibility artifacts:
 Generated caches, temporary staging directories, smoke-test-only outputs, and
 obsolete diagnostic files are not part of the final validation deliverables.
 
-Current Validation Status
+emotion recognition Validation Status
 -------------------------
 Scientific benchmark:
 ACCEPTED

@@ -3,7 +3,7 @@
   "videos": [
     {
       "test_type": "final_whole_project_end_to_end",
-      "video": "test_data/whole_project/istockphoto-1370809321-640_adpp_is.mp4",
+      "video": "test_data/whole_project/ravdess_whole_project.mp4",
       "resolution": {
         "width": 1280,
         "height": 720

@@ -2,7 +2,7 @@
   "test_type": "native_export_integration",
   "videos": [
     {
-      "video": "test_data/single_person/face_blink_pose.mp4",
+      "video": "test_data/single_person/ravdess_single_person.mp4",
       "fps": 29.97002997002997,
       "video_frames": 99,
       "processed_frames": 99,

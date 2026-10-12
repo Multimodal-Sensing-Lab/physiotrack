@@ -834,7 +834,5 @@ VERIFIED
 Isolated PhysioTrack Face Regions component execution:
 PASS / ACCEPTED
 
-Dataset handling:
-Read-only
 
-The Face Regions validation package is accepted for the defined thesis scope.
+

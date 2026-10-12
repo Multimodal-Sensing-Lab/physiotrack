@@ -7,7 +7,7 @@
   },
   "videos": [
     {
-      "video": "test_data/single_person/face_blink_pose.mp4",
+      "video": "test_data/single_person/ravdess_single_person.mp4",
       "cases": [
         {
           "case": "both_disabled",

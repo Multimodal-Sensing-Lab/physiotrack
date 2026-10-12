@@ -10,7 +10,7 @@ than a predictive machine-learning model. It receives per-frame outputs from
 upstream face-analysis components and summarizes them over a bounded rolling
 window for each tracked person.
 
-The current implementation summarizes:
+The implementation summarizes:
 
 - head pose: yaw, pitch, and roll
 - eye openness: mean_openness
@@ -60,7 +60,7 @@ temporal_aggregation_component_test.py
     Runs the real PhysioTrack FaceAnalysis pipeline on existing single-person
     and multi-person integration fixtures, captures the actual upstream
     frame-level values and temporal summaries, and independently recomputes
-    every current temporal summary field for numerical comparison.
+    every implemented temporal summary field for numerical comparison.
 
 
 Why No External Benchmark Dataset Is Required
@@ -85,9 +85,9 @@ aggregation of an emotion label does not itself establish emotion-recognition
 accuracy.
 
 
-Current Temporal-Aggregation Contract
+Temporal-Aggregation Contract
 -------------------------------------
-The current FaceTemporalAggregator uses a per-person rolling buffer.
+FaceTemporalAggregator uses a per-person rolling buffer.
 
 The configured maximum number of retained frames is:
 
@@ -95,7 +95,7 @@ window_frames = max(1, round(FPS * window_sec))
 
 Each tracked person has an independent temporal buffer.
 
-For every available finite numerical signal in the current window, the
+For every available finite numerical signal in the active temporal window, the
 component calculates:
 
 mean = arithmetic mean of valid values
@@ -110,10 +110,10 @@ Unavailable values and non-finite numerical values are excluded according to
 the implementation's availability and validity rules.
 
 Blink aggregation reports the number of blink-event samples contained in the
-current temporal window.
+active temporal window.
 
 Emotion aggregation reports the dominant available emotion label in the
-current temporal window.
+active temporal window.
 
 Temporal state is reset when continuity for a tracked identity is explicitly
 broken by the FaceAnalysis processing path.
@@ -121,7 +121,7 @@ broken by the FaceAnalysis processing path.
 
 Controlled Correctness Validation
 ---------------------------------
-The controlled evaluator exercises the current FaceTemporalAggregator directly
+The controlled evaluator exercises FaceTemporalAggregator directly
 using deterministic sequences whose expected results are computed
 independently from the implementation.
 
@@ -288,7 +288,7 @@ case_04_reset_behavior.png
     without leakage from pre-reset values.
 
 case_05_blink_events.png
-    Demonstrates blink-event aggregation within the current rolling window.
+    Demonstrates blink-event aggregation within the active rolling window.
 
 case_06_dominant_emotion.png
     Demonstrates dominant-emotion changes within the rolling window and their
@@ -317,7 +317,7 @@ FaceAnalysis.
 This execution verifies the actual project path rather than a local
 reimplementation of FaceTemporalAggregator.
 
-The component test enables the upstream analyses currently consumed by
+The component test enables the upstream analyses consumed by
 FaceTemporalAggregator:
 
 - tracking
@@ -333,9 +333,9 @@ FaceTemporalAggregator:
 - temporal aggregation
 
 Learned gaze estimation and face-region segmentation are disabled in this
-isolated component execution because the current FaceTemporalAggregator does
-not summarize their outputs. Their exclusion therefore reduces unrelated work
-without removing any input currently required by the target component.
+isolated component execution because FaceTemporalAggregator does not summarize
+their outputs. Their exclusion therefore reduces unrelated work without
+removing any input required by the target component.
 
 The validated blink configuration is:
 
@@ -358,7 +358,7 @@ validation/integration/test_data/multi_person/
 
 The accepted run used:
 
-validation/integration/test_data/single_person/face_blink_pose.mp4
+validation/integration/test_data/single_person/ravdess_single_person.mp4
     Source dataset: RAVDESS
 
 validation/integration/test_data/multi_person/multi_person2.mp4
@@ -411,6 +411,7 @@ Total independent checks: 111750
 Passed checks: 111750
 Failed checks: 0
 Maximum numerical absolute error: 3.197442310920451e-14
+Runtime: 321.320151599999 seconds
 Overall status: PASS
 
 The observed maximum numerical difference is at floating-point precision and
@@ -427,7 +428,7 @@ The real component execution stores both:
 For every temporal record, expected rolling statistics are independently
 recomputed from the stored frame-level evidence.
 
-The audit covers all currently supported numerical temporal summaries:
+The audit covers all supported numerical temporal summaries:
 
 - head_pose.yaw
 - head_pose.pitch
@@ -577,7 +578,7 @@ python -m py_compile temporal_aggregation_component_test.py
 
 Interpretation
 --------------
-The accepted results establish that the current PhysioTrack
+The accepted results establish that the PhysioTrack
 FaceTemporalAggregator:
 
 - derives its rolling-window size correctly,
@@ -621,12 +622,12 @@ For example:
 Those scientific questions belong to the corresponding component-specific
 benchmark validations.
 
-The current Temporal Aggregator summarizes the geometric gaze descriptor but
-does not summarize learned GazeEstimator outputs. It also does not aggregate
-face-region segmentation outputs. These are properties of the current
-implementation and are not treated as missing outputs in this validation.
+FaceTemporalAggregator summarizes the geometric gaze descriptor but does not
+summarize learned GazeEstimator outputs. It also does not aggregate face-region
+segmentation outputs. These are properties of the validated implementation and
+are not treated as missing outputs in this validation.
 
-The validation therefore evaluates the complete temporal contract currently
+The validation therefore evaluates the complete temporal contract
 implemented by FaceTemporalAggregator and does not invent aggregation fields
 that the component does not provide.
 
@@ -655,11 +656,12 @@ Real PhysioTrack execution:
 0 failed checks
 maximum numerical absolute error =
 3.197442310920451e-14
+runtime = 321.320151599999 seconds
 
 Overall validation status:
 PASS
 
-The current FaceTemporalAggregator is accepted as mathematically correct,
+FaceTemporalAggregator is accepted as mathematically correct,
 operationally integrated through the real FaceAnalysis execution path, and
 reproducible for the validated thesis scope.
 

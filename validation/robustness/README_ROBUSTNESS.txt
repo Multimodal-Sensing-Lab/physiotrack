@@ -655,7 +655,7 @@ The final robustness reproducibility package should preserve:
 Temporary staging directories, caches, and obsolete diagnostic artifacts are
 not part of the final package.
 
-Current Validation Status
+robustness Validation Status
 -------------------------
 Controlled input generation:
 ACCEPTED
@@ -671,12 +671,3 @@ ACCEPTED
 
 Qualitative evidence:
 ACCEPTED
-
-README:
-COMPLETED
-
-Internal thesis documentation:
-PENDING
-
-Final package audit:
-PENDING
