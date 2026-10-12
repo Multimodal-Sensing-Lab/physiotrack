@@ -91,18 +91,74 @@ The current video fixtures are:
 single_person/face_blink_pose.mp4
     Single-person video used for runtime configuration checks, the
     single-person end-to-end comparison, and native export validation.
+    Source dataset: RAVDESS.
 
 multi_person/multi_person2.mp4
     Multi-person video used to verify simultaneous face tracking, per-person
     feature generation, and gaze-estimation association.
+    Source dataset: MPEBlink2.
 
 whole_project/istockphoto-1370809321-640_adpp_is.mp4
     Full-pipeline video used for whole-project analysis and the final complete
     end-to-end integration test.
+    Source dataset: RAVDESS.
 
 The images/ directory contains static-image fixtures covering frontal faces,
 eye states, mouth configurations, gaze directions, facial expressions,
 multi-face scenes, and pose variation.
+
+Image-fixture provenance is documented as follows:
+
+- eyes_1, eyes_2, mouth_1, mouth_2, multi_1, multi_2, and pose_1: AFLW.
+- frontal_1, frontal_2, and the facial-expression fixtures for Anger, Disgust,
+  Fear, Happiness, Neutral, Sadness, and Surprise: CAER-S.
+- gaze_center, gaze_up, gaze_down, gaze_left, and gaze_right: AI-generated
+  controlled images of the same synthetic subject. These five images were used
+  to provide a consistent subject across the required gaze directions.
+
+Dataset Sources and Citations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RAVDESS
+    Livingstone, S. R., and Russo, F. A. (2018). The Ryerson Audio-Visual
+    Database of Emotional Speech and Song (RAVDESS): A dynamic, multimodal set
+    of facial and vocal expressions in North American English. PLoS ONE,
+    13(5), e0196391.
+    DOI: https://doi.org/10.1371/journal.pone.0196391
+    Dataset record: https://doi.org/10.5281/zenodo.1188976
+
+MPEblink2
+    Zeng, W., Xiao, Y., Wei, S., Gan, J., Zhang, X., Cao, Z., Fang, Z., and
+    Zhou, J. T. (2023). Real-time Multi-person Eyeblink Detection in the Wild
+    for Untrimmed Video. Proceedings of the IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition (CVPR), 13854-13863.
+    Official dataset/project repository:
+    https://github.com/wenzhengzeng/MPEblink
+
+AFLW
+    Koestinger, M., Wohlhart, P., Roth, P. M., and Bischof, H. (2011).
+    Annotated Facial Landmarks in the Wild: A Large-scale, Real-world Database
+    for Facial Landmark Localization. Proceedings of the First IEEE
+    International Workshop on Benchmarking Facial Image Analysis Technologies.
+    Official dataset page:
+    https://www.tugraz.at/institute/icg/research/team-bischof/learning-recognition-surveillance/downloads/aflw
+
+CAER-S
+    Lee, J., Kim, S., Kim, S., Park, J., and Sohn, K. (2019).
+    Context-Aware Emotion Recognition Networks. Proceedings of the IEEE/CVF
+    International Conference on Computer Vision (ICCV).
+    Official CAER/CAER-S dataset page:
+    https://caer-dataset.github.io/
+
+AI-generated gaze-direction fixtures
+    gaze_center, gaze_up, gaze_down, gaze_left, and gaze_right were generated
+    specifically for this integration validation to provide the same synthetic
+    subject under five controlled gaze directions. They do not originate from
+    an external dataset and are not used as benchmark-accuracy evidence.
+
+The RAVDESS, MPEBlink2, AFLW, and CAER-S sources are datasets already used in
+the corresponding component-validation work. Their use here is limited to
+system-integration fixtures. The AI-generated gaze-direction images are likewise
+used only as controlled integration fixtures.
 
 These media files are integration fixtures rather than benchmark datasets.
 They are not used to estimate model accuracy and do not replace the external
@@ -110,8 +166,7 @@ benchmark datasets used by the individual validation components.
 
 Any media distributed with the repository must have redistribution terms that
 permit inclusion in the repository. If a fixture cannot legally be
-redistributed, it must be replaced by an equivalent redistributable fixture
-before public release.
+redistributed, it must not be included in a public release.
 
 Supported Media Discovery
 -------------------------
@@ -138,7 +193,7 @@ Supported image extensions are:
 .tiff
 .webp
 
-This design allows integration fixtures to be replaced, renamed, or extended
+This design allows integration fixtures to be organized, renamed, or extended
 without changing the script source code, provided the files remain in the
 expected test-data directory and use a supported extension.
 
@@ -564,32 +619,36 @@ Single-person end-to-end integration
 Test video:
 face_blink_pose.mp4
 
+Video FPS:
+29.97002997002997
+
 Video frames:
-429
+99
 
 Gaze-estimation-disabled run:
-Processed frames: 429
-Total face samples: 429
+Processed frames: 99
+Total face samples: 99
 gaze_estimation: ABSENT
 
 Gaze-estimation-enabled run:
-Processed frames: 429
-Total face samples: 429
-gaze_estimation: PASS, 429/429
+Processed frames: 99
+Total face samples: 99
+gaze_estimation: PASS, 99/99
 
 Combined frame-result table:
-858 rows x 156 columns
+198 rows x 157 columns
 
 Module-summary table:
 14 rows x 8 columns
 
-The remaining configured modules passed in both runs. FaceQuality was available
-in all 858 exported face records across the two runs, with numerical confidence,
-brightness, sharpness, and face-area-ratio values preserved in the frame table.
+The remaining configured modules passed in both runs. FaceQuality and Emotion
+were available for all 198 exported face records across the two runs, with
+their numerical outputs preserved in the frame table.
 
-Emotion was available in all applicable face records in both runs, with
-numerical class scores, predicted labels, and confidence values preserved.
-The Emotion output remained internally consistent across the two configurations.
+MouthMotion produced 99 finite samples in each condition, including one
+initialization sample and 98 nonzero temporal updates. The maximum observed
+mouth movement was 0.17501307878437647 and the maximum observed mouth velocity
+was 5.245147216314979.
 
 Overall status:
 PASS
@@ -604,50 +663,50 @@ Native export integration
 Test video:
 face_blink_pose.mp4
 
+Video FPS:
+29.97002997002997
+
 Video frames:
-429
+99
 
 Processed frames:
-429
+99
 
 Detected faces:
-429
+99
 
 Frame records:
-429
+99
 
 Frame export shape:
-429 rows x 124 columns
+99 rows x 124 columns
 
 Window records:
-429
+99
 
 Window export shape:
-429 rows x 52 columns
+99 rows x 52 columns
 
 Existing landmark-based gaze available:
-429
+99
 
 Learned gaze estimation available:
-429
+99
 
 FaceQuality available:
-429
-
-FaceQuality numerical frame export:
-confidence, brightness, sharpness, and face_area_ratio present and finite
+99
 
 Blink available:
-429
+99
 
 Blink events:
-2
+5
 
 Mouth motion available:
-429
+99
 
 Temporal output available:
-429
+99
 
 Frame records contain the landmark-based gaze key:
 True
@@ -697,60 +756,89 @@ Video FPS:
 25.0
 
 Reported video frames:
-344
+712
 
 Processed frames:
-344
+712
 
 Total face instances:
-688
+2136
 
 Tracked person IDs:
-1, 2
+1, 2, 3
 
 Person 1 frame count:
-344
+712
 
 Person 2 frame count:
-344
+712
+
+Person 3 frame count:
+712
 
 Frames containing multiple faces:
-344
+712
 
 Frame records:
-688
+2136
 
 Window records:
-688
+2136
 
-Gaze-estimation failures:
-0
+Frame export shape:
+2136 rows x 127 columns
 
-Gaze-estimation failure CSV:
-Valid header-only CSV with columns:
-video, frame_index, timestamp, person_id, box, confidence, association_iou
+Window export shape:
+2136 rows x 52 columns
+
+Gaze-estimation unavailable records:
+24 total
+Person 1: 1
+Person 2: 23
+Person 3: 0
+
+Learned gaze-estimation availability:
+Person 1: 711/712
+Person 2: 689/712
+Person 3: 712/712
+
+FaceQuality availability:
+Person 1: 712/712
+Person 2: 712/712
+Person 3: 712/712
+
+Emotion availability:
+Person 1: 712/712
+Person 2: 712/712
+Person 3: 712/712
+
+Landmark-dependent outputs for Person 1 were available on 704/712 person-frames.
+This includes landmarks, eyes, blink, landmark-based gaze, mouth, and
+MouthMotion. The corresponding outputs were available on 712/712 person-frames
+for Persons 2 and 3.
 
 MouthMotion initialization:
 Person 1: movement=0, velocity=0 on the first sample
 Person 2: movement=0, velocity=0 on the first sample
+Person 3: movement=0, velocity=0 on the first sample
 
-Subsequent MouthMotion samples:
-343 temporal updates for Person 1
-343 temporal updates for Person 2
+MouthMotion numerical samples:
+Person 1: 704
+Person 2: 712
+Person 3: 712
+
+MouthMotion nonzero samples:
+Person 1: 699
+Person 2: 711
+Person 3: 711
 
 MouthMotion movement/velocity consistency:
 PASS at 25.0 FPS with per-person temporal state preserved independently
 
-Both tracked persons were present throughout the evaluated video. The
-configured modules were available for 344/344 person-frames for each identity
-in this fixture. Learned gaze estimation, FaceQuality, and Emotion were therefore
-available for 688/688 evaluated face instances. FaceQuality produced numerical
-confidence, brightness, sharpness, and face-area-ratio values for both tracked
-identities.
-
-Emotion produced independent per-face numerical outputs for both tracked
-identities, including predicted label, confidence, and class scores, with no
-evidence of cross-person substitution in the accepted fixture.
+The test retained three stable tracked identities across all 712 video frames.
+Per-person availability is reported directly rather than being interpreted as
+predictive accuracy. The complete multi-person integration test passed its
+association, accounting, numerical-output, and temporal-consistency criteria.
 
 Overall status:
 PASS
@@ -762,28 +850,43 @@ Test video:
 istockphoto-1370809321-640_adpp_is.mp4
 
 Resolution:
-768 x 432
+1280 x 720
 
 FPS:
-59.94005994005994
+29.97002997002997
 
 Reported video frames:
-1127
+112
 
 Processed frames:
-1127
+112
 
 Detected face records:
-1127
+112
 
 Frame records:
-1127
+112
+
+Frame export shape:
+112 rows x 124 columns
 
 Window records:
-1127
+112
+
+Window export shape:
+112 rows x 52 columns
 
 Tracked identity:
 1
+
+MouthMotion available and finite:
+112/112
+
+Non-initial MouthMotion samples:
+111/112
+
+MouthMotion movement/velocity consistency:
+PASS
 
 Frame-count consistency:
 PASS
@@ -793,13 +896,8 @@ PASS
 
 The complete configured pipeline produced the expected frame-level and
 temporal records across the entire video, including real numerical facial
-measurements and temporal outputs. FaceQuality was available for 1127/1127
-face records and its numerical confidence, brightness, sharpness, and
-face-area-ratio outputs were preserved in the frame export.
-
-Emotion was available for all applicable whole-project face records, with
-predicted label, confidence, and class-score outputs preserved throughout the
-video.
+measurements, learned gaze-estimation outputs, Emotion outputs, FaceQuality
+descriptors, and temporal summaries.
 
 Overall analysis status:
 PASS
@@ -811,36 +909,36 @@ Test video:
 istockphoto-1370809321-640_adpp_is.mp4
 
 Resolution:
-768 x 432
+1280 x 720
 
 FPS:
-59.94005994005994
+29.97002997002997
 
 Reported video frames:
-1127
+112
 
 Processed frames:
-1127
+112
 
 Frames with faces:
-1127
+112
 
 Frames without faces:
 0
 
 Frames with one face:
-1127
+112
 
 Frames with multiple faces:
 0
 
 Total face samples:
-1127
+112
 
 Unique track IDs:
 1
 
-The following modules produced successful output for 1127/1127 face samples:
+The following modules produced successful output for 112/112 face samples:
 
 - detection
 - tracking
@@ -856,6 +954,12 @@ The following modules produced successful output for 1127/1127 face samples:
 - emotion
 - regions
 - temporal
+
+Module-summary table:
+14 rows x 8 columns
+
+Final frame export:
+112 rows x 155 columns
 
 Frame count matches video:
 True
@@ -875,30 +979,27 @@ min_closed_frames = 3
 Configuration match: True
 
 Finite Eye Openness samples:
-1127/1127 available eye samples
+112/112 available eye samples
 
 Finite Mouth Openness samples:
-1127/1127 available mouth samples
+112/112 available mouth samples
 
 FaceQuality samples:
-1127/1127 face samples with numerical confidence, brightness, sharpness, and
+112/112 face samples with numerical confidence, brightness, sharpness, and
 face-area-ratio outputs
 
 Finite MouthMotion samples:
-1127/1127 face samples
+112/112 face samples
 
 Non-initial MouthMotion samples:
-1126/1127
+111/112
 
 MouthMotion movement/velocity consistency:
-PASS using the measured 59.94005994005994 FPS
-
-Temporal numerical consistency:
-PASS
+PASS using the measured 29.97002997002997 FPS
 
 Emotion output:
-Available for all applicable face samples with numerical class scores, predicted
-label, and confidence preserved consistently.
+Available for all 112 face samples with numerical class scores, predicted label,
+and confidence preserved consistently.
 
 Overall status:
 PASS
@@ -907,19 +1008,22 @@ Static-image end-to-end integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Input images:
-19
+21
 
 Passed images:
-19
+21
 
 Failed images:
 0
 
 Detected faces:
-23
+25
 
 Exported face records:
-23
+25
+
+Frame export shape:
+25 rows x 72 columns
 
 Static modules evaluated:
 
@@ -942,31 +1046,14 @@ images because they require temporal sequence input:
 - mouth_motion
 - temporal
 
-All 23 detected face records contained the expected static numerical outputs.
-FaceQuality was available for 23/23 detected faces and exported numerical
+All 25 detected face records contained the expected applicable static outputs.
+FaceQuality was available for 25/25 detected faces and exported numerical
 confidence, brightness, sharpness, and face-area-ratio values for every face.
-Emotion was also available for 23/23 detected faces with an eight-class score
+Emotion was also available for 25/25 detected faces with an eight-class score
 vector, predicted label, and confidence for every face.
 
-Static numerical checks included finite EyeOpenness, FaceQuality descriptors,
-gaze descriptors, learned gaze-estimation vectors, MouthOpenness, and normalized
-Emotion probabilities where applicable. Emotion labels, confidence values, and
-class scores were preserved as numerical outputs rather than availability flags.
-
-Temporal-only outputs were absent or explicitly neutral as required:
-
-- person_id: null
-- blink availability: false
-- blink event: false
-- blink count: 0
-- blink duration/rate: null
-- mouth-motion availability: false
-- movement: null
-- velocity: null
-- temporal availability: false
-- temporal summary: null
-
-No temporal quantity was fabricated from an independent static image.
+Temporal-only outputs were absent or explicitly neutral as required. No
+temporal quantity was fabricated from an independent static image.
 
 Overall status:
 PASS
@@ -974,19 +1061,22 @@ PASS
 Current Acceptance Summary
 --------------------------
 The complete seven-script integration suite passed on the documented fixtures.
-The accepted run confirms that the currently configured components remain
+The accepted run confirms that the currently configured components are
 operational together across runtime-configuration, single-person, native-export,
 multi-person, full-video, final whole-project, and static-image execution paths.
 
-FaceQuality is included in this accepted integrated configuration. It produced
-numerical outputs in all applicable runs: 858/858 records in the two-condition
-single-person test, 429/429 records in native export, 688/688 multi-person face
-instances, 1127/1127 whole-project video face records, 1127/1127 final
-whole-project face samples, and 23/23 static-image face records.
+FaceQuality produced numerical outputs in all applicable records: 198/198
+records in the two-condition single-person test, 99/99 records in native export,
+2136/2136 multi-person face instances, 112/112 whole-project video face records,
+112/112 final whole-project face samples, and 25/25 static-image face records.
 
-Emotion is included in the accepted integrated configuration and produced
-numerical per-face outputs in all applicable integration paths, including
-predicted labels, confidence values, and class-score vectors.
+Emotion produced numerical per-face outputs in all applicable integration paths,
+including predicted labels, confidence values, and eight-class score vectors.
+
+The multi-person test intentionally reports per-component availability at the
+person-frame level. It therefore preserves the observed 24 learned-gaze
+unavailable records and the 8 landmark-dependent unavailable records for Person
+1 rather than converting integration availability into an accuracy claim.
 
 The integration evidence supports software operation, numerical export,
 association, accounting, and internal consistency. It does not replace the
@@ -994,31 +1084,31 @@ separate scientific benchmark or controlled validation evidence for individual
 components.
 
 Independent Final Numerical Audit
--------------------------------
-The accepted final integration outputs were independently reviewed at the raw
-CSV/JSON level rather than accepted solely from console PASS messages.
+---------------------------------
+The accepted final integration outputs were reviewed at the raw CSV/JSON level
+rather than accepted solely from console PASS messages.
 
-The final audit confirmed:
+The audit confirmed:
 
 - Complete frame accounting for all evaluated videos.
 - No missing frame indices in the accepted full-video runs.
 - No duplicate frame/person rows in the audited frame exports.
-- Finite required numerical outputs; no unexpected NaN or Inf values.
+- Finite required numerical outputs with no unexpected Inf values.
 - Eye mean openness equal to the mean of the two eye-openness values within
   floating-point precision.
 - Mouth openness equal to mouth height divided by mouth width within
   floating-point precision.
 - Mouth velocity equal to mouth movement multiplied by measured FPS within
   floating-point precision.
-- Learned gaze vectors with unit norm within floating-point precision.
-- Internal consistency of categorical probability outputs, including Emotion
-  class scores, predicted labels, and confidence values.
-- Temporal windows growing according to measured FPS and respecting the
-  configured approximately five-second window.
-- JSON/CSV export consistency for the native-export and whole-project analysis
-  records.
+- Learned gaze vectors with unit norm within floating-point precision where
+  learned gaze was available.
+- Emotion class-score sums, predicted labels, and confidence values internally
+  consistent within floating-point precision.
+- Temporal window and per-person state behavior consistent with measured video
+  timing.
+- JSON/CSV export counts consistent for native-export and whole-project analysis.
 - Stable tracked identities in the accepted single-person and multi-person
-  fixtures, with no observed duplicate track assignment within a frame.
+  fixtures, with no duplicate track assignment within a frame.
 - Distinct per-person numerical outputs in the multi-person fixture.
 
 These checks confirm that the accepted integration evidence contains real
@@ -1102,8 +1192,9 @@ The results establish the following system-level properties:
 - MouthMotion exports preserve real numerical movement and velocity values,
   use measured video timing, and maintain independent temporal state per
   tracked identity.
-- Learned gaze estimation is available for both tracked identities in the
-  multi-person fixture without recorded gaze-estimation failure.
+- Learned gaze estimation is associated with all three tracked identities in the
+  multi-person fixture. Availability was 711/712, 689/712, and 712/712 for
+  Persons 1, 2, and 3 respectively, with unavailable records preserved explicitly.
 - The complete configured pipeline processes the full whole-project fixture
   with consistent frame, face, tracking, module, and export accounting.
 - Static-image analysis preserves applicable numerical facial outputs while
@@ -1132,26 +1223,35 @@ described above.
 
 Runtime / Processing Performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The dedicated final runtime benchmark processed the three accepted integration
-videos with the complete final pipeline configuration:
+The dedicated final runtime benchmark processed the three documented
+integration videos with the complete final pipeline configuration:
 
-- Total frames: 1900
-- Successful frames: 1900
+- Single-person fixture: 99 frames, 1280 x 720, 29.97002997002997 FPS
+- Multi-person fixture: 712 frames, 1920 x 1036, 25.0 FPS
+- Whole-project fixture: 112 frames, 1280 x 720, 29.97002997002997 FPS
+- Total frames: 923
+- Successful frames: 923
 - Failed frames: 0
-- Total detected faces: 2244
-- Effective processing rate: approximately 0.6742 FPS
-- Mean processing time: approximately 1483.26 ms/frame
-- Median processing time: approximately 1287.19 ms/frame
-- 95th percentile processing time: approximately 2454.94 ms/frame
+- Video execution failures: 0
+- Total detected faces: 2347
+- Processing time: 3763.9636661000095 s
+- Wall time: 3766.6400374999994 s
+- Effective processing rate: approximately 0.245220 FPS
+- Wall-clock processing rate: approximately 0.245046 FPS
+- Mean processing time: approximately 4077.97 ms/frame
+- Median processing time: approximately 3578.99 ms/frame
+- 90th percentile processing time: approximately 5673.03 ms/frame
+- 95th percentile processing time: approximately 5751.61 ms/frame
 - Input-media read-only verification: PASS
 
-Runtime performance is hardware-dependent and is reported as execution
-performance rather than predictive accuracy.
+Runtime performance is hardware- and workload-dependent and is reported as
+execution performance rather than predictive accuracy. Per-video timing must be
+interpreted with the corresponding resolution, source FPS, and number of faces.
 
 Controlled Robustness
 ~~~~~~~~~~~~~~~~~~~~~
-The separate controlled robustness package evaluates the final static pipeline
-on one accepted frontal reference image under seven deterministic conditions:
+The separate controlled robustness package evaluates the static face-analysis
+pipeline on one frontal reference image under seven deterministic conditions:
 
 - baseline
 - dim lighting
@@ -1161,10 +1261,10 @@ on one accepted frontal reference image under seven deterministic conditions:
 - reduced face scale
 - partial occlusion
 
-All seven cases remained detectable, all ten evaluated static modules remained
-available, no execution failure occurred, and no invalid numerical case was
-observed. The robustness package records condition-dependent numerical drift
-rather than assigning an arbitrary universal robustness score.
+This controlled robustness study is maintained as a separate validation package.
+Its own README and result artifacts are the authoritative source for robustness
+outcomes. Robustness results are not used to determine the PASS/FAIL status of
+the seven-script integration suite documented here.
 
 This controlled robustness study is a single-image perturbation study. It is
 not a population-level robustness benchmark and is interpreted together with

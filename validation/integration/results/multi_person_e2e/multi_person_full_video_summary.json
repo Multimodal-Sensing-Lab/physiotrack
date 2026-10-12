@@ -4,35 +4,47 @@
     {
       "video": "test_data/multi_person/multi_person2.mp4",
       "fps": 25.0,
-      "reported_frame_count": 344,
-      "processed_frames": 344,
-      "total_faces": 688,
+      "reported_frame_count": 712,
+      "processed_frames": 712,
+      "total_faces": 2136,
       "person_ids": [
         1,
-        2
+        2,
+        3
       ],
       "person_frame_counts": {
-        "2": 344,
-        "1": 344
+        "3": 712,
+        "2": 712,
+        "1": 712
       },
-      "multi_face_frames": 344,
+      "multi_face_frames": 712,
       "gaze_estimation_person_ids": [
         1,
-        2
+        2,
+        3
       ],
       "mouth_motion_person_ids": [
         1,
-        2
+        2,
+        3
       ],
       "mouth_motion_numeric_counts": {
-        "2": 344,
-        "1": 344
+        "3": 712,
+        "2": 712,
+        "1": 704
       },
       "mouth_motion_nonzero_counts": {
-        "2": 343,
-        "1": 343
+        "3": 711,
+        "2": 711,
+        "1": 699
       },
       "mouth_motion_initialization": {
+        "3": {
+          "frame_index": 0,
+          "movement": 0.0,
+          "velocity": 0.0,
+          "is_zero": true
+        },
         "2": {
           "frame_index": 0,
           "movement": 0.0,
@@ -47,6 +59,7 @@
         }
       },
       "mouth_motion_velocity_consistency": {
+        "3": true,
         "2": true,
         "1": true
       },
@@ -56,7 +69,7 @@
   "video_count": 1,
   "passed_videos": 1,
   "failed_videos": 0,
-  "total_processed_frames": 344,
-  "total_face_instances": 688,
+  "total_processed_frames": 712,
+  "total_face_instances": 2136,
   "overall_status": "PASS"
 }

@@ -35,50 +35,50 @@
     {
       "scenario": "single_person",
       "video": "test_data/single_person/face_blink_pose.mp4",
-      "input_fps": 25.0,
-      "reported_frames": 429,
-      "width": 3840,
-      "height": 2160
+      "input_fps": 29.97002997002997,
+      "reported_frames": 99,
+      "width": 1280,
+      "height": 720
     },
     {
       "scenario": "multi_person",
       "video": "test_data/multi_person/multi_person2.mp4",
       "input_fps": 25.0,
-      "reported_frames": 344,
-      "width": 2160,
-      "height": 3840
+      "reported_frames": 712,
+      "width": 1920,
+      "height": 1036
     },
     {
       "scenario": "whole_project",
       "video": "test_data/whole_project/istockphoto-1370809321-640_adpp_is.mp4",
-      "input_fps": 59.94005994005994,
-      "reported_frames": 1127,
-      "width": 768,
-      "height": 432
+      "input_fps": 29.97002997002997,
+      "reported_frames": 112,
+      "width": 1280,
+      "height": 720
     }
   ],
   "execution": {
     "videos": 3,
     "video_execution_failures": 0,
-    "frames_read": 1900,
-    "successful_frames": 1900,
+    "frames_read": 923,
+    "successful_frames": 923,
     "failed_frames": 0,
-    "total_faces": 2244,
-    "processing_seconds": 2818.1880193997786,
-    "wall_seconds": 2826.911463200013,
-    "effective_processing_fps": 0.6741920648731821,
-    "wall_fps": 0.6721116047437985,
-    "mean_ms_per_frame": 1483.2568523156729,
-    "median_ms_per_frame": 1287.1877499928814,
-    "p90_ms_per_frame": 2432.89422999369,
-    "p95_ms_per_frame": 2454.940920003719
+    "total_faces": 2347,
+    "processing_seconds": 3763.9636661000095,
+    "wall_seconds": 3766.6400374999994,
+    "effective_processing_fps": 0.2452202204588113,
+    "wall_fps": 0.24504598018679138,
+    "mean_ms_per_frame": 4077.967135536305,
+    "median_ms_per_frame": 3578.985800000737,
+    "p90_ms_per_frame": 5673.026300000856,
+    "p95_ms_per_frame": 5751.610399999663
   },
   "dataset": {
     "source": "validation/integration/test_data",
     "read_only_verified": true
   },
   "environment": {
-    "platform": "Windows-10-10.0.26200-SP0",
+    "platform": "Windows-10-10.0.26300-SP0",
     "system": "Windows",
     "release": "10",
     "machine": "AMD64",

@@ -13,6 +13,34 @@ test_data/images/emotion_angry.png,tracking,NOT_APPLICABLE,,,,Requires temporal 
 test_data/images/emotion_angry.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/emotion_angry.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/emotion_angry.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_disgust.png,detection,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,landmarks,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,quality,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,head_pose,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,eyes,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,gaze,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,gaze_estimation,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,mouth,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,emotion,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,regions,PASS,1,1,100.0,
+test_data/images/emotion_disgust.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_disgust.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_disgust.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_disgust.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_fear.png,detection,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,landmarks,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,quality,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,head_pose,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,eyes,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,gaze,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,gaze_estimation,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,mouth,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,emotion,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,regions,PASS,1,1,100.0,
+test_data/images/emotion_fear.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_fear.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_fear.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/emotion_fear.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/emotion_happy.png,detection,PASS,1,1,100.0,
 test_data/images/emotion_happy.png,landmarks,PASS,1,1,100.0,
 test_data/images/emotion_happy.png,quality,PASS,1,1,100.0,
@@ -69,34 +97,34 @@ test_data/images/emotion_surprise.png,tracking,NOT_APPLICABLE,,,,Requires tempor
 test_data/images/emotion_surprise.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/emotion_surprise.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/emotion_surprise.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_1.png,detection,PASS,1,1,100.0,
-test_data/images/eyes_1.png,landmarks,PASS,1,1,100.0,
-test_data/images/eyes_1.png,quality,PASS,1,1,100.0,
-test_data/images/eyes_1.png,head_pose,PASS,1,1,100.0,
-test_data/images/eyes_1.png,eyes,PASS,1,1,100.0,
-test_data/images/eyes_1.png,gaze,PASS,1,1,100.0,
-test_data/images/eyes_1.png,gaze_estimation,PASS,1,1,100.0,
-test_data/images/eyes_1.png,mouth,PASS,1,1,100.0,
-test_data/images/eyes_1.png,emotion,PASS,1,1,100.0,
-test_data/images/eyes_1.png,regions,PASS,1,1,100.0,
-test_data/images/eyes_1.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_1.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_1.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_1.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_2.png,detection,PASS,1,1,100.0,
-test_data/images/eyes_2.png,landmarks,PASS,1,1,100.0,
-test_data/images/eyes_2.png,quality,PASS,1,1,100.0,
-test_data/images/eyes_2.png,head_pose,PASS,1,1,100.0,
-test_data/images/eyes_2.png,eyes,PASS,1,1,100.0,
-test_data/images/eyes_2.png,gaze,PASS,1,1,100.0,
-test_data/images/eyes_2.png,gaze_estimation,PASS,1,1,100.0,
-test_data/images/eyes_2.png,mouth,PASS,1,1,100.0,
-test_data/images/eyes_2.png,emotion,PASS,1,1,100.0,
-test_data/images/eyes_2.png,regions,PASS,1,1,100.0,
-test_data/images/eyes_2.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_2.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_2.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/eyes_2.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_1.jpg,detection,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,landmarks,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,quality,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,head_pose,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,eyes,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,gaze,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,gaze_estimation,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,mouth,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,emotion,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,regions,PASS,1,1,100.0,
+test_data/images/eyes_1.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_1.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_1.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_1.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_2.jpg,detection,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,landmarks,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,quality,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,head_pose,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,eyes,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,gaze,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,gaze_estimation,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,mouth,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,emotion,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,regions,PASS,1,1,100.0,
+test_data/images/eyes_2.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_2.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_2.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/eyes_2.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/frontal_1.png,detection,PASS,1,1,100.0,
 test_data/images/frontal_1.png,landmarks,PASS,1,1,100.0,
 test_data/images/frontal_1.png,quality,PASS,1,1,100.0,
@@ -195,73 +223,73 @@ test_data/images/gaze_up.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequen
 test_data/images/gaze_up.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/gaze_up.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
 test_data/images/gaze_up.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_1.png,detection,PASS,1,1,100.0,
-test_data/images/mouth_1.png,landmarks,PASS,1,1,100.0,
-test_data/images/mouth_1.png,quality,PASS,1,1,100.0,
-test_data/images/mouth_1.png,head_pose,PASS,1,1,100.0,
-test_data/images/mouth_1.png,eyes,PASS,1,1,100.0,
-test_data/images/mouth_1.png,gaze,PASS,1,1,100.0,
-test_data/images/mouth_1.png,gaze_estimation,PASS,1,1,100.0,
-test_data/images/mouth_1.png,mouth,PASS,1,1,100.0,
-test_data/images/mouth_1.png,emotion,PASS,1,1,100.0,
-test_data/images/mouth_1.png,regions,PASS,1,1,100.0,
-test_data/images/mouth_1.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_1.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_1.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_1.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_2.png,detection,PASS,1,1,100.0,
-test_data/images/mouth_2.png,landmarks,PASS,1,1,100.0,
-test_data/images/mouth_2.png,quality,PASS,1,1,100.0,
-test_data/images/mouth_2.png,head_pose,PASS,1,1,100.0,
-test_data/images/mouth_2.png,eyes,PASS,1,1,100.0,
-test_data/images/mouth_2.png,gaze,PASS,1,1,100.0,
-test_data/images/mouth_2.png,gaze_estimation,PASS,1,1,100.0,
-test_data/images/mouth_2.png,mouth,PASS,1,1,100.0,
-test_data/images/mouth_2.png,emotion,PASS,1,1,100.0,
-test_data/images/mouth_2.png,regions,PASS,1,1,100.0,
-test_data/images/mouth_2.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_2.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_2.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/mouth_2.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_1.png,detection,PASS,3,3,100.0,
-test_data/images/multi_1.png,landmarks,PASS,3,3,100.0,
-test_data/images/multi_1.png,quality,PASS,3,3,100.0,
-test_data/images/multi_1.png,head_pose,PASS,3,3,100.0,
-test_data/images/multi_1.png,eyes,PASS,3,3,100.0,
-test_data/images/multi_1.png,gaze,PASS,3,3,100.0,
-test_data/images/multi_1.png,gaze_estimation,PASS,3,3,100.0,
-test_data/images/multi_1.png,mouth,PASS,3,3,100.0,
-test_data/images/multi_1.png,emotion,PASS,3,3,100.0,
-test_data/images/multi_1.png,regions,PASS,3,3,100.0,
-test_data/images/multi_1.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_1.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_1.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_1.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_2.png,detection,PASS,3,3,100.0,
-test_data/images/multi_2.png,landmarks,PASS,3,3,100.0,
-test_data/images/multi_2.png,quality,PASS,3,3,100.0,
-test_data/images/multi_2.png,head_pose,PASS,3,3,100.0,
-test_data/images/multi_2.png,eyes,PASS,3,3,100.0,
-test_data/images/multi_2.png,gaze,PASS,3,3,100.0,
-test_data/images/multi_2.png,gaze_estimation,PASS,3,3,100.0,
-test_data/images/multi_2.png,mouth,PASS,3,3,100.0,
-test_data/images/multi_2.png,emotion,PASS,3,3,100.0,
-test_data/images/multi_2.png,regions,PASS,3,3,100.0,
-test_data/images/multi_2.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_2.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_2.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/multi_2.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/pose_1.png,detection,PASS,1,1,100.0,
-test_data/images/pose_1.png,landmarks,PASS,1,1,100.0,
-test_data/images/pose_1.png,quality,PASS,1,1,100.0,
-test_data/images/pose_1.png,head_pose,PASS,1,1,100.0,
-test_data/images/pose_1.png,eyes,PASS,1,1,100.0,
-test_data/images/pose_1.png,gaze,PASS,1,1,100.0,
-test_data/images/pose_1.png,gaze_estimation,PASS,1,1,100.0,
-test_data/images/pose_1.png,mouth,PASS,1,1,100.0,
-test_data/images/pose_1.png,emotion,PASS,1,1,100.0,
-test_data/images/pose_1.png,regions,PASS,1,1,100.0,
-test_data/images/pose_1.png,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/pose_1.png,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/pose_1.png,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
-test_data/images/pose_1.png,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_1.jpg,detection,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,landmarks,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,quality,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,head_pose,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,eyes,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,gaze,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,gaze_estimation,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,mouth,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,emotion,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,regions,PASS,1,1,100.0,
+test_data/images/mouth_1.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_1.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_1.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_1.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_2.jpg,detection,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,landmarks,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,quality,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,head_pose,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,eyes,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,gaze,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,gaze_estimation,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,mouth,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,emotion,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,regions,PASS,1,1,100.0,
+test_data/images/mouth_2.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_2.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_2.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/mouth_2.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_1.jpg,detection,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,landmarks,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,quality,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,head_pose,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,eyes,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,gaze,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,gaze_estimation,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,mouth,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,emotion,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,regions,PASS,4,4,100.0,
+test_data/images/multi_1.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_1.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_1.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_1.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_2.jpg,detection,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,landmarks,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,quality,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,head_pose,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,eyes,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,gaze,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,gaze_estimation,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,mouth,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,emotion,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,regions,PASS,2,2,100.0,
+test_data/images/multi_2.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_2.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_2.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/multi_2.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/pose_1.jpg,detection,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,landmarks,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,quality,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,head_pose,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,eyes,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,gaze,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,gaze_estimation,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,mouth,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,emotion,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,regions,PASS,1,1,100.0,
+test_data/images/pose_1.jpg,tracking,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/pose_1.jpg,blink,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/pose_1.jpg,mouth_motion,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
+test_data/images/pose_1.jpg,temporal,NOT_APPLICABLE,,,,Requires temporal sequence input and is not evaluated from a single image.
