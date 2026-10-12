@@ -3,9 +3,9 @@
   "evidence_type": "controlled_robustness_test_input_generation",
   "source": {
     "source_file": "validation/integration/test_data/images/frontal_1.png",
-    "width": 843,
-    "height": 1004,
-    "source_sha256": "ee1450aca7b11848fa796f2cc2c17f0f18227d61be29887ff074dda08c0d8f3e"
+    "width": 1708,
+    "height": 1380,
+    "source_sha256": "61be53d91dfd5c88587d129322534df3508d48b9b8fa22983cc00094965b0ecd"
   },
   "cases": 7,
   "case_order": [
@@ -41,21 +41,21 @@
     },
     "small_face": {
       "background_bgr": [
-        78,
-        76,
-        72
+        151,
+        147,
+        145
       ],
       "paste_box": [
-        274,
-        326,
-        569,
-        677
+        555,
+        448,
+        1153,
+        931
       ],
       "scale": 0.35,
       "type": "scene_downscale_centered"
     },
     "partial_occlusion": {
-      "fill_gray": 69,
+      "fill_gray": 147,
       "normalized_box": [
         0.31,
         0.53,
@@ -63,10 +63,10 @@
         0.7
       ],
       "pixel_box": [
-        261,
-        532,
-        582,
-        703
+        529,
+        731,
+        1179,
+        966
       ],
       "type": "fixed_normalized_lower_face_occlusion"
     }

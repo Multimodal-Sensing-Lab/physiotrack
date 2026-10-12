@@ -1,9 +1,9 @@
 | Condition            | Status   |   Available modules |   Detector confidence |   Sharpness |   Face area ratio |   |Δ Head yaw| |   |Δ Gaze yaw| |   |Δ Mouth openness| | Emotion   |
 |:---------------------|:---------|--------------------:|----------------------:|------------:|------------------:|---------------:|---------------:|---------------------:|:----------|
-| baseline             | DETECTED |                  10 |              0.909525 |    55.3619  |          0.290097 |       0        |       0        |             0        | Anger     |
-| dim lighting         | DETECTED |                  10 |              0.91093  |     8.29765 |          0.291446 |       4.49954  |       0.066491 |             0.0002   | Anger     |
-| overexposed lighting | DETECTED |                  10 |              0.911792 |    89.7561  |          0.290436 |       0.025474 |       4.49001  |             0.000133 | Anger     |
-| gaussian blur        | DETECTED |                  10 |              0.901819 |     1.59706 |          0.286328 |       1.88299  |       1.872    |             0.005652 | Anger     |
-| motion blur          | DETECTED |                  10 |              0.904775 |     3.82887 |          0.280869 |      10.0117   |       4.17743  |             0.015579 | Anger     |
-| small face           | DETECTED |                  10 |              0.903526 |   102.38    |          0.036265 |       1.66137  |       1.10882  |             0.000947 | Anger     |
-| partial occlusion    | DETECTED |                  10 |              0.89891  |    67.148   |          0.293998 |       2.06119  |       1.58194  |             0.005603 | Anger     |
+| baseline             | DETECTED |                  10 |              0.904042 |     2.34029 |          0.099863 |       0        |       0        |             0        | Sadness   |
+| dim lighting         | DETECTED |                  10 |              0.910053 |     1.26045 |          0.101041 |       0.412568 |       2.68866  |             0.036014 | Sadness   |
+| overexposed lighting | DETECTED |                  10 |              0.889763 |     4.17598 |          0.098874 |       2.88414  |       0.585865 |             0.027037 | Sadness   |
+| gaussian blur        | DETECTED |                  10 |              0.892297 |     1.70681 |          0.098946 |       2.33154  |       1.49271  |             0.010864 | Sadness   |
+| motion blur          | DETECTED |                  10 |              0.886962 |     1.82229 |          0.097913 |       1.67496  |       2.03117  |             0.0131   | Sadness   |
+| small face           | DETECTED |                  10 |              0.895468 |    23.9796  |          0.012443 |       0.095671 |      10.3281   |             0.006355 | Sadness   |
+| partial occlusion    | DETECTED |                  10 |              0.869512 |    12.7161  |          0.100722 |       2.9122   |       1.53846  |             0.056591 | Sadness   |

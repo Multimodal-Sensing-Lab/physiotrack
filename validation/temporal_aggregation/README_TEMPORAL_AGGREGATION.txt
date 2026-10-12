@@ -359,23 +359,27 @@ validation/integration/test_data/multi_person/
 The accepted run used:
 
 validation/integration/test_data/single_person/face_blink_pose.mp4
+    Source dataset: RAVDESS
 
 validation/integration/test_data/multi_person/multi_person2.mp4
+    Source dataset: MPEblink2
 
 These are software-validation fixtures rather than external accuracy
-benchmarks.
+benchmarks. Their role in this package is to verify the real temporal execution
+path and independent per-person aggregation behavior, not to establish
+predictive accuracy for upstream components.
 
 
 Real Component Execution Results
 --------------------------------
 Single-person fixture:
 
-FPS: 25.0
-Reported frames: 429
-Processed frames: 429
-Frames with faces: 429
-Face records: 429
-Temporal window frames: 125
+FPS: 29.97002997002997
+Reported frames: 99
+Processed frames: 99
+Frames with faces: 99
+Face records: 99
+Temporal window frames: 150
 Duplicate person-ID frames: 0
 Failed frame rows: 0
 Failed checks: 0
@@ -384,10 +388,10 @@ Status: PASS
 Multi-person fixture:
 
 FPS: 25.0
-Reported frames: 344
-Processed frames: 344
-Frames with faces: 344
-Face records: 688
+Reported frames: 712
+Processed frames: 712
+Frames with faces: 712
+Face records: 2136
 Temporal window frames: 125
 Duplicate person-ID frames: 0
 Failed frame rows: 0
@@ -399,14 +403,14 @@ Aggregate real-component results:
 Videos discovered: 2
 Videos passed: 2
 Videos failed: 0
-Processed frames: 773
-Face records: 1117
-Temporal-available records: 1117
+Processed frames: 811
+Face records: 2235
+Temporal-available records: 2235
 Failed frame rows: 0
-Total independent checks: 55850
-Passed checks: 55850
+Total independent checks: 111750
+Passed checks: 111750
 Failed checks: 0
-Maximum numerical absolute error: 2.131628207280301e-14
+Maximum numerical absolute error: 3.197442310920451e-14
 Overall status: PASS
 
 The observed maximum numerical difference is at floating-point precision and
@@ -453,11 +457,11 @@ It additionally checks:
 - blink events
 - dominant emotion
 
-The accepted run produced 1117 real temporal records and 55850 successful
+The accepted run produced 2235 real temporal records and 111750 successful
 checks with no failed row, no failed check, and no duplicate tracked-person ID
 within a frame.
 
-For the multi-person fixture, the two tracked identities were evaluated
+For the multi-person fixture, the three tracked identities were evaluated
 independently throughout the run, providing direct evidence that temporal state
 does not leak between tracked persons.
 
@@ -592,9 +596,9 @@ FaceTemporalAggregator:
 The controlled evaluator produced exact agreement for all 106 numerical
 comparisons.
 
-The real FaceAnalysis execution produced 1117 temporal records and 55850
+The real FaceAnalysis execution produced 2235 temporal records and 111750
 successful checks. The largest observed numerical difference was approximately
-2.13e-14, which is consistent with ordinary floating-point arithmetic.
+3.20e-14, which is consistent with ordinary floating-point arithmetic.
 
 These findings support the conclusion that FaceTemporalAggregator is
 mathematically and operationally correct for the validated implementation
@@ -644,13 +648,13 @@ maximum numerical absolute error = 0
 
 Real PhysioTrack execution:
 2 / 2 videos passed
-773 processed frames
-1117 real face/temporal records
-55850 / 55850 checks passed
+811 processed frames
+2235 real face/temporal records
+111750 / 111750 checks passed
 0 failed frame rows
 0 failed checks
 maximum numerical absolute error =
-2.131628207280301e-14
+3.197442310920451e-14
 
 Overall validation status:
 PASS

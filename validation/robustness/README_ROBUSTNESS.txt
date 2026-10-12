@@ -62,13 +62,24 @@ reference image:
 
 validation/integration/test_data/images/frontal_1.png
 
+Source dataset:
+CAER-S (Context-Aware Emotion Recognition static-image dataset)
+
+Dataset reference:
+Lee, J., Kim, S., Kim, S., Park, J., and Sohn, K. (2019).
+Context-Aware Emotion Recognition Networks.
+Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV).
+
+Official dataset page:
+https://caer-dataset.github.io/
+
 The source image resolution is:
 
-843 x 1004 pixels
+1708 x 1380 pixels
 
 The source SHA256 recorded by the generator is:
 
-ee1450aca7b11848fa796f2cc2c17f0f18227d61be29887ff074dda08c0d8f3e
+61be53d91dfd5c88587d129322534df3508d48b9b8fa22983cc00094965b0ecd
 
 The source image is treated as read-only.
 
@@ -240,25 +251,25 @@ remained available.
 The accepted detector confidences are:
 
 baseline:
-0.909525
+0.904042
 
 dim lighting:
-0.910930
+0.910053
 
 overexposed lighting:
-0.911792
+0.889763
 
 gaussian blur:
-0.901819
+0.892297
 
 motion blur:
-0.904775
+0.886962
 
 small face:
-0.903526
+0.895468
 
 partial occlusion:
-0.898910
+0.869512
 
 The lowest detector confidence occurred under partial occlusion, although face
 detection still remained available.
@@ -273,42 +284,41 @@ Face Quality Sharpness
 The accepted sharpness values are:
 
 baseline:
-55.3619
+2.340294
 
 dim lighting:
-8.29765
+1.260449
 
 overexposed lighting:
-89.7561
+4.175979
 
 gaussian blur:
-1.59706
+1.706811
 
 motion blur:
-3.82887
+1.822290
 
 small face:
-102.38
+23.979593
 
 partial occlusion:
-67.148
+12.716056
 
-The blur perturbations produce the strongest sharpness degradation, as expected.
-
-The small-face case yields a higher sharpness value because the image content
-was rescaled and embedded into a new canvas. This illustrates that sharpness is
-not a universal robustness score and should be interpreted together with face
-scale and the underlying transformation.
+The dim-lighting and blur conditions reduce the sharpness output relative to
+the baseline. The small-face and partial-occlusion cases produce higher numeric
+sharpness values because these transformations alter the local image structure
+and effective face crop. Sharpness is therefore interpreted as a descriptor
+response rather than a universal robustness score.
 
 Face Area Ratio
 ---------------
 The baseline face-area ratio is:
 
-0.290097
+0.099863
 
 The small-face case reduces the face-area ratio to:
 
-0.036265
+0.012443
 
 This confirms that the controlled small-face perturbation materially changes
 face scale while preserving successful detection and downstream component
@@ -321,28 +331,36 @@ The robustness tables record absolute drift relative to the baseline.
 Examples of observed behavior include:
 
 dim lighting
-    Absolute head-yaw change: approximately 4.50 degrees
-    Absolute learned-gaze yaw change: approximately 0.07 degrees
+    Absolute head-yaw change: approximately 0.41 degrees
+    Absolute learned-gaze yaw change: approximately 2.69 degrees
 
 overexposed lighting
-    Absolute head-yaw change: approximately 0.03 degrees
-    Absolute learned-gaze yaw change: approximately 4.49 degrees
+    Absolute head-yaw change: approximately 2.88 degrees
+    Absolute learned-gaze yaw change: approximately 0.59 degrees
 
 gaussian blur
-    Absolute head-yaw change: approximately 1.88 degrees
-    Absolute learned-gaze yaw change: approximately 1.87 degrees
+    Absolute head-yaw change: approximately 2.33 degrees
+    Absolute learned-gaze yaw change: approximately 1.49 degrees
 
 motion blur
-    Absolute head-yaw change: approximately 10.01 degrees
-    Absolute learned-gaze yaw change: approximately 4.18 degrees
+    Absolute head-yaw change: approximately 1.67 degrees
+    Absolute learned-gaze yaw change: approximately 2.03 degrees
 
 small face
-    Absolute head-yaw change: approximately 1.66 degrees
-    Absolute learned-gaze yaw change: approximately 1.11 degrees
+    Absolute head-yaw change: approximately 0.10 degrees
+    Absolute learned-gaze yaw change: approximately 10.33 degrees
 
 partial occlusion
-    Absolute head-yaw change: approximately 2.06 degrees
-    Absolute learned-gaze yaw change: approximately 1.58 degrees
+    Absolute head-yaw change: approximately 2.91 degrees
+    Absolute learned-gaze yaw change: approximately 1.54 degrees
+
+Additional largest observed baseline-relative changes were:
+
+- learned-gaze pitch: 14.07 degrees under partial occlusion
+- mouth openness: 0.056591 under partial occlusion
+- eye mean openness: 0.055303 under motion blur
+- Emotion confidence: 0.204865 under Gaussian blur
+- regions skin fraction: 0.418891 under Gaussian blur
 
 These differences are preserved as descriptive robustness evidence.
 
@@ -350,7 +368,7 @@ Emotion Behavior
 ----------------
 The predicted emotion remained:
 
-Anger
+Sadness
 
 for all seven controlled cases.
 
@@ -593,15 +611,15 @@ Face detection succeeded in every case, all ten evaluated static components
 remained available, no execution failures occurred, and no invalid numerical
 outputs were produced.
 
-The result nevertheless demonstrates measurable condition-dependent
-degradation.
+The result nevertheless demonstrates measurable condition-dependent changes.
 
-Blur produces severe reductions in the face-quality sharpness output.
-Motion blur produces the largest observed head-pose yaw drift among the tested
-conditions. Overexposure produces a notable learned-gaze yaw drift. Reduced
-face scale strongly reduces face-area ratio while retaining successful
-detection and downstream availability. Partial occlusion slightly reduces
-detector confidence but does not make the pipeline unavailable.
+Dim lighting, Gaussian blur, and motion blur reduced the FaceQuality sharpness
+output relative to the baseline. Reduced face scale strongly reduced the
+face-area ratio while retaining successful detection and downstream
+availability. The small-face condition produced the largest learned-gaze yaw
+change, while partial occlusion produced the largest head-yaw change and the
+largest learned-gaze pitch and mouth-openness changes. Partial occlusion also
+produced the lowest detector confidence, although detection remained successful.
 
 The scientifically appropriate conclusion is therefore not that the system is
 invariant to these perturbations.
@@ -610,8 +628,8 @@ The supported conclusion is:
 
 the tested PhysioTrack static face-analysis pipeline preserves operational
 availability under the defined controlled perturbations, while several
-component outputs exhibit measurable and condition-specific numerical
-degradation relative to the baseline.
+component outputs exhibit measurable and condition-specific numerical changes
+relative to the baseline.
 
 Final Files to Preserve
 -----------------------
