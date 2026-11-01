@@ -1,0 +1,5608 @@
+{
+  "test_type": "image_end_to_end_integration",
+  "images": [
+    {
+      "image": "test_data/images/emotion_angry.jpg",
+      "resolution": {
+        "width": 2333,
+        "height": 3500
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_disgust.jpg",
+      "resolution": {
+        "width": 3840,
+        "height": 5760
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_fear.jpg",
+      "resolution": {
+        "width": 7220,
+        "height": 4815
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_happy.jpg",
+      "resolution": {
+        "width": 4000,
+        "height": 6000
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_neutral.jpg",
+      "resolution": {
+        "width": 3159,
+        "height": 4690
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_sad.jpg",
+      "resolution": {
+        "width": 6430,
+        "height": 4287
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/emotion_surprise.jpg",
+      "resolution": {
+        "width": 2333,
+        "height": 3500
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/eyes_1.jpg",
+      "resolution": {
+        "width": 2000,
+        "height": 2500
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/eyes_2.jpg",
+      "resolution": {
+        "width": 7680,
+        "height": 5120
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/frontal_1.jpg",
+      "resolution": {
+        "width": 4160,
+        "height": 6240
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/frontal_2.jpg",
+      "resolution": {
+        "width": 4781,
+        "height": 3388
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_center.png",
+      "resolution": {
+        "width": 1205,
+        "height": 1154
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_down.png",
+      "resolution": {
+        "width": 1099,
+        "height": 1158
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_left.png",
+      "resolution": {
+        "width": 624,
+        "height": 471
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_right.png",
+      "resolution": {
+        "width": 1074,
+        "height": 969
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/gaze_up.png",
+      "resolution": {
+        "width": 1162,
+        "height": 1212
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/mouth_1.jpg",
+      "resolution": {
+        "width": 7680,
+        "height": 5120
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/mouth_2.jpg",
+      "resolution": {
+        "width": 3478,
+        "height": 5217
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/multi_1.jpg",
+      "resolution": {
+        "width": 3983,
+        "height": 4979
+      },
+      "detected_faces": 4,
+      "frame_records": 4,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 4,
+          "total_face_samples": 4,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 4,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 4,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/multi_2.jpg",
+      "resolution": {
+        "width": 6000,
+        "height": 4000
+      },
+      "detected_faces": 2,
+      "frame_records": 2,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 2,
+          "total_face_samples": 2,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 2,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 2,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    },
+    {
+      "image": "test_data/images/pose_1.jpg",
+      "resolution": {
+        "width": 3648,
+        "height": 5472
+      },
+      "detected_faces": 1,
+      "frame_records": 1,
+      "modules": {
+        "detection": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "landmarks": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "quality": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "head_pose": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "eyes": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "gaze_estimation": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "mouth": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "emotion": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "regions": {
+          "status": "PASS",
+          "successful_face_samples": 1,
+          "total_face_samples": 1,
+          "coverage_percent": 100.0
+        },
+        "tracking": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "blink": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "mouth_motion": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        },
+        "temporal": {
+          "status": "NOT_APPLICABLE",
+          "reason": "Requires temporal sequence input and is not evaluated from a single image."
+        }
+      },
+      "eye_openness": {
+        "finite_samples": 1,
+        "matches_available_eye_samples": true
+      },
+      "mouth_openness": {
+        "finite_samples": 1,
+        "matches_available_mouth_samples": true
+      },
+      "temporal_outputs_absent": true,
+      "overall_status": "PASS"
+    }
+  ],
+  "records": [
+    {
+      "image": "test_data/images/emotion_angry.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        937.3055419921875,
+        1115.04150390625,
+        1721.39599609375,
+        2250.58984375
+      ],
+      "confidence": 0.9028754830360413,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 11.251680374145508,
+        "yaw": 1.438226342201233,
+        "roll": 2.450248956680298
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9028754830360413,
+          "brightness": 0.4932951726946285,
+          "sharpness": 288.9371253309732,
+          "face_area_ratio": 0.1089755679382769
+        },
+        "eyes": {
+          "left_openness": 0.24431341141481738,
+          "right_openness": 0.23375150664277383,
+          "mean_openness": 0.2390324590287956,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.44226290464827267,
+          "right_iris_y": -0.05302962988475423,
+          "left_iris_x": 0.5748053165299564,
+          "left_iris_y": -0.05301454017410794,
+          "mean_iris_x": 0.5085341105891146,
+          "mean_iris_y": -0.053022085029431086
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.3857420515211484,
+          "mouth_width": 0.12193976289133404,
+          "mouth_height": 0.047037294299705594
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Anger",
+          "confidence": 0.9729604125022888,
+          "scores": {
+            "Anger": 0.9729604125022888,
+            "Contempt": 0.00011433658801252022,
+            "Disgust": 0.01141731534153223,
+            "Fear": 0.011537360027432442,
+            "Happiness": 0.0006470637745223939,
+            "Neutral": 0.00030680018244311213,
+            "Sadness": 0.002883345354348421,
+            "Surprise": 0.00013336002302821726
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 21163,
+            "skin": 606500,
+            "l_brow": 9181,
+            "r_brow": 7807,
+            "l_eye": 5154,
+            "r_eye": 3467,
+            "nose": 35151,
+            "mouth": 23282,
+            "l_lip": 17667,
+            "u_lip": 8183,
+            "hair": 69483
+          },
+          "skin_pixel_count": 606500,
+          "skin_fraction": 0.6815832059696125,
+          "association_iou": 0.9985503859337396
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.7762150285287547,
+            -0.5273773025645367,
+            -0.3454901014875211
+          ],
+          "pitch": -31.82842040125264,
+          "yaw": -66.00635127193787,
+          "association_iou": 0.8335525178706537
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_disgust.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1425.79638671875,
+        1686.1300048828125,
+        2429.00927734375,
+        3019.0166015625
+      ],
+      "confidence": 0.9111024737358093,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 14.87915325164795,
+        "yaw": -0.6972752213478088,
+        "roll": 1.318366289138794
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9111024737358093,
+          "brightness": 0.4228477789707563,
+          "sharpness": 84.13884240783109,
+          "face_area_ratio": 0.06050763165509259
+        },
+        "eyes": {
+          "left_openness": 0.278923553664883,
+          "right_openness": 0.2639252759328086,
+          "mean_openness": 0.2714244147988458,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.461409857412272,
+          "right_iris_y": -0.07092744143003817,
+          "left_iris_x": 0.5685325085527809,
+          "left_iris_y": -0.06231757649443095,
+          "mean_iris_x": 0.5149711829825264,
+          "mean_iris_y": -0.06662250896223455
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.005024117329188828,
+          "mouth_width": 0.10452623139739187,
+          "mouth_height": 0.0005251520505184378
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Disgust",
+          "confidence": 0.6222390532493591,
+          "scores": {
+            "Anger": 0.34250491857528687,
+            "Contempt": 0.015420233830809593,
+            "Disgust": 0.6222390532493591,
+            "Fear": 0.002713915891945362,
+            "Happiness": 0.0027875027153640985,
+            "Neutral": 0.003238498931750655,
+            "Sadness": 0.010955517180263996,
+            "Surprise": 0.0001403518981533125
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 70228,
+            "skin": 934976,
+            "l_brow": 15707,
+            "r_brow": 14734,
+            "l_eye": 8623,
+            "r_eye": 1967,
+            "nose": 58488,
+            "l_lip": 19543,
+            "u_lip": 17788,
+            "hair": 196278
+          },
+          "skin_pixel_count": 934976,
+          "skin_fraction": 0.6986129002370114,
+          "association_iou": 0.9990876712334773
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.5827848042085124,
+            -0.6192564346516496,
+            -0.5261970544636042
+          ],
+          "pitch": -38.261855702325974,
+          "yaw": -47.92108443718937,
+          "association_iou": 0.8545445294634438
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_fear.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        2479.475341796875,
+        69.67121887207031,
+        4865.619140625,
+        3748.681884765625
+      ],
+      "confidence": 0.9083771705627441,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 2.8153076171875,
+        "yaw": -1.5565258264541626,
+        "roll": 4.772241592407227
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9083771705627441,
+          "brightness": 0.46712831943235233,
+          "sharpness": 21.009901139297302,
+          "face_area_ratio": 0.25250311382654045
+        },
+        "eyes": {
+          "left_openness": 0.40609449510894036,
+          "right_openness": 0.3833462262883014,
+          "mean_openness": 0.3947203606986209,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.440449826933595,
+          "right_iris_y": -0.03044248106771865,
+          "left_iris_x": 0.5156385822219955,
+          "left_iris_y": -0.023187208660013444,
+          "mean_iris_x": 0.4780442045777953,
+          "mean_iris_y": -0.026814844863866046
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.597721463426894,
+          "mouth_width": 0.13442266486685497,
+          "mouth_height": 0.08034731196195949
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Fear",
+          "confidence": 0.5598492622375488,
+          "scores": {
+            "Anger": 0.11380049586296082,
+            "Contempt": 0.002641266444697976,
+            "Disgust": 0.003767474787309766,
+            "Fear": 0.5598492622375488,
+            "Happiness": 0.039820801466703415,
+            "Neutral": 0.0026393868029117584,
+            "Sadness": 0.0037270658649504185,
+            "Surprise": 0.2737542390823364
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 173523,
+            "skin": 5539618,
+            "r_ear": 21597,
+            "l_brow": 24573,
+            "r_brow": 94125,
+            "l_eye": 143586,
+            "r_eye": 5570,
+            "nose": 331780,
+            "mouth": 375055,
+            "l_lip": 164429,
+            "u_lip": 111795,
+            "hair": 1783303
+          },
+          "skin_pixel_count": 5539618,
+          "skin_fraction": 0.6310729869149271,
+          "association_iou": 0.9991739386490602
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.9490092268777054,
+            -0.2661173283299027,
+            -0.16900607936856835
+          ],
+          "pitch": -15.433355197717127,
+          "yaw": -79.90223601484703,
+          "association_iou": 0.8741383334421268
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_happy.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1172.9656982421875,
+        1604.76953125,
+        2777.338134765625,
+        3700.40283203125
+      ],
+      "confidence": 0.9107388854026794,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 4.334993839263916,
+        "yaw": 2.204148292541504,
+        "roll": -7.461814880371094
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9107388854026794,
+          "brightness": 0.6408039549081624,
+          "sharpness": 51.61694215445288,
+          "face_area_ratio": 0.14017
+        },
+        "eyes": {
+          "left_openness": 0.21426667092932783,
+          "right_openness": 0.17724268557879794,
+          "mean_openness": 0.1957546782540629,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.41046372721872393,
+          "right_iris_y": -0.06736009748091526,
+          "left_iris_x": 0.6128449757876157,
+          "left_iris_y": -0.05916055058601747,
+          "mean_iris_x": 0.5116543515031697,
+          "mean_iris_y": -0.06326032403346636
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.12416101767183664,
+          "mouth_width": 0.20924330401334065,
+          "mouth_height": 0.025979861567313876
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9997599720954895,
+          "scores": {
+            "Anger": 5.861345542257368e-08,
+            "Contempt": 7.993193662514386e-08,
+            "Disgust": 0.00015812652418389916,
+            "Fear": 8.77706085589125e-09,
+            "Happiness": 0.9997599720954895,
+            "Neutral": 6.352892656380504e-10,
+            "Sadness": 8.181003795471042e-05,
+            "Surprise": 2.094354412118804e-10
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 34736,
+            "skin": 2529982,
+            "cloth": 36,
+            "r_ear": 12568,
+            "l_brow": 40,
+            "r_brow": 5746,
+            "l_eye": 7957,
+            "r_eye": 3474,
+            "nose": 124132,
+            "mouth": 73982,
+            "l_lip": 52442,
+            "u_lip": 36457,
+            "hair": 272416
+          },
+          "skin_pixel_count": 2529982,
+          "skin_fraction": 0.7520576205084303,
+          "association_iou": 0.998629234784533
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.631383025183868,
+            -0.6263407119120973,
+            -0.45722290855895886
+          ],
+          "pitch": -38.780659939741625,
+          "yaw": -54.089413086090225,
+          "association_iou": 0.8676879087839661
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_neutral.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        703.218994140625,
+        817.6478271484375,
+        2778.13623046875,
+        3752.6904296875
+      ],
+      "confidence": 0.9029037356376648,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 7.10201358795166,
+        "yaw": -3.588552236557007,
+        "roll": -2.0682260990142822
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9029037356376648,
+          "brightness": 0.5940105804518807,
+          "sharpness": 39.11117020169197,
+          "face_area_ratio": 0.41105859928413824
+        },
+        "eyes": {
+          "left_openness": 0.2827328846247597,
+          "right_openness": 0.2944881981328843,
+          "mean_openness": 0.288610541378822,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4532956515663659,
+          "right_iris_y": -0.09506015483057706,
+          "left_iris_x": 0.5725816859294068,
+          "left_iris_y": -0.08327133381915372,
+          "mean_iris_x": 0.5129386687478864,
+          "mean_iris_y": -0.08916574432486539
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.00735749541572608,
+          "mouth_width": 0.23926861145483413,
+          "mouth_height": 0.0017604177119060868
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.80558180809021,
+          "scores": {
+            "Anger": 0.051657531410455704,
+            "Contempt": 0.036894284188747406,
+            "Disgust": 0.006866598501801491,
+            "Fear": 0.001128984848037362,
+            "Happiness": 0.031045733019709587,
+            "Neutral": 0.80558180809021,
+            "Sadness": 0.06608996540307999,
+            "Surprise": 0.0007351617678068578
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 121023,
+            "skin": 3986498,
+            "l_brow": 79014,
+            "r_brow": 52609,
+            "l_eye": 37225,
+            "r_eye": 18118,
+            "nose": 232054,
+            "mouth": 10595,
+            "l_lip": 98534,
+            "u_lip": 64486,
+            "hair": 1389784
+          },
+          "skin_pixel_count": 3986498,
+          "skin_fraction": 0.6545839371113072,
+          "association_iou": 0.9993730783575934
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.8743374411531051,
+            -0.446530558089896,
+            -0.19011706838094944
+          ],
+          "pitch": -26.521305083028125,
+          "yaw": -77.73249111835607,
+          "association_iou": 0.8287554871485883
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_sad.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        2035.4898681640625,
+        346.18939208984375,
+        3776.804443359375,
+        2817.251220703125
+      ],
+      "confidence": 0.8894338011741638,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 6.376925945281982,
+        "yaw": 31.554649353027344,
+        "roll": 6.967977046966553
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8894338011741638,
+          "brightness": 0.49482807996940387,
+          "sharpness": 1040.5568906021701,
+          "face_area_ratio": 0.1560655546208092
+        },
+        "eyes": {
+          "left_openness": 0.12542645901408056,
+          "right_openness": 0.04037529538048391,
+          "mean_openness": 0.08290087719728223,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.6255227665053156,
+          "right_iris_y": 0.09992194638639636,
+          "left_iris_x": 0.5474127379486035,
+          "left_iris_y": 0.12198414294524143,
+          "mean_iris_x": 0.5864677522269595,
+          "mean_iris_y": 0.1109530446658189
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.0132075288721106,
+          "mouth_width": 0.06963004526308929,
+          "mouth_height": 0.0009196408331786197
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Sadness",
+          "confidence": 0.8925410509109497,
+          "scores": {
+            "Anger": 0.004614837933331728,
+            "Contempt": 0.003972241654992104,
+            "Disgust": 0.005697803106158972,
+            "Fear": 0.006912856362760067,
+            "Happiness": 0.006097253877669573,
+            "Neutral": 0.07544825971126556,
+            "Sadness": 0.8925410509109497,
+            "Surprise": 0.004715700633823872
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "l_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 188141,
+            "skin": 2735764,
+            "cloth": 64449,
+            "l_ear": 14327,
+            "l_brow": 21059,
+            "r_brow": 2127,
+            "l_eye": 280,
+            "nose": 143463,
+            "l_lip": 36193,
+            "u_lip": 35311,
+            "hair": 1009274
+          },
+          "skin_pixel_count": 2735764,
+          "skin_fraction": 0.6359267793596994,
+          "association_iou": 0.9990788143981296
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.4742752181334121,
+            -0.15825082182014322,
+            -0.8660367745412163
+          ],
+          "pitch": -9.105382226880144,
+          "yaw": -28.706816971508392,
+          "association_iou": 0.8105883364958261
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/emotion_surprise.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        789.0111083984375,
+        794.024169921875,
+        1576.965087890625,
+        2028.24072265625
+      ],
+      "confidence": 0.9194579124450684,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 7.708593845367432,
+        "yaw": 2.2154312133789062,
+        "roll": 5.620797634124756
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9194579124450684,
+          "brightness": 0.5187641646647105,
+          "sharpness": 389.2639525064909,
+          "face_area_ratio": 0.11893429673626844
+        },
+        "eyes": {
+          "left_openness": 0.4228680861431795,
+          "right_openness": 0.39632814554817475,
+          "mean_openness": 0.4095981158456771,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.47690698130164383,
+          "right_iris_y": -0.07049476799611516,
+          "left_iris_x": 0.5195251981731472,
+          "left_iris_y": -0.07534827778664167,
+          "mean_iris_x": 0.4982160897373955,
+          "mean_iris_y": -0.07292152289137842
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.43579667161396063,
+          "mouth_width": 0.10576435081851336,
+          "mouth_height": 0.04609175206211939
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Surprise",
+          "confidence": 0.6321065425872803,
+          "scores": {
+            "Anger": 0.019360750913619995,
+            "Contempt": 0.001611741608940065,
+            "Disgust": 0.008123420178890228,
+            "Fear": 0.27382761240005493,
+            "Happiness": 0.00628184387460351,
+            "Neutral": 0.050039567053318024,
+            "Sadness": 0.008648477494716644,
+            "Surprise": 0.6321065425872803
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 27975,
+            "skin": 672271,
+            "l_ear": 633,
+            "l_brow": 7383,
+            "r_brow": 5728,
+            "l_eye": 6724,
+            "r_eye": 6958,
+            "nose": 36882,
+            "mouth": 17287,
+            "l_lip": 15717,
+            "u_lip": 10970,
+            "hair": 79170
+          },
+          "skin_pixel_count": 672271,
+          "skin_fraction": 0.6922364846914714,
+          "association_iou": 0.9985467900522629
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.4187482619934085,
+            -0.7167915769630645,
+            -0.557547960513087
+          ],
+          "pitch": -45.79021844690906,
+          "yaw": -36.90850362554596,
+          "association_iou": 0.8161971389960943
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/eyes_1.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        507.9732971191406,
+        581.3012084960938,
+        1589.469970703125,
+        1955.5064697265625
+      ],
+      "confidence": 0.8980410099029541,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 11.252511978149414,
+        "yaw": 3.2966384887695312,
+        "roll": -0.4244542419910431
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8980410099029541,
+          "brightness": 0.6361590496067611,
+          "sharpness": 184.99554849200632,
+          "face_area_ratio": 0.2973336
+        },
+        "eyes": {
+          "left_openness": 0.0592110726708986,
+          "right_openness": 0.04239640043318075,
+          "mean_openness": 0.05080373655203967,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.5286457966245603,
+          "right_iris_y": 0.03942383575177264,
+          "left_iris_x": 0.4586615616207773,
+          "left_iris_y": 0.0571749771094098,
+          "mean_iris_x": 0.49365367912266883,
+          "mean_iris_y": 0.04829940643059122
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.003160788739697004,
+          "mouth_width": 0.22052774949343365,
+          "mouth_height": 0.0006970416273895668
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.7758378386497498,
+          "scores": {
+            "Anger": 0.0014339283807203174,
+            "Contempt": 0.02385552041232586,
+            "Disgust": 0.001053354237228632,
+            "Fear": 0.0009239825885742903,
+            "Happiness": 0.7758378386497498,
+            "Neutral": 0.026076696813106537,
+            "Sadness": 0.17044256627559662,
+            "Surprise": 0.0003760315594263375
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 32133,
+            "skin": 1046913,
+            "r_ear": 2227,
+            "l_brow": 15216,
+            "r_brow": 15519,
+            "nose": 56787,
+            "l_lip": 18779,
+            "u_lip": 10784,
+            "hair": 162313
+          },
+          "skin_pixel_count": 1046913,
+          "skin_fraction": 0.7042009379363785,
+          "association_iou": 0.9980802860474596
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.21637786153781172,
+            -0.23821210943921675,
+            -0.9468028368952229
+          ],
+          "pitch": -13.781041608057855,
+          "yaw": -12.873033799595666,
+          "association_iou": 0.8142039731299597
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/eyes_2.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        2867.195068359375,
+        88.30101013183594,
+        6892.40771484375,
+        5091.7666015625
+      ],
+      "confidence": 0.9073503017425537,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 10.682753562927246,
+        "yaw": -3.880030632019043,
+        "roll": -3.3842122554779053
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9073503017425537,
+          "brightness": 0.47603656946010203,
+          "sharpness": 44.712566383523345,
+          "face_area_ratio": 0.5121122996012369
+        },
+        "eyes": {
+          "left_openness": 0.4461285713983201,
+          "right_openness": 0.4539840335984364,
+          "mean_openness": 0.45005630249837825,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4947773580563752,
+          "right_iris_y": -0.02541641551368742,
+          "left_iris_x": 0.5472586958309174,
+          "left_iris_y": -0.020969317266706075,
+          "mean_iris_x": 0.5210180269436463,
+          "mean_iris_y": -0.02319286639019675
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.1552236234736087,
+          "mouth_width": 0.17044336490146667,
+          "mouth_height": 0.026456836697040156
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Surprise",
+          "confidence": 0.8017413020133972,
+          "scores": {
+            "Anger": 0.003693031845614314,
+            "Contempt": 0.0026369737461209297,
+            "Disgust": 0.0012362536508589983,
+            "Fear": 0.18313917517662048,
+            "Happiness": 0.00159871531650424,
+            "Neutral": 0.005337534938007593,
+            "Sadness": 0.0006170145934447646,
+            "Surprise": 0.8017413020133972
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 59415,
+            "skin": 14659324,
+            "l_brow": 193567,
+            "r_brow": 258223,
+            "l_eye": 394434,
+            "r_eye": 70478,
+            "nose": 916645,
+            "mouth": 3089,
+            "l_lip": 133245,
+            "u_lip": 259022,
+            "hair": 3036752
+          },
+          "skin_pixel_count": 14659324,
+          "skin_fraction": 0.7279768288095466,
+          "association_iou": 0.9996369392192638
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.8618332272075353,
+            -0.40856148511941137,
+            -0.30053452606658354
+          ],
+          "pitch": -24.114501529716012,
+          "yaw": -70.77554943279425,
+          "association_iou": 0.8618098565131199
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/frontal_1.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1371.8668212890625,
+        1604.218017578125,
+        2661.641845703125,
+        3359.66357421875
+      ],
+      "confidence": 0.9029415845870972,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 2.0074639320373535,
+        "yaw": -3.2039127349853516,
+        "roll": 6.196811676025391
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9029415845870972,
+          "brightness": 0.5464293545594656,
+          "sharpness": 29.967634651994793,
+          "face_area_ratio": 0.08721454326923077
+        },
+        "eyes": {
+          "left_openness": 0.2576068374562654,
+          "right_openness": 0.2830939154107973,
+          "mean_openness": 0.2703503764335313,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.428269733574767,
+          "right_iris_y": -0.05835217900601252,
+          "left_iris_x": 0.6179003818522192,
+          "left_iris_y": -0.04941617038163818,
+          "mean_iris_x": 0.5230850577134931,
+          "mean_iris_y": -0.05388417469382535
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.13818950391581594,
+          "mouth_width": 0.16097738393851554,
+          "mouth_height": 0.0222453848281293
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9998646974563599,
+          "scores": {
+            "Anger": 3.1499464148154743e-10,
+            "Contempt": 5.080397045276186e-07,
+            "Disgust": 3.167708428009064e-06,
+            "Fear": 3.800401827902533e-06,
+            "Happiness": 0.9998646974563599,
+            "Neutral": 4.5211892008012455e-09,
+            "Sadness": 9.407937614014372e-05,
+            "Surprise": 3.366881355759688e-05
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "l_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair",
+            "ear_r"
+          ],
+          "pixel_counts": {
+            "neck": 55152,
+            "skin": 1722220,
+            "cloth": 20316,
+            "l_ear": 18195,
+            "l_brow": 40660,
+            "r_brow": 24292,
+            "l_eye": 9378,
+            "r_eye": 10116,
+            "nose": 96523,
+            "mouth": 43200,
+            "l_lip": 35231,
+            "u_lip": 15396,
+            "hair": 49911,
+            "ear_r": 931
+          },
+          "skin_pixel_count": 1722220,
+          "skin_fraction": 0.760714680094525,
+          "association_iou": 0.9983298327059726
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.8873060549963209,
+            -0.43114415402495604,
+            -0.163715250410495
+          ],
+          "pitch": -25.54019296515713,
+          "yaw": -79.54602937588679,
+          "association_iou": 0.842058625915628
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/frontal_2.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1913.8997802734375,
+        722.09423828125,
+        2808.671142578125,
+        2028.42236328125
+      ],
+      "confidence": 0.8973166942596436,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 5.2075395584106445,
+        "yaw": -2.645402669906616,
+        "roll": -4.659265995025635
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8973166942596436,
+          "brightness": 0.47598020343764225,
+          "sharpness": 192.21474995477038,
+          "face_area_ratio": 0.07216125320934129
+        },
+        "eyes": {
+          "left_openness": 0.20501660723120088,
+          "right_openness": 0.19929597466887475,
+          "mean_openness": 0.20215629095003781,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4477738607748437,
+          "right_iris_y": -0.07645925118897917,
+          "left_iris_x": 0.6145685941424629,
+          "left_iris_y": -0.06223248697854616,
+          "mean_iris_x": 0.5311712274586533,
+          "mean_iris_y": -0.06934586908376267
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.15664709554834258,
+          "mouth_width": 0.09332075894550873,
+          "mouth_height": 0.014618425843180951
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9999252557754517,
+          "scores": {
+            "Anger": 1.9178318655388438e-11,
+            "Contempt": 7.473553705494851e-05,
+            "Disgust": 2.410335397939889e-08,
+            "Fear": 5.619306560865345e-13,
+            "Happiness": 0.9999252557754517,
+            "Neutral": 3.9111253125057033e-10,
+            "Sadness": 1.7422784326370788e-09,
+            "Surprise": 1.991529163802852e-09
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 19906,
+            "skin": 892407,
+            "cloth": 15750,
+            "r_ear": 2503,
+            "l_brow": 11814,
+            "r_brow": 18077,
+            "l_eye": 2735,
+            "r_eye": 1711,
+            "nose": 42246,
+            "mouth": 22287,
+            "l_lip": 17945,
+            "u_lip": 14080,
+            "hair": 52847
+          },
+          "skin_pixel_count": 892407,
+          "skin_fraction": 0.7634784022175263,
+          "association_iou": 0.9978517334540675
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.8614269116282037,
+            -0.3792272418185184,
+            -0.33783187384468905
+          ],
+          "pitch": -22.28582445349312,
+          "yaw": -68.58602754510818,
+          "association_iou": 0.8680690838437265
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/gaze_center.png",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        430.2818603515625,
+        238.8915557861328,
+        805.555908203125,
+        776.8311767578125
+      ],
+      "confidence": 0.9153992533683777,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": -0.0824209526181221,
+        "yaw": -2.454991579055786,
+        "roll": -0.41295096278190613
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9153992533683777,
+          "brightness": 0.40706856184853124,
+          "sharpness": 31.19206551696202,
+          "face_area_ratio": 0.1450843898545201
+        },
+        "eyes": {
+          "left_openness": 0.31666451963006514,
+          "right_openness": 0.31387611238690477,
+          "mean_openness": 0.315270316008485,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4191226022179214,
+          "right_iris_y": -0.0823077139869094,
+          "left_iris_x": 0.5611678950863971,
+          "left_iris_y": -0.07892960787116866,
+          "mean_iris_x": 0.49014524865215925,
+          "mean_iris_y": -0.08061866092903903
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.0026324995270789737,
+          "mouth_width": 0.11931679303361316,
+          "mouth_height": 0.00031410140123356645
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.5555610060691833,
+          "scores": {
+            "Anger": 0.09111390262842178,
+            "Contempt": 0.16124317049980164,
+            "Disgust": 0.0021444475278258324,
+            "Fear": 0.0010309071512892842,
+            "Happiness": 0.11672651767730713,
+            "Neutral": 0.5555610060691833,
+            "Sadness": 0.07156433910131454,
+            "Surprise": 0.0006156723247841001
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 4234,
+            "skin": 145379,
+            "l_brow": 1980,
+            "r_brow": 1278,
+            "l_eye": 950,
+            "r_eye": 733,
+            "nose": 8387,
+            "l_lip": 2111,
+            "u_lip": 1850,
+            "hair": 34848
+          },
+          "skin_pixel_count": 145379,
+          "skin_fraction": 0.7205898389095415,
+          "association_iou": 0.9945828111708395
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.366743545325571,
+            -0.1621446400112464,
+            -0.9160831226901052
+          ],
+          "pitch": -9.331400773655735,
+          "yaw": -21.818137930568383,
+          "association_iou": 0.8707377950675452
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/gaze_down.png",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        340.86614990234375,
+        196.8915557861328,
+        717.7540283203125,
+        733.14990234375
+      ],
+      "confidence": 0.90668785572052,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 2.0779895782470703,
+        "yaw": -2.935452699661255,
+        "roll": -2.187269926071167
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.90668785572052,
+          "brightness": 0.39865900867408,
+          "sharpness": 24.083593487677152,
+          "face_area_ratio": 0.15907772963645708
+        },
+        "eyes": {
+          "left_openness": 0.20761174377703362,
+          "right_openness": 0.21957938188026135,
+          "mean_openness": 0.2135955628286475,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4490421637265763,
+          "right_iris_y": -0.03595432982250005,
+          "left_iris_x": 0.5917646400897775,
+          "left_iris_y": -0.028755563562504187,
+          "mean_iris_x": 0.5204034019081769,
+          "mean_iris_y": -0.03235494669250212
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.002645995737850031,
+          "mouth_width": 0.13005602954059053,
+          "mouth_height": 0.0003441276998461003
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Sadness",
+          "confidence": 0.5051916837692261,
+          "scores": {
+            "Anger": 0.07847153395414352,
+            "Contempt": 0.04537710174918175,
+            "Disgust": 0.0025060800835490227,
+            "Fear": 0.0005330927670001984,
+            "Happiness": 0.01808805763721466,
+            "Neutral": 0.34958213567733765,
+            "Sadness": 0.5051916837692261,
+            "Surprise": 0.00025035510770976543
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 3954,
+            "skin": 147766,
+            "l_brow": 1444,
+            "r_brow": 1243,
+            "l_eye": 295,
+            "r_eye": 236,
+            "nose": 8313,
+            "l_lip": 2002,
+            "u_lip": 1862,
+            "hair": 35050
+          },
+          "skin_pixel_count": 147766,
+          "skin_fraction": 0.729892466744711,
+          "association_iou": 0.9937844080299162
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.19247937199555243,
+            0.16340566605132525,
+            -0.9676002685295827
+          ],
+          "pitch": 9.404628878280505,
+          "yaw": -11.250667115561296,
+          "association_iou": 0.850186913798831
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/gaze_left.png",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        236.88604736328125,
+        79.34809112548828,
+        400.6836853027344,
+        313.5081787109375
+      ],
+      "confidence": 0.912930428981781,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 0.26997488737106323,
+        "yaw": -0.009415953420102596,
+        "roll": 0.35470834374427795
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.912930428981781,
+          "brightness": 0.41059710521690435,
+          "sharpness": 29.266309994294524,
+          "face_area_ratio": 0.1305732484076433
+        },
+        "eyes": {
+          "left_openness": 0.3392965338930752,
+          "right_openness": 0.3499735031244213,
+          "mean_openness": 0.3446350185087482,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.7524372721790363,
+          "right_iris_y": -0.13112545253825672,
+          "left_iris_x": 0.8102615764242457,
+          "left_iris_y": -0.07842535555448356,
+          "mean_iris_x": 0.781349424301641,
+          "mean_iris_y": -0.10477540404637015
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.0037999768657691955,
+          "mouth_width": 0.0999285646909779,
+          "mouth_height": 0.0003797262340552365
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.38894250988960266,
+          "scores": {
+            "Anger": 0.2828717827796936,
+            "Contempt": 0.11626280099153519,
+            "Disgust": 0.012221131473779678,
+            "Fear": 0.04214920848608017,
+            "Happiness": 0.05474383011460304,
+            "Neutral": 0.38894250988960266,
+            "Sadness": 0.09587925672531128,
+            "Surprise": 0.006929514463990927
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 535,
+            "skin": 27526,
+            "l_brow": 533,
+            "r_brow": 267,
+            "l_eye": 198,
+            "r_eye": 151,
+            "nose": 1557,
+            "l_lip": 515,
+            "u_lip": 324,
+            "hair": 5611
+          },
+          "skin_pixel_count": 27526,
+          "skin_fraction": 0.7172712111736502,
+          "association_iou": 0.986869243736725
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            0.6715803365434732,
+            0.16968017074286293,
+            -0.7212409384004961
+          ],
+          "pitch": 9.769224034780779,
+          "yaw": 42.958002118215454,
+          "association_iou": 0.8572293971763458
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/gaze_right.png",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        349.08990478515625,
+        185.248291015625,
+        726.3261108398438,
+        721.7103271484375
+      ],
+      "confidence": 0.9148501753807068,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 0.16654829680919647,
+        "yaw": -3.1349565982818604,
+        "roll": -1.3759924173355103
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9148501753807068,
+          "brightness": 0.3974621742279397,
+          "sharpness": 25.523641408101273,
+          "face_area_ratio": 0.1941681896712424
+        },
+        "eyes": {
+          "left_openness": 0.3477674160276821,
+          "right_openness": 0.33072057232492347,
+          "mean_openness": 0.3392439941763028,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.23301984796001535,
+          "right_iris_y": -0.053230871352080045,
+          "left_iris_x": 0.33061145606038683,
+          "left_iris_y": -0.09073369044982714,
+          "mean_iris_x": 0.2818156520102011,
+          "mean_iris_y": -0.0719822809009536
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.0032397089576877316,
+          "mouth_width": 0.135367809738005,
+          "mouth_height": 0.00043855230579078336
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.4102492928504944,
+          "scores": {
+            "Anger": 0.1776111125946045,
+            "Contempt": 0.1947081983089447,
+            "Disgust": 0.006727301515638828,
+            "Fear": 0.021712662652134895,
+            "Happiness": 0.1320650279521942,
+            "Neutral": 0.4102492928504944,
+            "Sadness": 0.051723677664995193,
+            "Surprise": 0.005202747881412506
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 3686,
+            "skin": 144888,
+            "l_brow": 1632,
+            "r_brow": 1230,
+            "l_eye": 1782,
+            "r_eye": 678,
+            "nose": 8535,
+            "l_lip": 2129,
+            "u_lip": 1811,
+            "hair": 35653
+          },
+          "skin_pixel_count": 144888,
+          "skin_fraction": 0.7170117581852014,
+          "association_iou": 0.997114046614787
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.6695529230059384,
+            -0.14881154940253055,
+            -0.7277046145646063
+          ],
+          "pitch": -8.558060394863665,
+          "yaw": -42.61681385630181,
+          "association_iou": 0.8667464725944605
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/gaze_up.png",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        404.6124572753906,
+        201.2873992919922,
+        779.685546875,
+        738.5967407226562
+      ],
+      "confidence": 0.9057537913322449,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": -0.8992929458618164,
+        "yaw": -1.892361044883728,
+        "roll": -0.6266539692878723
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9057537913322449,
+          "brightness": 0.39671772252041726,
+          "sharpness": 25.83436199322704,
+          "face_area_ratio": 0.14298708270138547
+        },
+        "eyes": {
+          "left_openness": 0.350365895428689,
+          "right_openness": 0.3448154096509833,
+          "mean_openness": 0.3475906525398361,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.42485289536021836,
+          "right_iris_y": -0.13355321097900336,
+          "left_iris_x": 0.5979743217834412,
+          "left_iris_y": -0.1317084941923296,
+          "mean_iris_x": 0.5114136085718298,
+          "mean_iris_y": -0.13263085258566648
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.001869221863371026,
+          "mouth_width": 0.12409814709975817,
+          "mouth_height": 0.00023196696976270165
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.5688764452934265,
+          "scores": {
+            "Anger": 0.07489818334579468,
+            "Contempt": 0.1973678022623062,
+            "Disgust": 0.0011406471021473408,
+            "Fear": 0.0010737841948866844,
+            "Happiness": 0.10598567128181458,
+            "Neutral": 0.5688764452934265,
+            "Sadness": 0.04967422038316727,
+            "Surprise": 0.0009832818759605289
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 3669,
+            "skin": 145064,
+            "l_brow": 1786,
+            "r_brow": 1058,
+            "l_eye": 1531,
+            "r_eye": 571,
+            "nose": 8374,
+            "l_lip": 2097,
+            "u_lip": 1887,
+            "hair": 35330
+          },
+          "skin_pixel_count": 145064,
+          "skin_fraction": 0.7203674736188702,
+          "association_iou": 0.9949088093066433
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.2234697459224369,
+            -0.46623357943834903,
+            -0.8559716829787456
+          ],
+          "pitch": -27.790086443227676,
+          "yaw": -14.631702168088376,
+          "association_iou": 0.8726600563364783
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/mouth_1.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1443.063720703125,
+        176.3048858642578,
+        4552.634765625,
+        4971.1298828125
+      ],
+      "confidence": 0.89527428150177,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 5.078904151916504,
+        "yaw": 8.09376335144043,
+        "roll": 6.596950531005859
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.89527428150177,
+          "brightness": 0.44582667645266416,
+          "sharpness": 25.1108034071845,
+          "face_area_ratio": 0.37912127176920574
+        },
+        "eyes": {
+          "left_openness": 0.40860340451688587,
+          "right_openness": 0.41865950282730036,
+          "mean_openness": 0.4136314536720931,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.5138305515527909,
+          "right_iris_y": -0.04689893799607797,
+          "left_iris_x": 0.5612915093174599,
+          "left_iris_y": -0.025217306755753562,
+          "mean_iris_x": 0.5375610304351254,
+          "mean_iris_y": -0.03605812237591577
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.7632120937356496,
+          "mouth_width": 0.14825084747410072,
+          "mouth_height": 0.11314683969879284
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Surprise",
+          "confidence": 0.8247427940368652,
+          "scores": {
+            "Anger": 0.00496800197288394,
+            "Contempt": 0.0005628516664728522,
+            "Disgust": 0.00018804123101290315,
+            "Fear": 0.15229009091854095,
+            "Happiness": 0.01581324264407158,
+            "Neutral": 0.001012064516544342,
+            "Sadness": 0.0004229535988997668,
+            "Surprise": 0.8247427940368652
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 655271,
+            "skin": 9076260,
+            "l_brow": 63359,
+            "r_brow": 169785,
+            "l_eye": 203976,
+            "r_eye": 43257,
+            "nose": 541390,
+            "mouth": 637596,
+            "l_lip": 298382,
+            "u_lip": 209273,
+            "hair": 2997916
+          },
+          "skin_pixel_count": 9076260,
+          "skin_fraction": 0.6088321738060077,
+          "association_iou": 0.9996847450411406
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.7098228620330715,
+            -0.6548315290746849,
+            -0.2595133388958825
+          ],
+          "pitch": -40.90687683200853,
+          "yaw": -69.91743819763181,
+          "association_iou": 0.8770395702869043
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/mouth_2.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        1281.2108154296875,
+        1575.7135009765625,
+        2230.6162109375,
+        2896.153076171875
+      ],
+      "confidence": 0.9156002998352051,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 9.72156810760498,
+        "yaw": -7.417166233062744,
+        "roll": -0.6149827241897583
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.9156002998352051,
+          "brightness": 0.45925942470486353,
+          "sharpness": 94.40475450342538,
+          "face_area_ratio": 0.06909054454721443
+        },
+        "eyes": {
+          "left_openness": 0.27980976845042516,
+          "right_openness": 0.2372966697799924,
+          "mean_openness": 0.2585532191152088,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.5217412050473303,
+          "right_iris_y": -0.11075883708976418,
+          "left_iris_x": 0.6358367321575826,
+          "left_iris_y": -0.09019707362211832,
+          "mean_iris_x": 0.5787889686024565,
+          "mean_iris_y": -0.10047795535594126
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.00641528359344803,
+          "mouth_width": 0.1150572580311183,
+          "mouth_height": 0.0007381249397541499
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Anger",
+          "confidence": 0.8132677674293518,
+          "scores": {
+            "Anger": 0.8132677674293518,
+            "Contempt": 0.013225045055150986,
+            "Disgust": 0.10694137215614319,
+            "Fear": 0.005382303614169359,
+            "Happiness": 0.0011237970320507884,
+            "Neutral": 0.013497825711965561,
+            "Sadness": 0.04644384980201721,
+            "Surprise": 0.00011810629075625911
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 53931,
+            "skin": 895993,
+            "l_brow": 15333,
+            "r_brow": 14664,
+            "l_eye": 4875,
+            "r_eye": 162,
+            "nose": 49770,
+            "l_lip": 16891,
+            "u_lip": 15980,
+            "hair": 173690
+          },
+          "skin_pixel_count": 895993,
+          "skin_fraction": 0.7147194265608087,
+          "association_iou": 0.9984741160762488
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.8303967785216407,
+            -0.46167444179785727,
+            -0.3119261130644853
+          ],
+          "pitch": -27.495209057582365,
+          "yaw": -69.41206301577431,
+          "association_iou": 0.8386373613820994
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_1.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        2988.82275390625,
+        1202.6156005859375,
+        3295.492431640625,
+        1621.85107421875
+      ],
+      "confidence": 0.8543715476989746,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": -6.742071628570557,
+        "yaw": -8.28835391998291,
+        "roll": -2.2300827503204346
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8543715476989746,
+          "brightness": 0.3506478302841508,
+          "sharpness": 89.75694640852612,
+          "face_area_ratio": 0.006486343824076184
+        },
+        "eyes": {
+          "left_openness": 0.23615659798256797,
+          "right_openness": 0.24839103474645505,
+          "mean_openness": 0.2422738163645115,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4474688408554601,
+          "right_iris_y": -0.0920476331473161,
+          "left_iris_x": 0.5745506039314412,
+          "left_iris_y": -0.09333036716706548,
+          "mean_iris_x": 0.5110097223934507,
+          "mean_iris_y": -0.09268900015719078
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.20907803202664432,
+          "mouth_width": 0.03729758373036992,
+          "mouth_height": 0.00779810540569473
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9999864101409912,
+          "scores": {
+            "Anger": 4.460918319182383e-07,
+            "Contempt": 1.2110437637602445e-05,
+            "Disgust": 7.824709769010951e-08,
+            "Fear": 7.782012534374161e-11,
+            "Happiness": 0.9999864101409912,
+            "Neutral": 1.8400832857423666e-07,
+            "Sadness": 2.2027604740237905e-10,
+            "Surprise": 6.962525276321685e-07
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 2401,
+            "skin": 96345,
+            "cloth": 413,
+            "r_ear": 51,
+            "l_brow": 805,
+            "r_brow": 781,
+            "l_eye": 634,
+            "r_eye": 335,
+            "nose": 5757,
+            "mouth": 2969,
+            "l_lip": 2975,
+            "u_lip": 2171,
+            "hair": 6117
+          },
+          "skin_pixel_count": 96345,
+          "skin_fraction": 0.748991316380711,
+          "association_iou": 0.9922522001348708
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            0.33894337421405846,
+            0.14434633277639303,
+            -0.9296674272504095
+          ],
+          "pitch": 8.29942860791028,
+          "yaw": 20.03112826332308,
+          "association_iou": 0.7953254796175603
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_1.jpg",
+      "face_index": 1,
+      "person_id": null,
+      "box": [
+        2289.679931640625,
+        1433.824462890625,
+        2590.201904296875,
+        1834.7357177734375
+      ],
+      "confidence": 0.8512123823165894,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 10.838842391967773,
+        "yaw": -0.19997772574424744,
+        "roll": -2.467210292816162
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8512123823165894,
+          "brightness": 0.4810778733577755,
+          "sharpness": 130.23279625525714,
+          "face_area_ratio": 0.00608637119487083
+        },
+        "eyes": {
+          "left_openness": 0.22253791847252336,
+          "right_openness": 0.23763692178163465,
+          "mean_openness": 0.230087420127079,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.4216716497855648,
+          "right_iris_y": -0.06699026136023346,
+          "left_iris_x": 0.5754377018649217,
+          "left_iris_y": -0.06067985871297574,
+          "mean_iris_x": 0.49855467582524327,
+          "mean_iris_y": -0.06383506003660461
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.1396898200844719,
+          "mouth_width": 0.039250733015598595,
+          "mouth_height": 0.005482927833132608
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 1.0,
+          "scores": {
+            "Anger": 3.7042160246254785e-14,
+            "Contempt": 2.476816529650705e-09,
+            "Disgust": 8.346986990481753e-11,
+            "Fear": 1.0152257723730629e-13,
+            "Happiness": 1.0,
+            "Neutral": 3.586026753321647e-10,
+            "Sadness": 1.306919994448208e-08,
+            "Surprise": 2.731501469455111e-09
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "r_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair",
+            "ear_r"
+          ],
+          "pixel_counts": {
+            "neck": 3999,
+            "skin": 88016,
+            "cloth": 4512,
+            "r_ear": 404,
+            "l_brow": 269,
+            "r_brow": 193,
+            "l_eye": 328,
+            "r_eye": 299,
+            "nose": 4970,
+            "mouth": 2171,
+            "l_lip": 2576,
+            "u_lip": 1559,
+            "hair": 7711,
+            "ear_r": 115
+          },
+          "skin_pixel_count": 88016,
+          "skin_fraction": 0.7292068831244148,
+          "association_iou": 0.993205519204365
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            0.1632483544413843,
+            0.23306218034770473,
+            -0.9586615642987645
+          ],
+          "pitch": 13.477422419747679,
+          "yaw": 9.664070281592915,
+          "association_iou": 0.8482312123494509
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_1.jpg",
+      "face_index": 2,
+      "person_id": null,
+      "box": [
+        754.1920776367188,
+        1184.72509765625,
+        1069.490966796875,
+        1603.81396484375
+      ],
+      "confidence": 0.8495160937309265,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 6.548216819763184,
+        "yaw": 0.11396723985671997,
+        "roll": 3.409754991531372
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8495160937309265,
+          "brightness": 0.3096685526504423,
+          "sharpness": 82.9963415504111,
+          "face_area_ratio": 0.006655369070306182
+        },
+        "eyes": {
+          "left_openness": 0.18824416092871982,
+          "right_openness": 0.1985354917376169,
+          "mean_openness": 0.19338982633316837,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.36754696838838097,
+          "right_iris_y": -0.06914079664648709,
+          "left_iris_x": 0.5520881182037009,
+          "left_iris_y": -0.07467143772804864,
+          "mean_iris_x": 0.4598175432960409,
+          "mean_iris_y": -0.07190611718726786
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.12361852388590289,
+          "mouth_width": 0.03366423262676505,
+          "mouth_height": 0.004161522745072347
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9998123049736023,
+          "scores": {
+            "Anger": 1.1734076679204009e-06,
+            "Contempt": 0.0001739389990689233,
+            "Disgust": 1.0241865311400034e-05,
+            "Fear": 1.8983359328927918e-10,
+            "Happiness": 0.9998123049736023,
+            "Neutral": 1.410925506206695e-06,
+            "Sadness": 2.4855614455532304e-08,
+            "Surprise": 8.748663162805315e-07
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "l_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 2618,
+            "skin": 106394,
+            "cloth": 659,
+            "l_ear": 190,
+            "l_brow": 1567,
+            "r_brow": 668,
+            "l_eye": 413,
+            "r_eye": 375,
+            "nose": 5265,
+            "mouth": 1375,
+            "l_lip": 2464,
+            "u_lip": 1899,
+            "hair": 1432
+          },
+          "skin_pixel_count": 106394,
+          "skin_fraction": 0.8061067545554419,
+          "association_iou": 0.9941807039120483
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            0.1897238852031456,
+            0.2722184984439345,
+            -0.9433461382166959
+          ],
+          "pitch": 15.796323180524444,
+          "yaw": 11.371511973842296,
+          "association_iou": 0.7737424464346043
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_1.jpg",
+      "face_index": 3,
+      "person_id": null,
+      "box": [
+        1495.25,
+        1454.96337890625,
+        1792.619140625,
+        1871.6201171875
+      ],
+      "confidence": 0.8481028079986572,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 7.044253826141357,
+        "yaw": 10.926460266113281,
+        "roll": 2.7906739711761475
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8481028079986572,
+          "brightness": 0.39234988717285235,
+          "sharpness": 144.0800828903556,
+          "face_area_ratio": 0.006245109701771795
+        },
+        "eyes": {
+          "left_openness": 0.29548308164291337,
+          "right_openness": 0.2822231502184105,
+          "mean_openness": 0.28885311593066193,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.36955175353089176,
+          "right_iris_y": -0.055244957791665564,
+          "left_iris_x": 0.48452704636924426,
+          "left_iris_y": -0.07773773273416686,
+          "mean_iris_x": 0.427039399950068,
+          "mean_iris_y": -0.06649134526291621
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.1526784345238466,
+          "mouth_width": 0.03723970918145738,
+          "mouth_height": 0.00568570049994823
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.999991774559021,
+          "scores": {
+            "Anger": 1.2924515901957534e-09,
+            "Contempt": 1.5413516019080475e-09,
+            "Disgust": 5.031952809986251e-07,
+            "Fear": 1.2641029556448302e-08,
+            "Happiness": 0.999991774559021,
+            "Neutral": 1.5080345860951638e-09,
+            "Sadness": 7.796543286531232e-06,
+            "Surprise": 2.935097720424551e-09
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 5967,
+            "skin": 87114,
+            "l_brow": 839,
+            "r_brow": 1041,
+            "l_eye": 385,
+            "r_eye": 615,
+            "nose": 5150,
+            "mouth": 2115,
+            "l_lip": 2079,
+            "u_lip": 1005,
+            "hair": 13290
+          },
+          "skin_pixel_count": 87114,
+          "skin_fraction": 0.7033888041082286,
+          "association_iou": 0.9933050530323232
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            0.0760426401174702,
+            0.1720205801461338,
+            -0.9821539781979975
+          ],
+          "pitch": 9.905320681285703,
+          "yaw": 4.427256535578191,
+          "association_iou": 0.8112292609110339
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_2.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        3421.03369140625,
+        828.44775390625,
+        5141.52685546875,
+        3194.02978515625
+      ],
+      "confidence": 0.8972200155258179,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 5.319616317749023,
+        "yaw": -10.74548053741455,
+        "roll": -11.006693840026855
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8972200155258179,
+          "brightness": 0.583486170166429,
+          "sharpness": 149.09522448535574,
+          "face_area_ratio": 0.16956333333333334
+        },
+        "eyes": {
+          "left_openness": 0.31261369461964084,
+          "right_openness": 0.3544547786520299,
+          "mean_openness": 0.33353423663583537,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.525670126229923,
+          "right_iris_y": -0.08931835055005953,
+          "left_iris_x": 0.6025123953419609,
+          "left_iris_y": -0.09623563497527185,
+          "mean_iris_x": 0.564091260785942,
+          "mean_iris_y": -0.09277699276266568
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.0012513839172657655,
+          "mouth_width": 0.09541941230796726,
+          "mouth_height": 0.00011940631795714126
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Sadness",
+          "confidence": 0.5187971591949463,
+          "scores": {
+            "Anger": 0.2515462636947632,
+            "Contempt": 0.010975200682878494,
+            "Disgust": 0.02161259762942791,
+            "Fear": 0.0021151353139430285,
+            "Happiness": 0.0018610316328704357,
+            "Neutral": 0.19278396666049957,
+            "Sadness": 0.5187971591949463,
+            "Surprise": 0.0003086020878981799
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "l_ear",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 158485,
+            "skin": 2668239,
+            "l_ear": 3647,
+            "l_brow": 63230,
+            "r_brow": 51761,
+            "l_eye": 24177,
+            "r_eye": 22018,
+            "nose": 169339,
+            "l_lip": 55023,
+            "u_lip": 43936,
+            "hair": 351405
+          },
+          "skin_pixel_count": 2668239,
+          "skin_fraction": 0.6556643043897069,
+          "association_iou": 0.9994724929895132
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.7853986905017921,
+            -0.45195367816816334,
+            -0.4229500794991511
+          ],
+          "pitch": -26.869099167978042,
+          "yaw": -61.69680725122922,
+          "association_iou": 0.8462621311626244
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/multi_2.jpg",
+      "face_index": 1,
+      "person_id": null,
+      "box": [
+        1535.267822265625,
+        675.6414794921875,
+        3280.49072265625,
+        3123.797607421875
+      ],
+      "confidence": 0.8819735050201416,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": 8.48223876953125,
+        "yaw": 18.77434730529785,
+        "roll": 9.585661888122559
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8819735050201416,
+          "brightness": 0.2871169306346431,
+          "sharpness": 287.2975945240341,
+          "face_area_ratio": 0.17799
+        },
+        "eyes": {
+          "left_openness": 0.4148116928279906,
+          "right_openness": 0.36066191651418983,
+          "mean_openness": 0.3877368046710902,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.421740370375661,
+          "right_iris_y": -0.044210246182999964,
+          "left_iris_x": 0.5012711849966838,
+          "left_iris_y": -0.05249005959955371,
+          "mean_iris_x": 0.4615057776861724,
+          "mean_iris_y": -0.04835015289127684
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.040530107302950764,
+          "mouth_width": 0.09294461134194532,
+          "mouth_height": 0.0037670550709200984
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Neutral",
+          "confidence": 0.7185676693916321,
+          "scores": {
+            "Anger": 0.10778025537729263,
+            "Contempt": 0.014309773221611977,
+            "Disgust": 0.012200473807752132,
+            "Fear": 0.003993298392742872,
+            "Happiness": 0.0019530989229679108,
+            "Neutral": 0.7185676693916321,
+            "Sadness": 0.12690579891204834,
+            "Surprise": 0.014289671555161476
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "skin",
+            "cloth",
+            "l_brow",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "skin": 2526551,
+            "cloth": 284,
+            "l_brow": 42746,
+            "r_brow": 15777,
+            "l_eye": 18383,
+            "r_eye": 24961,
+            "nose": 228895,
+            "l_lip": 53513,
+            "u_lip": 36656,
+            "hair": 980484
+          },
+          "skin_pixel_count": 2526551,
+          "skin_fraction": 0.5914543420042324,
+          "association_iou": 0.9989781340349583
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.5854806903581635,
+            -0.6898309999094594,
+            -0.4258468654124906
+          ],
+          "pitch": -43.61673253553762,
+          "yaw": -53.969891908416336,
+          "association_iou": 0.8333202335058721
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    },
+    {
+      "image": "test_data/images/pose_1.jpg",
+      "face_index": 0,
+      "person_id": null,
+      "box": [
+        905.4468383789062,
+        1298.9769287109375,
+        2307.410888671875,
+        2744.318115234375
+      ],
+      "confidence": 0.8729047179222107,
+      "module_status": {
+        "detection": true,
+        "landmarks": true,
+        "quality": true,
+        "head_pose": true,
+        "eyes": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "emotion": true,
+        "regions": true
+      },
+      "static_value_checks": {
+        "eye_openness_finite": true,
+        "mouth_openness_finite": true
+      },
+      "head_pose": {
+        "pitch": -9.481146812438965,
+        "yaw": -4.501784324645996,
+        "roll": -35.169395446777344
+      },
+      "face_features": {
+        "landmarks": {
+          "available": true,
+          "count": 478
+        },
+        "quality": {
+          "available": true,
+          "confidence": 0.8729047179222107,
+          "brightness": 0.42015828862092974,
+          "sharpness": 119.99426003241668,
+          "face_area_ratio": 0.10155829197445368
+        },
+        "eyes": {
+          "left_openness": 0.2236890731741186,
+          "right_openness": 0.147636379350338,
+          "mean_openness": 0.1856627262622283,
+          "available": true
+        },
+        "blink": {
+          "available": false,
+          "eye_state": "unknown",
+          "blink": false,
+          "blink_count": 0,
+          "blink_duration": null,
+          "blink_rate": null
+        },
+        "gaze": {
+          "available": true,
+          "right_iris_x": 0.5593455383529469,
+          "right_iris_y": -0.11919002199812478,
+          "left_iris_x": 0.6676745666794557,
+          "left_iris_y": -0.10918825111877925,
+          "mean_iris_x": 0.6135100525162013,
+          "mean_iris_y": -0.11418913655845202
+        },
+        "mouth": {
+          "available": true,
+          "mouth_openness": 0.2200882621691704,
+          "mouth_width": 0.16106958893830264,
+          "mouth_height": 0.03544952591773366
+        },
+        "mouth_motion": {
+          "available": false,
+          "mouth_movement": null,
+          "mouth_velocity": null
+        },
+        "emotion": {
+          "available": true,
+          "emotion": "Happiness",
+          "confidence": 0.9668039679527283,
+          "scores": {
+            "Anger": 0.0011391338193789124,
+            "Contempt": 0.014227334409952164,
+            "Disgust": 0.002061047125607729,
+            "Fear": 0.00037128099938854575,
+            "Happiness": 0.9668039679527283,
+            "Neutral": 0.0020186074543744326,
+            "Sadness": 0.00022176248603500426,
+            "Surprise": 0.013156854547560215
+          }
+        },
+        "regions": {
+          "available": true,
+          "classes": [
+            "neck",
+            "skin",
+            "cloth",
+            "r_ear",
+            "r_brow",
+            "l_eye",
+            "r_eye",
+            "nose",
+            "mouth",
+            "l_lip",
+            "u_lip",
+            "hair"
+          ],
+          "pixel_counts": {
+            "neck": 136444,
+            "skin": 1257798,
+            "cloth": 21697,
+            "r_ear": 27,
+            "r_brow": 29415,
+            "l_eye": 5524,
+            "r_eye": 1300,
+            "nose": 47076,
+            "mouth": 50604,
+            "l_lip": 19243,
+            "u_lip": 10714,
+            "hair": 236182
+          },
+          "skin_pixel_count": 1257798,
+          "skin_fraction": 0.6204325770535276,
+          "association_iou": 0.9984937988655197
+        },
+        "gaze_estimation": {
+          "available": true,
+          "gaze_vector": [
+            -0.41341536363163306,
+            -0.7315157893374564,
+            -0.5421922049082986
+          ],
+          "pitch": -47.01361898585393,
+          "yaw": -37.32510667204054,
+          "association_iou": 0.8624964111633457
+        },
+        "temporal": {
+          "available": false,
+          "summary": null
+        }
+      }
+    }
+  ]
+}

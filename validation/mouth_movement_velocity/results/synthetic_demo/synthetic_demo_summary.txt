@@ -1,0 +1,310 @@
+PhysioTrack MouthMovement/Velocity Synthetic Demonstration
+This is a non-benchmark qualitative software demonstration.
+
+project: "physiotrack-v2"
+component: "MouthMovement / MouthVelocity"
+type: "synthetic_qualitative_demonstration"
+scientific_benchmark: false
+uses_ground_truth_motion_labels: false
+calculates_accuracy_metrics: false
+input_directory: "validation/synthetic_media/mouth_movement_velocity_media"
+output_directory: "validation/mouth_movement_velocity/results/synthetic_demo"
+configuration:
+  visualization_layout: "source at unchanged 1:1 scale on left; distinct readable measurements panel on right"
+  annotation_font: "OpenCV Hershey Simplex, without thick stroke or text overlay on faces"
+  output_dimensions: "(source_width + dashboard_width, source_height); source FPS unchanged"
+  pipeline: "real Face detector -> FaceTracker -> FaceAnalysis -> FaceLandmarks -> MouthOpenness -> MouthMovement"
+  device: "cpu"
+  tracker_type: "ocsort"
+  detector_confidence: 0.25
+  detector_iou: 0.45
+  fps: "individual decoded input FPS (no fixed 30-FPS assumption)"
+  geometry_tolerance: 1e-12
+  movement_tolerance: 1e-12
+  velocity_tolerance: 1e-10
+  separate_pipeline_and_temporal_state_per_video: true
+  unrelated_components_disabled: true
+component_imports:
+  Face: "src/physiotrack/face/detect.py"
+  FaceAnalysis: "src/physiotrack/face/analysis.py"
+  FaceAnalysisConfig: "src/physiotrack/face/config.py"
+  FaceTracker: "src/physiotrack/face/tracking.py"
+  FaceLandmarks: "src/physiotrack/face/landmarks.py"
+  MouthOpenness: "src/physiotrack/face/mouth.py"
+  MouthMovement: "src/physiotrack/face/mouth_motion.py"
+reproducibility:
+  python: "3.11.17"
+  platform: "Windows"
+  opencv: "5.0.0"
+  numpy: "2.4.6"
+  mediapipe: "1.1.0"
+  ultralytics: "8.4.177"
+  physiotrack: "1.0.1.dev0+g7100beb0d.d20261015"
+  landmark_model_sha256: "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
+  component_file_sha256:
+    src/physiotrack/face/analysis.py: "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084"
+    src/physiotrack/face/config.py: "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc"
+    src/physiotrack/face/detect.py: "94498dc545ad199339079ffc7a7aee693c6f6f75ed497299e6b87db1c413c6dc"
+    src/physiotrack/face/landmarks.py: "dee8b2407621eac2869c47d36cd64b34d717c80a0dbd330ff125d6516283d0f8"
+    src/physiotrack/face/mouth.py: "cec1b66b7ecdf96bb83eb5f175e47f43bcbf2cd5a248707fb8fd66ea8682e822"
+    src/physiotrack/face/mouth_motion.py: "4b51bb72d4042abffb753aac2f29a39fe701e7f08fb70e2d998a979212ed783a"
+    src/physiotrack/face/tracking.py: "e986e295c85c71bd6b5f6b69f5e84f5e84b32be47c71c4cb016c5e45ab9bb0bf"
+    validation/mouth_movement_velocity/mouth_movement_velocity_synthetic_demo.py: "fc0ae31ccb53e09d1a166f384f91499f4731497a5f9841c20d8241d8719efebf"
+files_discovered: 8
+files_processed: 8
+files_failed: 0
+observations: 2160
+totals:
+  frames: 1920
+  face_observations: 2160
+  mouth_available: 2160
+  mouth_motion_available: 2160
+  mouth_unavailable: 0
+  frames_with_no_face: 0
+videos: 8 items
+  item_001:
+    input: "01_Static_Closed_Mouth.mp4"
+    source_sha256: "e1c418811517dd38b1d363bdb954f06a7efb9ed1905a00f0c50aacb73c1e41ab"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/01_Static_Closed_Mouth_1684b4a7ce20_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "61e23f8aa9a8de8b704dbc13081b7b484fd8e30fa0661b436030f9f8cc9d55d2"
+    figure: "figures/01_Static_Closed_Mouth_1684b4a7ce20_signals.png"
+    figure_sha256: "5927043c809f197a9b3d1fbb30d3d9bdc3b7226e11df867d72f21314c1689d5b"
+    stills: 3 items
+      item_001: "images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000060.png"
+      item_002: "images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000120.png"
+      item_003: "images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000180.png"
+    still_sha256:
+      images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000060.png: "ff3afc51298f668516942dd0b9a659d79063a2de345bd18277240ef824c299c8"
+      images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000120.png: "f209b02bdf40c79c73da9d5245608d1952a97ecc1c1a546a28dae30f7984a333"
+      images/01_Static_Closed_Mouth_1684b4a7ce20_frame_000180.png: "0dcc72e66b133fd513af1b5638476b5cd89c2d39bff113eaf2be593152e27373"
+  item_002:
+    input: "02_Slow_Opening_&_Closing.mp4"
+    source_sha256: "884c14747bf9c23ad4431c015070376de034ff9628a281251a19ccf09577865e"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/02_Slow_Opening___Closing_5a2dae851900_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "880f983464a25b2ee2433f4a3e72ac273a4ea3933eb448770f4ea00ae8b032a5"
+    figure: "figures/02_Slow_Opening___Closing_5a2dae851900_signals.png"
+    figure_sha256: "612f9ab6deb1770e5adc2112f77163ed742e8cc8e540a30394425d319269b2f2"
+    stills: 3 items
+      item_001: "images/02_Slow_Opening___Closing_5a2dae851900_frame_000060.png"
+      item_002: "images/02_Slow_Opening___Closing_5a2dae851900_frame_000120.png"
+      item_003: "images/02_Slow_Opening___Closing_5a2dae851900_frame_000180.png"
+    still_sha256:
+      images/02_Slow_Opening___Closing_5a2dae851900_frame_000060.png: "7ecee7696944e04a99f21670942079c4d86d4b6eb8e539ddd095fba3714d9954"
+      images/02_Slow_Opening___Closing_5a2dae851900_frame_000120.png: "919ac9beaccc9f738a1b8bcbd4fb9451328c295eb37d8ce65e6cd76d2cdb7c06"
+      images/02_Slow_Opening___Closing_5a2dae851900_frame_000180.png: "a0f7bf3ddcfe1a7911ee9bcdb00fc400fda911e9805a34509d9f83af5545ab91"
+  item_003:
+    input: "03_Fast_Opening_&_Closing.mp4"
+    source_sha256: "f426f6cf91283f8efdc166484050966eaf5ce513c6196468f8ea37abd76927f9"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/03_Fast_Opening___Closing_8a5b46feb405_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "dd2923a7672521c92f5a98ff8cfe44af1a4c9be6af2eb989632a4d95b5be2250"
+    figure: "figures/03_Fast_Opening___Closing_8a5b46feb405_signals.png"
+    figure_sha256: "69acab88b05f57cadb9ca3c8227abfc4d96ecf6de8f34d0feb4a9c71b994525f"
+    stills: 3 items
+      item_001: "images/03_Fast_Opening___Closing_8a5b46feb405_frame_000060.png"
+      item_002: "images/03_Fast_Opening___Closing_8a5b46feb405_frame_000120.png"
+      item_003: "images/03_Fast_Opening___Closing_8a5b46feb405_frame_000180.png"
+    still_sha256:
+      images/03_Fast_Opening___Closing_8a5b46feb405_frame_000060.png: "35c41258231ad7247b23de1e3a519a900d6c1a60c41b3f53e08c92435e853d38"
+      images/03_Fast_Opening___Closing_8a5b46feb405_frame_000120.png: "2b7a5b7597ed406a156b5ec53a91c9a2c0e7b436f0189a96f2274560b182a1b0"
+      images/03_Fast_Opening___Closing_8a5b46feb405_frame_000180.png: "db82dcc30a20beb25d6207fb578625973900c9c9269d8f943fd1a222ff716fa1"
+  item_004:
+    input: "04_Repeated_Mouth_Movements.mp4"
+    source_sha256: "fa75b6e3176647a17cf43ab467cfc6523ab256bae47f9ab607189804bd5d4906"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/04_Repeated_Mouth_Movements_db7465a9d88f_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "bc93c901844aae058def1eee52ddb1c770e7e431a7783ab697b4f5bb48986831"
+    figure: "figures/04_Repeated_Mouth_Movements_db7465a9d88f_signals.png"
+    figure_sha256: "1efa0298f1fa04f9889a028219c8acc711748e2e6bd2f4d9c474233311c48d5d"
+    stills: 3 items
+      item_001: "images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000060.png"
+      item_002: "images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000120.png"
+      item_003: "images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000180.png"
+    still_sha256:
+      images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000060.png: "a2d35c9a72d9c4e3e74a01a1e34c602c13575b6863ab5fdc00eb4f9fdf5d3275"
+      images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000120.png: "cccf463e96779b6fb0917e1d1170f039c0a56f1e6df728cec65e37a18383a357"
+      images/04_Repeated_Mouth_Movements_db7465a9d88f_frame_000180.png: "ba1e221d9d953c3cfea57c1bc9b35818d99117c3ae9c33e24914165d7205b305"
+  item_005:
+    input: "05_Opening_with_Pause.mp4"
+    source_sha256: "fff8a35e91b2be4cedd4172a004c29ba8c71d6ca41e720e0a8c0192dfd302531"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/05_Opening_with_Pause_ea181f8d435c_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "feb20a4020162dd780e2dcda7e08cbc86101df25374fc12a953c38edf5a9f680"
+    figure: "figures/05_Opening_with_Pause_ea181f8d435c_signals.png"
+    figure_sha256: "3d600cdb01b4c2a5e0ef3e79f7cae1df056bb81d579aef0c97dce3df492feafa"
+    stills: 3 items
+      item_001: "images/05_Opening_with_Pause_ea181f8d435c_frame_000060.png"
+      item_002: "images/05_Opening_with_Pause_ea181f8d435c_frame_000120.png"
+      item_003: "images/05_Opening_with_Pause_ea181f8d435c_frame_000180.png"
+    still_sha256:
+      images/05_Opening_with_Pause_ea181f8d435c_frame_000060.png: "c2d6e87d39c5069202e35589a4b19b663cf84d6ac3b2ec0ccfe1a01fbb72ee2b"
+      images/05_Opening_with_Pause_ea181f8d435c_frame_000120.png: "b2ef6dbb30882550baeaf193f5a61dc79a9f6a7cb360fe570189018ae42a5e56"
+      images/05_Opening_with_Pause_ea181f8d435c_frame_000180.png: "8b12efcfc4b6f2ef37bf0dfd361c57885efc75dcd74d362939e9758eef4161b3"
+  item_006:
+    input: "06_Speech_Like_Mouth_Motion.mp4"
+    source_sha256: "89a71c6df747e7063303eddfacb26a8377bd96374580bfbb476388451de43b39"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/06_Speech_Like_Mouth_Motion_8876ef5d2a55_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "58aa04a1c96df202d43e4eb0bbcdca6e237653678b310298a299c61eec145310"
+    figure: "figures/06_Speech_Like_Mouth_Motion_8876ef5d2a55_signals.png"
+    figure_sha256: "7e6c4a5fa01e85f6ffedc63b2f55ba4a6997088ebbbd8ccd66606455190ab611"
+    stills: 3 items
+      item_001: "images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000060.png"
+      item_002: "images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000120.png"
+      item_003: "images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000180.png"
+    still_sha256:
+      images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000060.png: "a968f546ebc6539789a4c006a3b8b4c1f66aab5fcb39f944ecb3875798cd130a"
+      images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000120.png: "82d90a109aee84016326c92b443e0ade08d15b9643775b47fb124485bc38acce"
+      images/06_Speech_Like_Mouth_Motion_8876ef5d2a55_frame_000180.png: "4f7a353084960d0fe8e290cfe99603206bed7071f1e04573bb81169a4881705f"
+  item_007:
+    input: "07_Temporary_Mouth_Occlusion.mp4"
+    source_sha256: "a1217187de4e88ad0569b2de047d691a9e62c318c0fe732b27fcf964303573b0"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 240
+    mouth_available: 240
+    mouth_motion_available: 240
+    mouth_unavailable: 0
+    observed_track_ids: 1 items
+      item_001: "1"
+    output_video: "videos/07_Temporary_Mouth_Occlusion_9134dcee299d_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "6a1dc9a86ed02933f0187766eef7715a5eac7fda51c1df147f1dc7cc59054372"
+    figure: "figures/07_Temporary_Mouth_Occlusion_9134dcee299d_signals.png"
+    figure_sha256: "0fe29db2a61d2079cde34fcab9a10d9836d1cb7684a4e632551e764e8dde4274"
+    stills: 3 items
+      item_001: "images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000060.png"
+      item_002: "images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000120.png"
+      item_003: "images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000180.png"
+    still_sha256:
+      images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000060.png: "60831ed8c801aa4e7f217108913548370606c39daa98fa5979dd6816a38fda2c"
+      images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000120.png: "6549a501a190c4534eff255157af05ff7323b700d88378cf05de8e4bc77b94bb"
+      images/07_Temporary_Mouth_Occlusion_9134dcee299d_frame_000180.png: "c6f3b17271bb94eb4a1bac7866d12474189d9ca2d30836fcaeffeded41aa8915"
+  item_008:
+    input: "08_Multiple_Faces_with_Independent_Motion.mp4"
+    source_sha256: "d45ffe59925192929ee9468bde5a58c2f67708107028045017e10b42a772a376"
+    width: 1024
+    height: 1024
+    annotated_width: 1464
+    annotated_height: 1024
+    source_fps: 30.0
+    declared_source_frames: 240
+    frames_processed: 240
+    no_face_frames: 0
+    face_observations: 480
+    mouth_available: 480
+    mouth_motion_available: 480
+    mouth_unavailable: 0
+    observed_track_ids: 2 items
+      item_001: "1"
+      item_002: "2"
+    output_video: "videos/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_annotated.mp4"
+    output_codec: "mp4v"
+    output_sha256: "098c139a46a4729825c12c87856854d07502ee67000762b19ffaa46847009ed2"
+    figure: "figures/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_signals.png"
+    figure_sha256: "61b2795174870f6fa4e5747b18068a4d342ee5696c2a2d159ef19a42456a1f5a"
+    stills: 3 items
+      item_001: "images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000060.png"
+      item_002: "images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000120.png"
+      item_003: "images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000180.png"
+    still_sha256:
+      images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000060.png: "ac8a5d172afbade59789490aeeff9c9fa5a55e042149da8c23d6de29ab50d0d1"
+      images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000120.png: "4f9ae3ba28b9af9f104dd73dea3aea1a9b9960d7830ce084c97316876575e4e0"
+      images/08_Multiple_Faces_with_Independent_Motion_890b612bbc4f_frame_000180.png: "8fcbee09281a788ac22b21e99b4be626e7c324cfe8961e26e64a518ca523a2f2"
+artifact_sha256:
+  mouth_movement_velocity_observations.csv: "93efa4257990d720d8cc360909ebaf42a613f89829b79d8a4f7280f1010c6c2d"
+  synthetic_demo_examples.png: "19fdf8d4335bfc593fcfaa54a731c7cf064e402d9cd64fe76a1f638fbb8263dd"
+interpretation: "Independent non-benchmark real-pipeline video outputs. Values are the real native per-track PhysioTrack measurements. Arithmetic is independently verified from the recorded landmark coordinates, consecutive openness samples, and actual input FPS. The chosen synthetic motion types have no measured ground truth; this is NOT a scientific accuracy result, detection-recall result or quantitative multi-person ID accuracy study. Missing faces/features and potential ID switches must be interpreted from the explicit observations, not hidden or assigned fabricated values."
+status: "COMPLETE"

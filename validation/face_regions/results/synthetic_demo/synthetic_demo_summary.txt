@@ -1,0 +1,603 @@
+PhysioTrack-v2 Face Regions - Synthetic Qualitative Demonstration
+======================================================================
+
+Full human-readable projection of synthetic_demo_summary.json
+
+project: "physiotrack-v2"
+component: "Face Regions"
+evaluation_type: "synthetic_qualitative_demonstration"
+benchmark_evaluation: false
+ground_truth_used: false
+benchmark_accuracy_calculated: false
+input_directory: "validation/synthetic_media/face_regions_media"
+output_directory: "validation/face_regions/results/synthetic_demo"
+configuration:
+  pipeline: "physiotrack.face.FaceAnalysis"
+  regions: "physiotrack.face.FaceRegions"
+  backend: "SegFace"
+  detector: "controlled_full_aligned_image_box"
+  face_detection_performed: false
+  input_resolution: "512 x 512"
+  resize_interpolation: "cv2.INTER_LINEAR"
+  device: "cpu"
+  other_modules_disabled: true
+  semantic_class_order: (19 items)
+    item_001: "background"
+    item_002: "neck"
+    item_003: "skin"
+    item_004: "cloth"
+    item_005: "l_ear"
+    item_006: "r_ear"
+    item_007: "l_brow"
+    item_008: "r_brow"
+    item_009: "l_eye"
+    item_010: "r_eye"
+    item_011: "nose"
+    item_012: "mouth"
+    item_013: "l_lip"
+    item_014: "u_lip"
+    item_015: "hair"
+    item_016: "eye_g"
+    item_017: "hat"
+    item_018: "ear_r"
+    item_019: "neck_l"
+component_imports:
+  FaceAnalysis: "src/physiotrack/face/analysis.py"
+  FaceAnalysisConfig: "src/physiotrack/face/config.py"
+  FaceRegions: "src/physiotrack/face/regions.py"
+  Instance: "src/physiotrack/results.py"
+  Result: "src/physiotrack/results.py"
+reproducibility:
+  script_sha256: "2b281ad50e41f4b2c21b00de4944d55a98a7d9d29a86f005a283cae39dc9f263"
+  implementation_sha256:
+    src/physiotrack/face/analysis.py: "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084"
+    src/physiotrack/face/config.py: "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc"
+    src/physiotrack/face/regions.py: "80575c142f2325b6deca6f6db8639aaed4190fb4df1f8726fb52971c030d2a95"
+    src/physiotrack/results.py: "7cc55319523ed9b9e71bbd9a77dc0f6230d5190c249094c3e00cf09ee36c7a8e"
+  package_versions:
+    numpy: "2.4.6"
+    opencv-python: "5.0.0.93"
+    opencv-contrib-python: "5.0.0.93"
+    torch: "2.14.1"
+    onnxruntime: "1.31.0"
+  warning: "Exact predictions depend on weights and runtime; no weight hash is asserted here."
+runtime_environment:
+  python: "3.11.17"
+  platform: "Windows"
+  opencv: "5.0.0"
+  numpy: "2.4.6"
+discovered_files: 10
+successful_files: 10
+failed_files: 0
+observation_rows: 190
+status: "COMPLETE"
+interpretation: "Real SegFace semantic class predictions on independently supplied synthetic images. No annotation-based accuracy, IoU, Dice or pixel-accuracy score is measured. The FaceAnalysis association IoU is NOT segmentation IoU. No CelebAMask-HQ input or result is accessed."
+records: (10 items)
+  item_001:
+    input: "01.png"
+    source_sha256: "5f86bf02ecf43f3f37c20aa38ed54c3035830c9ec408b29bf4d84469107bea8f"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (12 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_brow"
+      item_007: "r_brow"
+      item_008: "l_eye"
+      item_009: "r_eye"
+      item_010: "nose"
+      item_011: "l_lip"
+      item_012: "u_lip"
+    foreground_pixels: 91355
+    background_pixels: 170789
+    skin_fraction: 0.22311782836914062
+    class_counts:
+      background: 170789
+      neck: 23920
+      skin: 58489
+      cloth: 20
+      l_ear: 1760
+      r_ear: 1586
+      l_brow: 219
+      r_brow: 197
+      l_eye: 397
+      r_eye: 347
+      nose: 2607
+      mouth: 0
+      l_lip: 963
+      u_lip: 850
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/01_4cabcf2b3682232b_panels.png"
+    label_maps_path: "label_maps/01_4cabcf2b3682232b_labels.png"
+    segmentation_maps_path: "segmentation_maps/01_4cabcf2b3682232b_colors.png"
+    overlays_path: "overlays/01_4cabcf2b3682232b_overlay.png"
+    output_sha256:
+      annotated_path: "943d4fa8f89e5ed0248b4e347387a1728c71b2a8e2d37fc80339951fd868459d"
+      label_maps_path: "8947c689663c3b2c284eb3a730d8176efb8c03aef55d18997cc554117c1e4581"
+      segmentation_maps_path: "f1a74cef1c84f033e0ef2a697b4ecffb34f067df0cf11264438fad6045859341"
+      overlays_path: "818602e2771513e3cfbc1c79239e774554757301dd85246192a9d4e64b72722e"
+    status: "SUCCESS"
+  item_002:
+    input: "02.png"
+    source_sha256: "b22b478a0f0d219e6f3ef2d88cf1a4951901fafbac5917d40a5824e44b3ae696"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (11 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "l_brow"
+      item_006: "r_brow"
+      item_007: "l_eye"
+      item_008: "r_eye"
+      item_009: "nose"
+      item_010: "l_lip"
+      item_011: "u_lip"
+    foreground_pixels: 114095
+    background_pixels: 148049
+    skin_fraction: 0.23433685302734375
+    class_counts:
+      background: 148049
+      neck: 27446
+      skin: 61430
+      cloth: 19224
+      l_ear: 2678
+      r_ear: 0
+      l_brow: 65
+      r_brow: 380
+      l_eye: 77
+      r_eye: 381
+      nose: 1984
+      mouth: 0
+      l_lip: 164
+      u_lip: 266
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/02_0ec4dd27e244bdd3_panels.png"
+    label_maps_path: "label_maps/02_0ec4dd27e244bdd3_labels.png"
+    segmentation_maps_path: "segmentation_maps/02_0ec4dd27e244bdd3_colors.png"
+    overlays_path: "overlays/02_0ec4dd27e244bdd3_overlay.png"
+    output_sha256:
+      annotated_path: "dc56d5eded15d270aff387044a6840aaf29e609a82ec3cbbf58457e4ccc0125d"
+      label_maps_path: "665c5e71f8ffdb3289cba72456ebf42f0e3327ea4115f6a3b5536f072ebf3933"
+      segmentation_maps_path: "dd8d1ad60149d37d2ed0aa6f94f7e632efb3977f1d1ea1dc81954d3538fd178e"
+      overlays_path: "8a8314458fbe2fe9715a6bbf03d6d1b6b685a2d1c27b3834b4ae07addc5569c1"
+    status: "SUCCESS"
+  item_003:
+    input: "03.png"
+    source_sha256: "f35c84692d5f00b702aea55c482412d68789b1b7e3b5a748e7ff77d382abd271"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (9 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "r_ear"
+      item_005: "l_brow"
+      item_006: "l_eye"
+      item_007: "nose"
+      item_008: "l_lip"
+      item_009: "u_lip"
+    foreground_pixels: 107816
+    background_pixels: 154328
+    skin_fraction: 0.23030471801757812
+    class_counts:
+      background: 154328
+      neck: 28724
+      skin: 60373
+      cloth: 11837
+      l_ear: 0
+      r_ear: 3035
+      l_brow: 304
+      r_brow: 0
+      l_eye: 406
+      r_eye: 0
+      nose: 2438
+      mouth: 0
+      l_lip: 61
+      u_lip: 638
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/03_04903e22460dfe33_panels.png"
+    label_maps_path: "label_maps/03_04903e22460dfe33_labels.png"
+    segmentation_maps_path: "segmentation_maps/03_04903e22460dfe33_colors.png"
+    overlays_path: "overlays/03_04903e22460dfe33_overlay.png"
+    output_sha256:
+      annotated_path: "deb596f111f22ed9ea0fed639ccda60530b66b583fa9e479cc389e9ed06be118"
+      label_maps_path: "e5146cbf9d26a731e3e1dda9668897625c488683296d0d1fd5d78323e854aa35"
+      segmentation_maps_path: "ad4efdc109017ebef548a1297ba23add50fbaebb7e3b56b13c17b957520167de"
+      overlays_path: "784efe5a37b6dbf2a6b95690fef8f8b8d5d723ddee34b1f0d5889af7625f0a83"
+    status: "SUCCESS"
+  item_004:
+    input: "04.png"
+    source_sha256: "ee10380483a27f8fac91c4208297ef0f58c8c68bf5cd8322854493da542c3a2f"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (13 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_brow"
+      item_007: "r_brow"
+      item_008: "l_eye"
+      item_009: "r_eye"
+      item_010: "nose"
+      item_011: "mouth"
+      item_012: "l_lip"
+      item_013: "u_lip"
+    foreground_pixels: 94333
+    background_pixels: 167811
+    skin_fraction: 0.22198104858398438
+    class_counts:
+      background: 167811
+      neck: 23950
+      skin: 58191
+      cloth: 1331
+      l_ear: 1741
+      r_ear: 1533
+      l_brow: 242
+      r_brow: 160
+      l_eye: 405
+      r_eye: 321
+      nose: 2675
+      mouth: 1478
+      l_lip: 1311
+      u_lip: 995
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/04_1a453e66e8e1d265_panels.png"
+    label_maps_path: "label_maps/04_1a453e66e8e1d265_labels.png"
+    segmentation_maps_path: "segmentation_maps/04_1a453e66e8e1d265_colors.png"
+    overlays_path: "overlays/04_1a453e66e8e1d265_overlay.png"
+    output_sha256:
+      annotated_path: "3c635358bcaac5f5c586bcc500406e214475257913039e52061f10adb583610b"
+      label_maps_path: "1625a0d3facfb3ef9d381880b9f89d3b1b60e43eca494c60b88c31ad9a80b482"
+      segmentation_maps_path: "3fec24a6907e73bd0531b6951a788971164786a4c6c82302df1117293c4ee321"
+      overlays_path: "9faee3373a3efd49e3dbb3eaba2a8c5cd891f98682592e955f1e41ce19055a8c"
+    status: "SUCCESS"
+  item_005:
+    input: "05.png"
+    source_sha256: "0b9e6d50e9ee9bd0ba0fcfc2a664dcea059dc547eec14dbeaca6a93e85dacc8b"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (10 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_brow"
+      item_007: "r_brow"
+      item_008: "nose"
+      item_009: "l_lip"
+      item_010: "u_lip"
+    foreground_pixels: 93722
+    background_pixels: 168422
+    skin_fraction: 0.22391891479492188
+    class_counts:
+      background: 168422
+      neck: 25278
+      skin: 58699
+      cloth: 947
+      l_ear: 1753
+      r_ear: 1598
+      l_brow: 483
+      r_brow: 421
+      l_eye: 0
+      r_eye: 0
+      nose: 2684
+      mouth: 0
+      l_lip: 975
+      u_lip: 884
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/05_8930e35b62e03c73_panels.png"
+    label_maps_path: "label_maps/05_8930e35b62e03c73_labels.png"
+    segmentation_maps_path: "segmentation_maps/05_8930e35b62e03c73_colors.png"
+    overlays_path: "overlays/05_8930e35b62e03c73_overlay.png"
+    output_sha256:
+      annotated_path: "4ab0b6b5ef3c24fbad614e40e1928c1f837162fbab7952aff6e29de6c59b0d0a"
+      label_maps_path: "1b2e6de6b8c88a17ac28fbce7bfec1e4712dfac7c0fc47e5684f48f3c614d464"
+      segmentation_maps_path: "99df294936063e041396c4d74bf552d12bf40afaaeec2d348eca6df02581ba69"
+      overlays_path: "d15a8d6ea9ab1cc52cd0178a6cb407af5d4bd1e09f947e1f25b1fdd30264ed6a"
+    status: "SUCCESS"
+  item_006:
+    input: "06.png"
+    source_sha256: "01c59c2778c650818809392f360668ec75de795dd9acc264abc443408444a6de"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (9 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "nose"
+      item_007: "l_lip"
+      item_008: "u_lip"
+      item_009: "eye_g"
+    foreground_pixels: 98175
+    background_pixels: 163969
+    skin_fraction: 0.18330764770507812
+    class_counts:
+      background: 163969
+      neck: 26721
+      skin: 48053
+      cloth: 4062
+      l_ear: 1706
+      r_ear: 1511
+      l_brow: 0
+      r_brow: 0
+      l_eye: 0
+      r_eye: 0
+      nose: 2648
+      mouth: 0
+      l_lip: 987
+      u_lip: 885
+      hair: 0
+      eye_g: 11602
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/06_0ba7ca29d9aaf5ce_panels.png"
+    label_maps_path: "label_maps/06_0ba7ca29d9aaf5ce_labels.png"
+    segmentation_maps_path: "segmentation_maps/06_0ba7ca29d9aaf5ce_colors.png"
+    overlays_path: "overlays/06_0ba7ca29d9aaf5ce_overlay.png"
+    output_sha256:
+      annotated_path: "f54c8a00962bd27fa7a5f314ee7b158deb818ea74b400133b65f7f4142e61faf"
+      label_maps_path: "1cbd7f4994737811bc19620a7a778bf771fab057c5f53d31cb14997a5401bda2"
+      segmentation_maps_path: "dc60c93363dbb42c9062e8fb2a0755a513be815b1a863f7bfd7f24b174df2050"
+      overlays_path: "11a8dddc45d59d3af75ed74e7a1950c61669ccb54aa78e1522a98553929d9cbe"
+    status: "SUCCESS"
+  item_007:
+    input: "07.png"
+    source_sha256: "3b56b7350337c02dcb3e91b21870a7d80619126949fb623972bc8e53b01a3e20"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (11 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_eye"
+      item_007: "r_eye"
+      item_008: "nose"
+      item_009: "l_lip"
+      item_010: "u_lip"
+      item_011: "hat"
+    foreground_pixels: 95466
+    background_pixels: 166678
+    skin_fraction: 0.13438796997070312
+    class_counts:
+      background: 166678
+      neck: 23491
+      skin: 35229
+      cloth: 2644
+      l_ear: 1583
+      r_ear: 1498
+      l_brow: 0
+      r_brow: 0
+      l_eye: 411
+      r_eye: 386
+      nose: 2549
+      mouth: 0
+      l_lip: 987
+      u_lip: 877
+      hair: 0
+      eye_g: 0
+      hat: 25811
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/07_9e02727d0a17dacb_panels.png"
+    label_maps_path: "label_maps/07_9e02727d0a17dacb_labels.png"
+    segmentation_maps_path: "segmentation_maps/07_9e02727d0a17dacb_colors.png"
+    overlays_path: "overlays/07_9e02727d0a17dacb_overlay.png"
+    output_sha256:
+      annotated_path: "59d1ca531c79afcbe11be8c0410c84405003978cb364ad0dc87700ba282e3ab2"
+      label_maps_path: "defc7c28a361e6463dabb69dd03122305875540be189241ed22693c0c5f7383f"
+      segmentation_maps_path: "f95249304f8cc78a93addfa264e12967651835f056a70826b86643d87170a6fb"
+      overlays_path: "033175d2541ef50e2047a9d418930fd5fea01643f3f61fd73a72ece013098eda"
+    status: "SUCCESS"
+  item_008:
+    input: "08.png"
+    source_sha256: "a043a4059c26efc185e77f2b630008f61d5878461f3ddfaaeb9f3e164605fc83"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (10 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_eye"
+      item_007: "nose"
+      item_008: "l_lip"
+      item_009: "u_lip"
+      item_010: "hair"
+    foreground_pixels: 108240
+    background_pixels: 153904
+    skin_fraction: 0.10843276977539062
+    class_counts:
+      background: 153904
+      neck: 21590
+      skin: 28425
+      cloth: 191
+      l_ear: 904
+      r_ear: 349
+      l_brow: 0
+      r_brow: 0
+      l_eye: 387
+      r_eye: 0
+      nose: 2068
+      mouth: 0
+      l_lip: 977
+      u_lip: 860
+      hair: 52489
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/08_6139571ad89cf311_panels.png"
+    label_maps_path: "label_maps/08_6139571ad89cf311_labels.png"
+    segmentation_maps_path: "segmentation_maps/08_6139571ad89cf311_colors.png"
+    overlays_path: "overlays/08_6139571ad89cf311_overlay.png"
+    output_sha256:
+      annotated_path: "525811b5bd3d29db2ed9293813087475c3a80deb0e80fdcae7f5515ae3c9c8bc"
+      label_maps_path: "1f404f88a39e076b6036871f8ae3fc054d7ca003d957e9d72f430c3e4c593c8d"
+      segmentation_maps_path: "9e92f81efd8fda61124e40ee0962ab87988b5daa17889c228ff49b1b869c548f"
+      overlays_path: "a10c119d43d8ca8bb3983e1cb989cb3e85d8ca8c5e8879e99de3bfb50a6d38eb"
+    status: "SUCCESS"
+  item_009:
+    input: "09.png"
+    source_sha256: "42f5377e95b30e49711d8c6cad9326fa82aae7ce048c3cb8a7bf08551f1f36af"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (12 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "cloth"
+      item_004: "l_ear"
+      item_005: "r_ear"
+      item_006: "l_brow"
+      item_007: "r_brow"
+      item_008: "l_eye"
+      item_009: "r_eye"
+      item_010: "nose"
+      item_011: "l_lip"
+      item_012: "u_lip"
+    foreground_pixels: 127483
+    background_pixels: 134661
+    skin_fraction: 0.24048233032226562
+    class_counts:
+      background: 134661
+      neck: 20233
+      skin: 63041
+      cloth: 37029
+      l_ear: 1724
+      r_ear: 1302
+      l_brow: 201
+      r_brow: 335
+      l_eye: 390
+      r_eye: 307
+      nose: 2456
+      mouth: 0
+      l_lip: 246
+      u_lip: 219
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/09_e129a903eff27e5c_panels.png"
+    label_maps_path: "label_maps/09_e129a903eff27e5c_labels.png"
+    segmentation_maps_path: "segmentation_maps/09_e129a903eff27e5c_colors.png"
+    overlays_path: "overlays/09_e129a903eff27e5c_overlay.png"
+    output_sha256:
+      annotated_path: "50483691c0b2f1e05f4a6d367076057761e3d01caadf366c40a3b1ad99f0e44a"
+      label_maps_path: "37858843e08227b407a16cc29a6e1a24a4dc8f676fe658a219cefd3f22d9d249"
+      segmentation_maps_path: "cd523b407e25e8f99341bed30b160775dcf427db5bb00ba46b58048b442fff56"
+      overlays_path: "6d68336927a6a61967bc3a27d63e3dc5548bc43247b5325eff34425fc9c4f0e1"
+    status: "SUCCESS"
+  item_010:
+    input: "10.png"
+    source_sha256: "527f2d32df407216152a23cc2ae15643a9ecd0000277bdead29c6ed4f324a920"
+    original_width: 1254
+    original_height: 1254
+    input_width: 512
+    input_height: 512
+    association_iou: 1.0
+    foreground_classes: (11 items)
+      item_001: "neck"
+      item_002: "skin"
+      item_003: "l_ear"
+      item_004: "r_ear"
+      item_005: "l_brow"
+      item_006: "r_brow"
+      item_007: "l_eye"
+      item_008: "r_eye"
+      item_009: "nose"
+      item_010: "l_lip"
+      item_011: "u_lip"
+    foreground_pixels: 91372
+    background_pixels: 170772
+    skin_fraction: 0.22412490844726562
+    class_counts:
+      background: 170772
+      neck: 23595
+      skin: 58753
+      cloth: 0
+      l_ear: 1712
+      r_ear: 1550
+      l_brow: 379
+      r_brow: 106
+      l_eye: 404
+      r_eye: 338
+      nose: 2734
+      mouth: 0
+      l_lip: 902
+      u_lip: 899
+      hair: 0
+      eye_g: 0
+      hat: 0
+      ear_r: 0
+      neck_l: 0
+    annotated_path: "annotated_images/10_5a57901b94b657ef_panels.png"
+    label_maps_path: "label_maps/10_5a57901b94b657ef_labels.png"
+    segmentation_maps_path: "segmentation_maps/10_5a57901b94b657ef_colors.png"
+    overlays_path: "overlays/10_5a57901b94b657ef_overlay.png"
+    output_sha256:
+      annotated_path: "52131a3ee38037a9f52526d792ea14d1fc90d325b51f58b8c2e06808bb24d7bd"
+      label_maps_path: "d92bc088b5a363d98be740e3258a6faeec5cc11a3d99c94c771720c20a7353a6"
+      segmentation_maps_path: "b3cab3b9fde780fcf4a6b2f81cdef37ca7f7e5d25c7d70213b577dc1f708104a"
+      overlays_path: "22d445f0bbec11b6fa80a65ab55b0b2d63f8bab05474a2fc8e10507090365890"
+    status: "SUCCESS"

@@ -1,0 +1,80 @@
+PhysioTrack Gaze Estimation - Synthetic Qualitative Demonstration
+==============================================================
+
+Status: COMPLETE
+Evaluation type: qualitative only (not MPIIFaceGaze benchmark)
+Source: validation/synthetic_media/gaze_estimation_media
+Output: validation/gaze_estimation/results/synthetic_demo
+
+Discovered images: 12
+Successfully processed images: 12
+Failed images: 0
+Faces detected: 14
+Displayed faces: 14
+Faces with gaze output: 13
+Faces without gaze output: 1
+Gaze arrows drawn: 13
+Detections below display threshold: 0
+Invalid face results: 0
+Observation CSV rows: 14
+
+Configuration
+-------------
+Device: cpu
+Model mode: eth-xgaze
+Detector confidence threshold: 0.001
+Display confidence threshold: 0.25
+Gaze min IoU: 0.1
+Synthetic camera model: per-image-size pinhole camera with focal=max(width,height) and zero distortion
+Ground truth: not used
+Benchmark accuracy metrics: not calculated
+
+Images
+------
+01.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: a5e709798c5b27620b9e2ef348c9f3c927e412df744f285d4df50c942df576a2
+  Annotated image: images/01_4cabcf2b3682232b_annotated.png
+02.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 396ff087478afd9ae7567450264465013e125298172aa746bf1c50cf6da2baa3
+  Annotated image: images/02_0ec4dd27e244bdd3_annotated.png
+03.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 8563dd5e6b59c4b2d5c49ae2befc5f08d9b040547099335a1d141c314e09cfb3
+  Annotated image: images/03_04903e22460dfe33_annotated.png
+04.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 0a94b01b31757177fca23540195a70d6f22f4184909e095bed6d0ab50d350390
+  Annotated image: images/04_1a453e66e8e1d265_annotated.png
+05.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 76b4a94d4069235b4705e42ad3796dee5f9d912741855c9cf10d60ed5ad5208f
+  Annotated image: images/05_8930e35b62e03c73_annotated.png
+06.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: cde46774f4d535aeabea2a5265c520cbddb232e0e3e6c0c8083962ec97341bda
+  Annotated image: images/06_0ba7ca29d9aaf5ce_annotated.png
+07.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: fee816258d32f2b82f60441f532945c29f1461b790bd8b548c22860765b1fd88
+  Annotated image: images/07_9e02727d0a17dacb_annotated.png
+08.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: acae363119bb30c21d0f33967c690d83e13e63928bab5be734de96f7389ed847
+  Annotated image: images/08_6139571ad89cf311_annotated.png
+09.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 4ac579ca0b87aa73a4bd0737f03d3d5bc1992974e98b0aa2f60eff5b560fd8e4
+  Annotated image: images/09_e129a903eff27e5c_annotated.png
+10.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: 3de6b708b83030eb7d70321be2de4878d3a3eae00ed9abbc71228d6d22167d1d
+  Annotated image: images/10_5a57901b94b657ef_annotated.png
+11.png: SUCCESS; faces=1; gaze=1
+  Input SHA-256: a435ed12769eca15af6319573f8d938d44b2a243986d5488c51623e0ef1c7a45
+  Annotated image: images/11_501f9bdfba64d823_annotated.png
+12.png: SUCCESS; faces=3; gaze=2
+  Input SHA-256: e55723dc536d1dd360b7a7b95066553ef59e88a1b18e5e460c0e56f06c95a969
+  Annotated image: images/12_9abe4c6267a0e841_annotated.png
+
+Published files
+---------------
+images/
+gaze_observations.csv
+synthetic_demo_examples.png
+synthetic_demo_summary.json
+synthetic_demo_summary.txt
+
+Interpretation: visual demonstrations and model-predicted gaze directions only; there are no synthetic ground-truth gaze labels here.
+Reproduction: use identical media, implementation, dependencies, model weights and synthetic camera assumptions.

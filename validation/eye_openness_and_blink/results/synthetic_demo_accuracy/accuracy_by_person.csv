@@ -1,0 +1,8 @@
+video,person_label,track_id,gt_blinks,predicted_blinks,tp,fp,fn,precision,recall,f1,matched_mean_tiou,prolonged_closures
+01_normal_blink.mp4,person_1,1,5,5,5,0,0,1.0,1.0,1.0,0.5555555555555556,0
+02_fast_blink.mp4,person_1,1,5,0,0,0,5,0.0,0.0,0.0,,0
+03_prolonged_closure.mp4,person_1,1,3,5,3,2,0,0.6,1.0,0.7499999999999999,0.5555555555555556,2
+04_multi_person_blink.mp4,left,1,5,5,5,0,0,1.0,1.0,1.0,0.7142857142857143,0
+04_multi_person_blink.mp4,center,2,5,5,5,0,0,1.0,1.0,1.0,0.7142857142857143,0
+04_multi_person_blink.mp4,right,3,5,5,5,0,0,1.0,1.0,1.0,0.7142857142857143,0
+05_head_motion_blink.mp4,person_1,1,5,5,5,0,0,1.0,1.0,1.0,0.625,0

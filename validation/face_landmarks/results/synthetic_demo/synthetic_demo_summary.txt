@@ -1,0 +1,222 @@
+PhysioTrack Face Landmarks - Synthetic Qualitative Demonstration
+=================================================================
+
+type: "synthetic_qualitative_face_landmarks_demonstration"
+
+benchmark_evaluation: false
+
+project: "physiotrack-v2"
+
+input_directory: "validation/synthetic_media/face_landmarks_media"
+
+output_directory: "validation/face_landmarks/results/synthetic_demo"
+
+component_imports:
+  Face: "src/physiotrack/face/detect.py"
+  FaceAnalysis: "src/physiotrack/face/analysis.py"
+  FaceAnalysisConfig: "src/physiotrack/face/config.py"
+
+configuration:
+  detector: "physiotrack.face.Face"
+  pipeline: "physiotrack.face.FaceAnalysis"
+  detector_confidence: 0.25
+  detector_iou: 0.45
+  max_detections: 20
+  landmarker_model_path: "face_landmarker.task"
+  landmarker_model_sha256: "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
+  device: "cpu"
+  tracking_enabled: false
+  ground_truth_used: false
+  benchmark_metrics_calculated: false
+  expected_native_landmarks_per_face: 478
+
+environment:
+  python: "3.11.17"
+  opencv: "5.0.0"
+  numpy: "2.4.6"
+  platform: "Windows"
+  mediapipe: "1.1.0"
+  torch: "2.14.1"
+  ultralytics: "8.4.177"
+
+note: "Qualitative demonstration only. Uses the real face detector and the real face-landmarks component. No 300-W annotations or NME calculations are used here."
+
+status: "COMPLETE"
+
+images_discovered: 10
+
+images_succeeded: 10
+
+images_failed: 0
+
+images_without_faces: 0
+
+faces_detected: 12
+
+faces_with_landmarks: 12
+
+faces_without_landmarks: 0
+
+invalid_faces: 0
+
+landmark_observations: 5736
+
+out_of_frame_landmarks: 0
+
+result_rows: 5736
+
+landmark_observations_csv: "landmark_observations.csv"
+
+summary_contact_sheet: "synthetic_demo_examples.png"
+
+images: (10 entries)
+  [1]:
+    input: "01.png"
+    source_sha256: "845bccb29ba30b03e8124403fd31cdbbc51634fc76270933ccdf4192ac1cadb9"
+    output_image: "annotated_images/01_4cabcf2b3682232b_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [2]:
+    input: "02.png"
+    source_sha256: "b9622b488d94265e8447a0ba2a629af4b092cffe07f9d279d9305e7d3223d627"
+    output_image: "annotated_images/02_0ec4dd27e244bdd3_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [3]:
+    input: "03.png"
+    source_sha256: "a7c5d4b224a8cace087c9741f1d9141266e4cc8a42d16958d70d2f5dc9f09974"
+    output_image: "annotated_images/03_04903e22460dfe33_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [4]:
+    input: "04.png"
+    source_sha256: "b3655ee1d037b7a0128e2a4a8ae197e7813d5714b584084c71de296215cc4539"
+    output_image: "annotated_images/04_1a453e66e8e1d265_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [5]:
+    input: "05.png"
+    source_sha256: "09ed1f2f721e7eaa9f19bf755bb1331db6ef2c35da4e02214df344f99a3ce6d1"
+    output_image: "annotated_images/05_8930e35b62e03c73_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [6]:
+    input: "06.png"
+    source_sha256: "1791cfa69549b05e203986089eca67bafabaa986128e7323509e6ed6ef944b12"
+    output_image: "annotated_images/06_0ba7ca29d9aaf5ce_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [7]:
+    input: "07.png"
+    source_sha256: "950c836be828a5253a90d5193dc69b41048a861d00b7a74c88401957c9d51833"
+    output_image: "annotated_images/07_9e02727d0a17dacb_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [8]:
+    input: "08.png"
+    source_sha256: "5bcb0a52bb782028b1a1e83749d362acd5c136228fed68408607d08c7b123c7b"
+    output_image: "annotated_images/08_6139571ad89cf311_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [9]:
+    input: "09.png"
+    source_sha256: "e1fa12dd6937641755d98ccad97179e28bcefdb36d8eeb72269e22c107897262"
+    output_image: "annotated_images/09_e129a903eff27e5c_annotated.png"
+    width: 1122
+    height: 1402
+    faces_detected: 1
+    faces_drawn: 1
+    faces_with_landmarks: 1
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 478
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+  [10]:
+    input: "10.png"
+    source_sha256: "263f896b51c8fd15e69dfa70411ca2c646b5175c5d5ef07cb1ff047f4a0ce456"
+    output_image: "annotated_images/10_5a57901b94b657ef_annotated.png"
+    width: 1448
+    height: 1086
+    faces_detected: 3
+    faces_drawn: 3
+    faces_with_landmarks: 3
+    faces_without_landmarks: 0
+    invalid_faces: 0
+    landmark_observations: 1434
+    out_of_frame_landmarks: 0
+    status: "SUCCESS"
+
+reproducibility:
+  script_sha256: "9efef84d929a59eeb502277860fa56d6bbce5a470169de10eb72c15ee6466a88"
+  source_sha256:
+    Face: "94498dc545ad199339079ffc7a7aee693c6f6f75ed497299e6b87db1c413c6dc"
+    FaceAnalysis: "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084"
+    FaceAnalysisConfig: "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc"
+  input_sha256_recorded_per_image: true
+  model_sha256_recorded: true
+  exact_numerical_reproduction_requires_matching_model_and_environment: true

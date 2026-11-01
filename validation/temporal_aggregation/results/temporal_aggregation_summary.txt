@@ -1,0 +1,40 @@
+PhysioTrack Temporal Aggregation Correctness Validation
+=======================================================
+
+Purpose
+-------
+Validate the deterministic mathematical and state-management behavior of the current PhysioTrack FaceTemporalAggregator implementation using controlled sequences with independently computed expected results.
+
+Implementation
+--------------
+src/physiotrack/face/temporal.py
+
+Validation Scope
+----------------
+The validation covers constructor constraints, temporal-window derivation, population mean/std/min/max statistics, availability filtering, non-finite numerical filtering, bounded sliding-window behavior, per-person state isolation, per-person and global reset behavior, tracked-instance requirements, blink-event aggregation, dominant-emotion aggregation, and all numerical feature groups currently summarized by the component.
+
+This is a deterministic correctness validation, not an external predictive-accuracy benchmark. It does not establish the scientific accuracy of upstream predictive components.
+
+Results
+-------
+Validation cases: 8
+Total checks: 150
+Passed checks: 150
+Failed checks: 0
+Pass rate: 1.000000
+Maximum numerical absolute error: 0
+
+Case Status
+-----------
+availability_and_non_finite: PASS
+constructor_and_window: PASS
+empty_numeric_feature: PASS
+full_numeric_summary: PASS
+person_isolation: PASS
+rejected_updates: PASS
+reset_behavior: PASS
+sliding_window: PASS
+
+Overall Status
+--------------
+PASS

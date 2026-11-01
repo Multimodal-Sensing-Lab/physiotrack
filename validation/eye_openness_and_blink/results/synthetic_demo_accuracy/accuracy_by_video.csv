@@ -1,0 +1,6 @@
+video,gt_blinks,predicted_blinks,tp,fp,fn,precision,recall,f1,matched_mean_tiou,prolonged_closures,fps,frames
+01_normal_blink.mp4,5,5,5,0,0,1.0,1.0,1.0,0.5555555555555556,0,30.0,300
+02_fast_blink.mp4,5,0,0,0,5,0.0,0.0,0.0,,0,30.0,300
+03_prolonged_closure.mp4,3,5,3,2,0,0.6,1.0,0.7499999999999999,0.5555555555555556,2,30.0,300
+04_multi_person_blink.mp4,15,15,15,0,0,1.0,1.0,1.0,0.7142857142857141,0,30.0,300
+05_head_motion_blink.mp4,5,5,5,0,0,1.0,1.0,1.0,0.625,0,30.0,300

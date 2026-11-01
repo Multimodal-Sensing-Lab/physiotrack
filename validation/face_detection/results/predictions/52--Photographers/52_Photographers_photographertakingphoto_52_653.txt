@@ -1,0 +1,4 @@
+52--Photographers/52_Photographers_photographertakingphoto_52_653.jpg
+2
+465.261 146.662 465.951 521.304 0.369360
+473.885 145.425 242.236 299.509 0.004445

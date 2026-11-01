@@ -1,0 +1,4 @@
+52--Photographers/52_Photographers_taketouristphotos_52_86.jpg
+2
+423.674 361.065 75.610 95.239 0.831994
+0.000 12.580 61.685 89.943 0.006952

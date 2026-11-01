@@ -1,0 +1,142 @@
+ECCV 2016 Music Video Face Tracking Validation
+
+Dataset:
+ECCV 2016 Music Video Face Tracking Dataset
+
+Dataset coverage:
+Videos evaluated: 8
+Total frames: 42007
+Ground-truth face annotations: 95302
+
+Evaluation setup:
+Face detector confidence: 0.25
+Face detector IoU: 0.45
+Tracker: OC-SORT
+Device: CPU
+GT/prediction matching IoU threshold: 0.5
+Evaluation library: motmetrics 1.4.0
+
+Metrics:
+Recall, Precision, F1, FAF, IDS, Frag, MOTA, MOTP (mean matched IoU), IDF1
+
+Results:
+
+Apink
+Recall: 86.31%
+Precision: 88.10%
+F1: 87.19%
+FAF: 0.1608
+IDS: 211
+Frag: 248
+MOTA: 71.75%
+MOTP: 65.77%
+IDF1: 6.03%
+
+BrunoMars
+Recall: 84.66%
+Precision: 66.50%
+F1: 74.49%
+FAF: 1.0990
+IDS: 460
+Frag: 896
+MOTA: 39.26%
+MOTP: 68.11%
+IDF1: 6.40%
+
+Darling
+Recall: 82.62%
+Precision: 84.93%
+F1: 83.76%
+FAF: 0.2954
+IDS: 477
+Frag: 582
+MOTA: 62.96%
+MOTP: 67.04%
+IDF1: 5.50%
+
+GirlsAloud
+Recall: 89.71%
+Precision: 87.53%
+F1: 88.61%
+FAF: 0.3784
+IDS: 504
+Frag: 658
+MOTA: 73.86%
+MOTP: 67.75%
+IDF1: 6.72%
+
+HelloBubble
+Recall: 86.35%
+Precision: 86.88%
+F1: 86.61%
+FAF: 0.1807
+IDS: 138
+Frag: 201
+MOTA: 70.67%
+MOTP: 70.86%
+IDF1: 8.41%
+
+PussycatDolls
+Recall: 82.39%
+Precision: 56.06%
+F1: 66.72%
+FAF: 1.5528
+IDS: 155
+Frag: 782
+MOTA: 16.72%
+MOTP: 62.98%
+IDF1: 8.24%
+
+T-ara
+Recall: 86.03%
+Precision: 95.14%
+F1: 90.36%
+FAF: 0.1405
+IDS: 263
+Frag: 354
+MOTA: 79.83%
+MOTP: 75.31%
+IDF1: 5.78%
+
+Westlife
+Recall: 93.50%
+Precision: 39.75%
+F1: 55.79%
+FAF: 2.8112
+IDS: 94
+Frag: 367
+MOTA: -49.02%
+MOTP: 65.10%
+IDF1: 5.62%
+
+OVERALL
+Recall: 86.47%
+Precision: 68.37%
+F1: 76.36%
+FAF: 0.9076
+IDS: 2302
+Frag: 4088
+MOTA: 44.04%
+MOTP: 67.89%
+IDF1: 6.53%
+
+Overall count statistics:
+GT objects: 95302
+Predictions: 120531
+Matches: 80102
+False negatives: 12898
+False positives: 38127
+Identity switches: 2302
+Fragmentations: 4088
+
+Runtime:
+Total frames: 42007
+Total runtime: 94.99 min
+Overall processing speed: 7.37 FPS
+
+Generated outputs:
+Detailed results CSV: results/eccv16_tracking_results.csv
+Validation summary: results/eccv16_tracking_summary.txt
+Thesis table CSV: results/eccv16_tracking_thesis_table.csv
+Thesis table Markdown: results/eccv16_tracking_thesis_table.md
+Metrics figure: results/figures/eccv16_tracking_metrics.png

@@ -1,0 +1,82 @@
+PhysioTrack Head Pose - Synthetic Qualitative Demonstration
+========================================================
+
+Status: COMPLETE
+Evaluation type: qualitative only (not AFLW benchmark)
+Source: validation/synthetic_media/head_pose_media
+Output: validation/head_pose/results/synthetic_demo
+
+Discovered images: 13
+Successfully processed images: 13
+Failed images: 0
+Faces detected: 16
+Displayed faces: 15
+Faces with pose: 15
+Faces without pose: 0
+Pose axes drawn: 15
+Detections below display threshold: 1
+Invalid face results: 0
+Pose observation CSV rows: 15
+
+Configuration
+-------------
+Device: cpu
+Detector confidence threshold: 0.001
+Display confidence threshold: 0.25
+Detector IoU: 0.45
+Maximum detections: 10000
+Ground truth: not used
+Benchmark accuracy metrics: not calculated
+
+Images
+------
+01.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 54398b7881e0a5031f85ca2c7e5fd305a70b9c3d09feea45b15ba5f5ce43c6f3
+  Annotated image: images/01_4cabcf2b3682232b_annotated.png
+02.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 4a50316290beac3d40276a5ff1a2060d6b70f1373f9ddbc42d75270e7ed9ef34
+  Annotated image: images/02_0ec4dd27e244bdd3_annotated.png
+03.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 057b6487ec22524fa32a51041b77884fb4120146de8ae5680b105d2c0179d2e7
+  Annotated image: images/03_04903e22460dfe33_annotated.png
+04.png: SUCCESS; faces=2; pose=1
+  Input SHA-256: 559bb334752b071ac48ce75ae6d955f20e88f0efe6b2df6b9fec9ddeb1ac0d08
+  Annotated image: images/04_1a453e66e8e1d265_annotated.png
+05.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: f4644cec91578ab40e2fe2d19cb44a93b027ecb9ac97feb2347bc61baddf870e
+  Annotated image: images/05_8930e35b62e03c73_annotated.png
+06.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 8bb5817a5a63b7a5e21a9fb03bc38e752b22eecaaad297306c6f009f6277ccc8
+  Annotated image: images/06_0ba7ca29d9aaf5ce_annotated.png
+07.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 245c7d477eb2734f73cf9b2306c335a80f1ccd8f20c80e9818193154b8bc0c18
+  Annotated image: images/07_9e02727d0a17dacb_annotated.png
+08.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 881b0a470d3dc62cb84f950a8204332fc1de55d9947a2effc7456ef0134b4fa0
+  Annotated image: images/08_6139571ad89cf311_annotated.png
+09.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 945b620a3455345e9fba7c21ebce32e3eaacca11499455746ecb48b03a9661a8
+  Annotated image: images/09_e129a903eff27e5c_annotated.png
+10.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 9ec78d3819d65b1c6acf1a52c9a1267b9a69044429819caea797667ba7da9d60
+  Annotated image: images/10_5a57901b94b657ef_annotated.png
+11.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: 6766c44604548fbd8495de08a84e321f60a2e0679957e523864f5c2ab8471e64
+  Annotated image: images/11_501f9bdfba64d823_annotated.png
+12.png: SUCCESS; faces=1; pose=1
+  Input SHA-256: fad62072a1943a87a8245552086ab0ab00de559317ef35e529d0e8cb68e3d748
+  Annotated image: images/12_9abe4c6267a0e841_annotated.png
+13.png: SUCCESS; faces=3; pose=3
+  Input SHA-256: d7a55a4897e7a2089ff4ead907bccb461260bb8d96a31ce8e39c790a4eaea4f2
+  Annotated image: images/13_6540c9c7fd613a96_annotated.png
+
+Published files
+---------------
+images/
+head_pose_observations.csv
+synthetic_demo_examples.png
+synthetic_demo_summary.json
+synthetic_demo_summary.txt
+
+Interpretation: visual demonstrations and model-predicted angles, not ground-truth pose accuracy.
+Reproduction: use identical media, implementation, dependencies and model weights.

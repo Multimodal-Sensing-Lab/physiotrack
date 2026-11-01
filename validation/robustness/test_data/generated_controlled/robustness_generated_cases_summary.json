@@ -1,0 +1,77 @@
+{
+  "generator": "robustness_dataset_generator",
+  "evidence_type": "controlled_robustness_test_input_generation",
+  "source": {
+    "source_file": "validation/integration/test_data/images/frontal_1.jpg",
+    "width": 4160,
+    "height": 6240,
+    "source_sha256": "31bb53b9a1b8c0d2ed1cf667651363e14e9e4071deb23fbd4f0697072e3896ff"
+  },
+  "cases": 7,
+  "case_order": [
+    "baseline",
+    "dim_lighting",
+    "overexposed_lighting",
+    "gaussian_blur",
+    "motion_blur",
+    "small_face",
+    "partial_occlusion"
+  ],
+  "conditions": {
+    "baseline": {
+      "type": "unmodified_reference"
+    },
+    "dim_lighting": {
+      "factor": 0.35,
+      "type": "global_intensity_scale"
+    },
+    "overexposed_lighting": {
+      "alpha": 1.6,
+      "beta": 55.0,
+      "type": "linear_overexposure"
+    },
+    "gaussian_blur": {
+      "kernel_size": 31,
+      "sigma": 7.0,
+      "type": "gaussian_blur"
+    },
+    "motion_blur": {
+      "kernel_size": 31,
+      "type": "horizontal_motion_blur"
+    },
+    "small_face": {
+      "background_bgr": [
+        189,
+        186,
+        199
+      ],
+      "paste_box": [
+        1352,
+        2028,
+        2808,
+        4212
+      ],
+      "scale": 0.35,
+      "type": "scene_downscale_centered"
+    },
+    "partial_occlusion": {
+      "fill_gray": 200,
+      "normalized_box": [
+        0.36,
+        0.44,
+        0.64,
+        0.53
+      ],
+      "pixel_box": [
+        1498,
+        2746,
+        2662,
+        3307
+      ],
+      "type": "fixed_normalized_lower_face_occlusion"
+    }
+  },
+  "dataset_source_modified": false,
+  "interpretation": "These images are deterministic controlled stress-test inputs derived from a single accepted frontal reference image. They are not additional natural benchmark samples and must not be used as independent accuracy observations.",
+  "status": "PASS"
+}

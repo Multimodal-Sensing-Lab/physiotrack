@@ -1,0 +1,5 @@
+Axis,MAE (degrees),Median absolute error (degrees),Std. absolute error (degrees)
+Yaw,11.1036,7.782,12.7337
+Pitch,13.7046,7.1886,25.4115
+Roll,13.7529,4.9559,27.0779
+Overall,12.8537,6.6887,22.6988

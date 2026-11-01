@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "annotation_source": "independent_manual_review_of_original_synthetic_video",
+  "frame_indexing": "1_based_inclusive",
+  "instructions": "Review original unannotated videos independently of model results. For every true blink mark [start_frame,end_frame], from first visible eyelid closing movement through last blink/reopening frame. Mark prolonged closed-eye periods separately under prolonged_closure_intervals. For multi-person video, label left/center/right and verify track_id correspondence visually. Set each person reviewed=true and each video reviewed=true ONLY after full manual annotation; empty lists mean independently verified zero events. GT must not be derived from predicted blink pulses.",
+  "video_annotations": [
+    {
+      "video": "01_normal_blink.mp4",
+      "source_sha256": "15c485b2088ddd4416fe0cfaa446c5cd40b5f1b1438c9908dc5874dc7928141c",
+      "frames": 300,
+      "fps": 30.0,
+      "reviewed": true,
+      "persons": [
+        {
+          "person_label": "person_1",
+          "track_id": 1,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              32,
+              40
+            ],
+            [
+              86,
+              94
+            ],
+            [
+              140,
+              148
+            ],
+            [
+              194,
+              202
+            ],
+            [
+              248,
+              256
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        }
+      ]
+    },
+    {
+      "video": "02_fast_blink.mp4",
+      "source_sha256": "6cce417ca19d4f841cb245bde29cdcb2aa26f229d4970563f95f6b7f2f865c2f",
+      "frames": 300,
+      "fps": 30.0,
+      "reviewed": true,
+      "persons": [
+        {
+          "person_label": "person_1",
+          "track_id": 1,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              31,
+              32
+            ],
+            [
+              85,
+              87
+            ],
+            [
+              139,
+              141
+            ],
+            [
+              193,
+              194
+            ],
+            [
+              247,
+              249
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        }
+      ]
+    },
+    {
+      "video": "03_prolonged_closure.mp4",
+      "source_sha256": "277f58a1ea3e543667207d2ff86dd9c5cfa058037aea8f40f95dff59c6f69564",
+      "frames": 300,
+      "fps": 30.0,
+      "reviewed": true,
+      "persons": [
+        {
+          "person_label": "person_1",
+          "track_id": 1,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              17,
+              25
+            ],
+            [
+              137,
+              145
+            ],
+            [
+              272,
+              280
+            ]
+          ],
+          "prolonged_closure_intervals": [
+            [
+              59,
+              125
+            ],
+            [
+              179,
+              245
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "video": "04_multi_person_blink.mp4",
+      "source_sha256": "99fcd1a4006c1fd77ba8ef32eeb834ceb2a0231ad0d9910091abfe9a29a0762d",
+      "frames": 300,
+      "fps": 30.0,
+      "reviewed": true,
+      "persons": [
+        {
+          "person_label": "left",
+          "track_id": 1,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              33,
+              39
+            ],
+            [
+              87,
+              93
+            ],
+            [
+              153,
+              159
+            ],
+            [
+              213,
+              219
+            ],
+            [
+              267,
+              273
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        },
+        {
+          "person_label": "center",
+          "track_id": 2,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              51,
+              57
+            ],
+            [
+              87,
+              93
+            ],
+            [
+              177,
+              183
+            ],
+            [
+              213,
+              219
+            ],
+            [
+              279,
+              285
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        },
+        {
+          "person_label": "right",
+          "track_id": 3,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              69,
+              75
+            ],
+            [
+              117,
+              123
+            ],
+            [
+              177,
+              183
+            ],
+            [
+              213,
+              219
+            ],
+            [
+              255,
+              261
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        }
+      ]
+    },
+    {
+      "video": "05_head_motion_blink.mp4",
+      "source_sha256": "23bc299aabb7d6ad90b7c1e0d150e8f8f0e140f88c699344f5518d3808863314",
+      "frames": 300,
+      "fps": 30.0,
+      "reviewed": true,
+      "persons": [
+        {
+          "person_label": "person_1",
+          "track_id": 1,
+          "reviewed": true,
+          "blink_intervals": [
+            [
+              22,
+              29
+            ],
+            [
+              72,
+              79
+            ],
+            [
+              142,
+              149
+            ],
+            [
+              197,
+              204
+            ],
+            [
+              262,
+              269
+            ]
+          ],
+          "prolonged_closure_intervals": []
+        }
+      ]
+    }
+  ],
+  "annotation_notes": "Event intervals annotated by visual inspection of ORIGINAL unannotated 30-fps videos and frame-by-frame eye crops; pixel-change curves used as independent image-based boundary aids. Not derived from PhysioTrack blink predictions. Intervals are 1-based inclusive and include visible closing and reopening. Subtle eyelid transitions may have about one-frame boundary uncertainty. Two sustained closures in video 03 are excluded from blink events."
+}

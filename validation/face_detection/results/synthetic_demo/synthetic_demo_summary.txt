@@ -1,0 +1,176 @@
+PhysioTrack-v2 Face Detection - Synthetic Qualitative Demonstration
+====================================================================
+
+Human-readable rendering of synthetic_demo_summary.json
+No ground truth or detection-accuracy benchmark is used.
+
+type: "synthetic_qualitative_face_detection_demonstration"
+benchmark_evaluation: false
+project: "physiotrack-v2"
+input_directory: "validation/synthetic_media/face_detection_media"
+output_directory: "validation/face_detection/results/synthetic_demo"
+component_imports:
+  Face: "src/physiotrack/face/detect.py"
+  FaceAnalysis: "src/physiotrack/face/analysis.py"
+  FaceAnalysisConfig: "src/physiotrack/face/config.py"
+script_sha256: "360fbbecb02c581fe3476e575b8636bba25ee9b3f19fcfd2a53acb91a2d9bb22"
+component_source_sha256:
+  Face: "94498dc545ad199339079ffc7a7aee693c6f6f75ed497299e6b87db1c413c6dc"
+  FaceAnalysis: "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084"
+  FaceAnalysisConfig: "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc"
+detector:
+  class: "physiotrack.face.Face"
+  pipeline: "physiotrack.face.FaceAnalysis"
+  device: "cpu"
+  confidence_threshold: 0.001
+  display_confidence_threshold: 0.25
+  nms_iou: 0.45
+  max_det: 10000
+  tracking: false
+environment:
+  python: "3.11.17"
+  opencv: "5.0.0"
+  numpy: "2.4.6"
+  torch: "2.14.1"
+  ultralytics: "8.4.177"
+  platform: "Windows"
+video_note: "Independent per-frame detection; frame detections are not unique people. MP4 encoding does not preserve source audio or variable frame timing."
+status: "COMPLETE"
+discovered_files: 10
+successful_files: 10
+failed_files: 0
+total_processed_frames: 10
+total_raw_detections: 19
+total_displayed_detections: 14
+total_invalid_boxes_or_confidence: 0
+files: (10 items)
+  item_001:
+    input: "01.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/01.png_4cabcf2b3682232b_annotated.png"
+    source_sha256: "3e5f8e9288ac790f0bd9a0e45aa9849cfd092f185d3e55694fa886e0e1fd7cee"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 1
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "ce070bb005321e1485a097805ae632342b28d216a3c1f48e75021756c91bdb9a"
+  item_002:
+    input: "02.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/02.png_0ec4dd27e244bdd3_annotated.png"
+    source_sha256: "fb647fe3fa202bd82e571965692f3cd1563e30e3a10ab2dbd97924d1839958f3"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 2
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "c05ee7998fc9b4741eb3a1d5a168744cd29541d3065c1f48349d70170120b8f8"
+  item_003:
+    input: "03.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/03.png_04903e22460dfe33_annotated.png"
+    source_sha256: "9ffcac900afed24e9202720004976614e83a45392b619aa03e0ed47417f65b6e"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 1
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "57be829883def357d50ad768a1fff9d563e95d7c309808f584cfc85055b0e1e4"
+  item_004:
+    input: "04.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/04.png_1a453e66e8e1d265_annotated.png"
+    source_sha256: "8a818040a9bf53eafa691fc57c94448be461a555d3245be0ecab6dd5ae352f63"
+    width: 1448
+    height: 1086
+    frames_processed: 1
+    raw_detections: 2
+    displayed_detections: 2
+    invalid_boxes_or_confidence: 0
+    output_sha256: "06f901ba19bb708d72a9392e31a3369ee6de0ca477a289b612c25b77fffad1a0"
+  item_005:
+    input: "05.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/05.png_8930e35b62e03c73_annotated.png"
+    source_sha256: "e8fe6e96eaaf12c5fb6983c030f58207796ed3c67588e5203440219f58226e37"
+    width: 1448
+    height: 1086
+    frames_processed: 1
+    raw_detections: 6
+    displayed_detections: 5
+    invalid_boxes_or_confidence: 0
+    output_sha256: "c88c002ad741ebe7ac574bbc44d786a175a0fdeed7c688c490937b065b7f1607"
+  item_006:
+    input: "06.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/06.png_0ba7ca29d9aaf5ce_annotated.png"
+    source_sha256: "dd5c71c377d56ae819675bc55fea62913ce0d214ec0aa47765afd88c2d8bc6f8"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 1
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "d769cf832933da1bbdad0ff85f7b63cf25b279e18cb84add855081ff2e6fa7c3"
+  item_007:
+    input: "07.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/07.png_9e02727d0a17dacb_annotated.png"
+    source_sha256: "b5e980a14a2f559a6726847f649a59dcd83990d0b4a167cdf76834252e620504"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 1
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "923d0f02f7d6afe0b17667bde6020af7c0ada1340cc07e8059d1169084b4ad49"
+  item_008:
+    input: "08.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/08.png_6139571ad89cf311_annotated.png"
+    source_sha256: "5d9bb8d76a835be25a855f65100d4ee5968cfc9483889a7b02d19de94af19eb6"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 2
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "b1a582f12c9f23bd1580a91cc1fecd7fc348ad8b2eedf20e57ad81db04cc0028"
+  item_009:
+    input: "09.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/09.png_e129a903eff27e5c_annotated.png"
+    source_sha256: "29991f90c97c49d9eea1938a134dc99d14f3ff11272a453830297526265fe6fa"
+    width: 1086
+    height: 1448
+    frames_processed: 1
+    raw_detections: 3
+    displayed_detections: 1
+    invalid_boxes_or_confidence: 0
+    output_sha256: "65eb7e3b6e6a12e3f055366830cb6c7ba69db83348627eb2667c47e61f0ab994"
+  item_010:
+    input: "10.png"
+    media_type: "image"
+    status: "SUCCESS"
+    output: "images/10.png_5a57901b94b657ef_annotated.png"
+    source_sha256: "d075bca23e00ad49fcd107d6f27e3ffedd7bdb7d5576a05732c0d253f3b45915"
+    width: 1448
+    height: 1086
+    frames_processed: 1
+    raw_detections: 0
+    displayed_detections: 0
+    invalid_boxes_or_confidence: 0
+    output_sha256: "9bc80af2b07018c017d02f749d0d88bfbefc59e6b7f14a58aeaf5151560c9890"

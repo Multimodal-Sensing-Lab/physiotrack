@@ -1,0 +1,219 @@
+{
+  "type": "synthetic_qualitative_face_tracking_demonstration",
+  "benchmark_evaluation": false,
+  "project": "physiotrack-v2",
+  "input_directory": "validation/synthetic_media/face_tracking_media",
+  "output_directory": "validation/face_tracking/results/synthetic_demo",
+  "component_imports": {
+    "Face": "src/physiotrack/face/detect.py",
+    "FaceAnalysis": "src/physiotrack/face/analysis.py",
+    "FaceAnalysisConfig": "src/physiotrack/face/config.py",
+    "FaceTracker": "src/physiotrack/face/tracking.py"
+  },
+  "script_sha256": "424f03d58fab27448df6e3732ccf6530f9390ff22a752862966043fa3cdf2c3d",
+  "component_source_sha256": {
+    "Face": "94498dc545ad199339079ffc7a7aee693c6f6f75ed497299e6b87db1c413c6dc",
+    "FaceAnalysis": "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084",
+    "FaceAnalysisConfig": "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc",
+    "FaceTracker": "e986e295c85c71bd6b5f6b69f5e84f5e84b32be47c71c4cb016c5e45ab9bb0bf"
+  },
+  "configuration": {
+    "detector": "physiotrack.face.Face",
+    "pipeline": "physiotrack.face.FaceAnalysis",
+    "tracker": "physiotrack.face.FaceTracker",
+    "tracker_backend": "ocsort",
+    "detector_confidence": 0.25,
+    "detector_iou": 0.45,
+    "device": "cpu",
+    "tracking_state": "reset_per_video_using_new_FaceTracker",
+    "ground_truth_used": false,
+    "benchmark_metrics_calculated": false,
+    "visual_trail_length": 18,
+    "illustrative_frame_fractions": [
+      0.25,
+      0.5,
+      0.75
+    ],
+    "illustrative_frames_are_decoded_from_saved_annotated_video": true
+  },
+  "environment": {
+    "python": "3.11.17",
+    "opencv": "5.0.0",
+    "numpy": "2.4.6",
+    "torch": "2.14.1",
+    "ultralytics": "8.4.177",
+    "platform": "Windows"
+  },
+  "video_note": "Source audio and variable-frame timestamps are not preserved by OpenCV MP4 encoding. IDs are unique within a sequence, not across different videos. Track observations are not unique people and are not accuracy measurements.",
+  "status": "COMPLETE",
+  "discovered_files": 5,
+  "successful_files": 5,
+  "failed_files": 0,
+  "total_processed_frames": 1560,
+  "total_track_observations": 2553,
+  "total_frames_without_tracks": 71,
+  "total_invalid_track_observations": 0,
+  "total_illustrative_images": 15,
+  "files": [
+    {
+      "input": "01_single_face.mp4",
+      "status": "SUCCESS",
+      "source_sha256": "79d3bac0c62f66efb540c82e4dfc9e027a021ef9cbbb9c7c532f76bd9d16182d",
+      "width": 1280,
+      "height": 720,
+      "source_fps": 30.0,
+      "declared_source_frames": 300,
+      "frames_processed": 300,
+      "frames_with_tracks": 300,
+      "frames_without_tracks": 0,
+      "track_observations": 300,
+      "unique_track_ids": 1,
+      "invalid_track_observations": 0,
+      "output_codec": "mp4v",
+      "verified_output_frames": 300,
+      "output_fps": 30.0,
+      "output_images": [
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000075.png",
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000150.png",
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000225.png"
+      ],
+      "output_video_sha256": "e064bc3334b83cb42213d4ced4e9bee01abf3893672441bf61730aaa509dfddc",
+      "output_observations_sha256": "e2d0145d690a5c0ab53f5837ef59e6b7c765e0e6ed6c4afa04175124d1d2d588",
+      "output_images_sha256": {
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000075.png": "db8935ef9291697122573296860f5b9ff11ff34cacd75f4582d5d8e92ce9ca3e",
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000150.png": "9e5ff2bc92cc4e494e4a8dc63b93f058e660d4e2592a86293ed431b5fe1c72a8",
+        "images/01_single_face.mp4_0bb65bf9446583b3_tracked_frame_000225.png": "ec204d7a5834f0abd495c09261b67867dd25b9f64eaee50c5eec6a0e23757cfb"
+      },
+      "output_video": "videos/01_single_face.mp4_0bb65bf9446583b3_tracked.mp4",
+      "output_observations_csv": "tracks/01_single_face.mp4_0bb65bf9446583b3_observations.csv"
+    },
+    {
+      "input": "02_multiple_faces.mp4",
+      "status": "SUCCESS",
+      "source_sha256": "480a81db8e00b88c92827a2155ac6515b23f35d04a64f06a9000d3c124a449e1",
+      "width": 1280,
+      "height": 720,
+      "source_fps": 30.0,
+      "declared_source_frames": 300,
+      "frames_processed": 300,
+      "frames_with_tracks": 300,
+      "frames_without_tracks": 0,
+      "track_observations": 900,
+      "unique_track_ids": 3,
+      "invalid_track_observations": 0,
+      "output_codec": "mp4v",
+      "verified_output_frames": 300,
+      "output_fps": 30.0,
+      "output_images": [
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000075.png",
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000150.png",
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000225.png"
+      ],
+      "output_video_sha256": "41857e34636ea16157cac37387215e1585ae0f68c8188adc3d1c237b527fc8df",
+      "output_observations_sha256": "7fe8ac6169a64c9224819dd5a28ebed9f283713f828ded2ab11ba908ced13072",
+      "output_images_sha256": {
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000075.png": "bdbcef8291d5d26e3eefd3c1fd8d83cade4bccb3b21b5f69b046fb8df0535015",
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000150.png": "c418d861bc6418203dc577ec17079ce0c427028318c0f2c197199268bfc21b23",
+        "images/02_multiple_faces.mp4_6445d5094b77e237_tracked_frame_000225.png": "df19ca9f55d71857f9f829e2c17e8cd71c5c56dd330deef12688e865fa4ed89f"
+      },
+      "output_video": "videos/02_multiple_faces.mp4_6445d5094b77e237_tracked.mp4",
+      "output_observations_csv": "tracks/02_multiple_faces.mp4_6445d5094b77e237_observations.csv"
+    },
+    {
+      "input": "03_face_occlusion.mp4",
+      "status": "SUCCESS",
+      "source_sha256": "e48f990355d1e8896cd147315715989a2ee388b2e47122c89904043a1cf6b835",
+      "width": 1280,
+      "height": 720,
+      "source_fps": 30.0,
+      "declared_source_frames": 300,
+      "frames_processed": 300,
+      "frames_with_tracks": 272,
+      "frames_without_tracks": 28,
+      "track_observations": 272,
+      "unique_track_ids": 1,
+      "invalid_track_observations": 0,
+      "output_codec": "mp4v",
+      "verified_output_frames": 300,
+      "output_fps": 30.0,
+      "output_images": [
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000075.png",
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000150.png",
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000225.png"
+      ],
+      "output_video_sha256": "1b8c5717f48aac3e3e074b7bf631e61900e6060e618cd597e5829b46c39f6c6e",
+      "output_observations_sha256": "55fb20d6cfb0f6ad7b0d40f4b9d2d6dfa7bdf845b9c770d25436373ae1ee3fc3",
+      "output_images_sha256": {
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000075.png": "5b584857bf280dbcd32cc2dcda90994dec1316dff52b15bea8b979b7b0d4971a",
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000150.png": "3293ecb9172e5af1cc648d49c99535d599faf4b27f80cfa5c1c9e6f1687ec616",
+        "images/03_face_occlusion.mp4_bda96b6dffe65ade_tracked_frame_000225.png": "fc3577affddc72c35e0bfc4817e95bd4063e718bc69f81d03949f2305eb0a57a"
+      },
+      "output_video": "videos/03_face_occlusion.mp4_bda96b6dffe65ade_tracked.mp4",
+      "output_observations_csv": "tracks/03_face_occlusion.mp4_bda96b6dffe65ade_observations.csv"
+    },
+    {
+      "input": "04_enter_exit.mp4",
+      "status": "SUCCESS",
+      "source_sha256": "92b4893389dc4759470a7920786c514d62f5d450607eceefd51da9fd50917189",
+      "width": 1280,
+      "height": 720,
+      "source_fps": 30.0,
+      "declared_source_frames": 360,
+      "frames_processed": 360,
+      "frames_with_tracks": 317,
+      "frames_without_tracks": 43,
+      "track_observations": 481,
+      "unique_track_ids": 3,
+      "invalid_track_observations": 0,
+      "output_codec": "mp4v",
+      "verified_output_frames": 360,
+      "output_fps": 30.0,
+      "output_images": [
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000090.png",
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000180.png",
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000270.png"
+      ],
+      "output_video_sha256": "6c49428a4fa7cfcd65fe1649177f58679c8adcbc762471a2f5eed8146f73d49d",
+      "output_observations_sha256": "900d8d623687eb2f959cb22c796768eb06a4940231847f5cedfa12f587e3c630",
+      "output_images_sha256": {
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000090.png": "60b03eb5b09efff9754f04735a858b3ae982ac67867e88bdae386b694f3fb8bd",
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000180.png": "741f01d96a187a860dcd5f34b33bc3c1bdcd7c010db5faaf06b477f4fbc58541",
+        "images/04_enter_exit.mp4_859c8d4e92e7f22e_tracked_frame_000270.png": "3d2cc1a6914b9afa593a861b30c13c054c6b2850b1d63de6163fb11d59ce7615"
+      },
+      "output_video": "videos/04_enter_exit.mp4_859c8d4e92e7f22e_tracked.mp4",
+      "output_observations_csv": "tracks/04_enter_exit.mp4_859c8d4e92e7f22e_observations.csv"
+    },
+    {
+      "input": "05_crossing_faces.mp4",
+      "status": "SUCCESS",
+      "source_sha256": "63f6d8aee1fae544517948c71dac56958da9aa762cbf3a7e5a67fc82f0c5b506",
+      "width": 1280,
+      "height": 720,
+      "source_fps": 30.0,
+      "declared_source_frames": 300,
+      "frames_processed": 300,
+      "frames_with_tracks": 300,
+      "frames_without_tracks": 0,
+      "track_observations": 600,
+      "unique_track_ids": 2,
+      "invalid_track_observations": 0,
+      "output_codec": "mp4v",
+      "verified_output_frames": 300,
+      "output_fps": 30.0,
+      "output_images": [
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000075.png",
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000150.png",
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000225.png"
+      ],
+      "output_video_sha256": "dfd62de389a2d1d9a477535a899621e6d067aab9223c5c0da57e195628f0aee2",
+      "output_observations_sha256": "bff193ff06637056d3ef79712a91f497b4a3df3a73b60f8a165ab647d3c66d27",
+      "output_images_sha256": {
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000075.png": "d7b230eabfd45b15160463d741360ae2e9fb9bf7b6daeebec3c4729d0d2a1941",
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000150.png": "d875f24ec84546b2d7e7676f09e127432d186cc18c0a4fbe81a229c794a067a5",
+        "images/05_crossing_faces.mp4_2d88280490770c65_tracked_frame_000225.png": "419b227095578359c5d593be6342c41d4d51e18e15da45652e99614270c808b2"
+      },
+      "output_video": "videos/05_crossing_faces.mp4_2d88280490770c65_tracked.mp4",
+      "output_observations_csv": "tracks/05_crossing_faces.mp4_2d88280490770c65_observations.csv"
+    }
+  ]
+}

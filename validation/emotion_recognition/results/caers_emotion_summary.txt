@@ -1,0 +1,50 @@
+CAER-S Emotion Recognition Validation
+=====================================
+
+Protocol
+--------
+Dataset: CAER-S
+Split: test
+Evaluation subset: annotated target-face subset from test.txt
+Model: enet_b0_8_best_afew
+Engine: onnx
+Target-face crop: annotation bounding box clipped to image bounds
+CAER-S Happy mapped to model Happiness
+CAER-S Sad mapped to model Sadness
+Model Contempt predictions retained and counted as incorrect
+
+Counts
+------
+Annotated samples: 13942
+Successful predictions: 13942
+Failed predictions: 0
+Availability: 1.000000
+Correct predictions: 3730
+
+Primary Metrics
+---------------
+Accuracy: 0.267537
+Macro F1: 0.259980
+Weighted F1: 0.261324
+Contempt predictions: 591
+Contempt prediction rate: 0.042390
+
+Per-Class Metrics
+-----------------
+Anger: support=1994, precision=0.298118, recall=0.246239, f1=0.269706
+Disgust: support=1966, precision=0.321348, recall=0.072737, f1=0.118623
+Fear: support=1954, precision=0.185780, recall=0.165814, f1=0.175230
+Happiness: support=2019, precision=0.628525, recall=0.386330, f1=0.478528
+Neutral: support=2003, precision=0.230044, recall=0.182726, f1=0.203673
+Sadness: support=2043, precision=0.262067, recall=0.581987, f1=0.361398
+Surprise: support=1963, precision=0.203635, recall=0.222618, f1=0.212704
+
+Runtime
+-------
+Elapsed seconds: 128.777
+
+Interpretation
+--------------
+Accuracy uses all annotated samples as the denominator. A failed prediction therefore cannot be counted as correct.
+Per-class recall and F1 retain failed samples as false negatives for their ground-truth classes.
+This validation covers the annotated target-face subset rather than the complete CAER-S test split.

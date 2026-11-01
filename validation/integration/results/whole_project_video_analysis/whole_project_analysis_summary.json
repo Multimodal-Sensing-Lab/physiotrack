@@ -1,0 +1,56 @@
+{
+  "test_type": "whole_project_video_analysis",
+  "videos": [
+    {
+      "test_type": "whole_project_video_analysis",
+      "video": "test_data/whole_project/ravdess_whole_project.mp4",
+      "resolution": {
+        "width": 2560,
+        "height": 1440
+      },
+      "fps": 25.0,
+      "video_frames": 568,
+      "processed_frames": 568,
+      "detected_faces": 568,
+      "frame_records": 568,
+      "window_records": 568,
+      "mouth_motion_available": 568,
+      "mouth_motion_numeric": 568,
+      "mouth_motion_nonzero": 567,
+      "mouth_motion_velocity_consistent": true,
+      "mouth_motion_person_ids": [
+        1
+      ],
+      "frame_count_matches_video": true,
+      "export_counts_match": true,
+      "analysis_status": "PASS",
+      "all_components_enabled": {
+        "tracking": true,
+        "head_pose": true,
+        "landmarks": true,
+        "quality": true,
+        "eyes": true,
+        "blink": true,
+        "gaze": true,
+        "gaze_estimation": true,
+        "mouth": true,
+        "mouth_motion": true,
+        "emotion": true,
+        "regions": true,
+        "temporal": true
+      }
+    }
+  ],
+  "video_count": 1,
+  "passed_videos": 1,
+  "failed_videos": 0,
+  "total_processed_frames": 568,
+  "total_detected_faces": 568,
+  "total_frame_records": 568,
+  "total_window_records": 568,
+  "mouth_motion_available": 568,
+  "mouth_motion_numeric": 568,
+  "mouth_motion_nonzero": 567,
+  "mouth_motion_velocity_consistent": true,
+  "analysis_status": "PASS"
+}

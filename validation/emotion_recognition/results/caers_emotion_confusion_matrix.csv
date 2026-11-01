@@ -1,0 +1,8 @@
+ground_truth,Anger,Contempt,Disgust,Fear,Happiness,Neutral,Sadness,Surprise
+Anger,491,29,94,329,40,159,498,354
+Disgust,231,115,143,265,102,189,691,230
+Fear,195,52,51,324,56,299,729,248
+Happiness,85,197,57,109,780,160,372,259
+Neutral,286,112,35,132,79,366,566,427
+Sadness,136,40,32,215,65,175,1189,191
+Surprise,223,46,33,370,119,243,492,437

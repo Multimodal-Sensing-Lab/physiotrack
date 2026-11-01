@@ -1,0 +1,2 @@
+samples,correct_predictions,availability,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,contempt_predictions,contempt_prediction_rate
+13942,3730,1.0,0.2675369387462344,0.30421677369767375,0.2654929206629852,0.25998019274261097,0.2613243315324005,591,0.04238990101850523
