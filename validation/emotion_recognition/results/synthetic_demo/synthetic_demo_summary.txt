@@ -15,8 +15,8 @@ Invalid face boxes: 0
 Images with no faces: 0
 Max direct confidence difference: 0
 Max direct score difference: 0
-Runtime seconds: 7.733
-Status: COMPLETE_WITH_LIMITATIONS
+Runtime seconds: 7.470
+Status: COMPLETE
 
 This is not a CAER-S evaluation; nominal synthetic expressions are not
 ground truth. No synthetic emotion accuracy, F1 or other accuracy

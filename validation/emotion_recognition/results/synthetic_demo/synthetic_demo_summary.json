@@ -1,7 +1,7 @@
 {
   "artifact_sha256": {
-    "emotion_recognition_observations.csv": "7aba8302307ce170f322f57453aa29165778cc2cf245d496e8bd4fa3aaa3d393",
-    "synthetic_demo_examples.png": "a957f02bde8603386d38ceaa22150132b3d910d51f4b72fb9add3d1c4be3859b"
+    "emotion_recognition_observations.csv": "61bbe77a93ac59b300f4a2ab841d9684265b0e709cbd644ee34b5ecdaab68a69",
+    "synthetic_demo_examples.png": "216b0d61df93b845ad5d8c2401cac585fc4f3ff8020a3c78cd7ca2362ca89b83"
   },
   "component": "FaceEmotion",
   "component_imports": {
@@ -51,48 +51,48 @@
         "nominal": "Neutral"
       },
       "02": {
-        "description": "Visible natural smile",
-        "nominal": "Happiness"
+        "description": "Angry expression",
+        "nominal": "Anger"
       },
       "03": {
         "description": "Sad expression",
         "nominal": "Sadness"
       },
       "04": {
-        "description": "Angry expression",
-        "nominal": "Anger"
-      },
-      "05": {
-        "description": "Surprised expression",
-        "nominal": "Surprise"
-      },
-      "06": {
-        "description": "Fearful expression",
+        "description": "Wide-eyed fearful expression with slightly open mouth",
         "nominal": "Fear"
       },
-      "07": {
-        "description": "Disgust expression",
+      "05": {
+        "description": "Disgust expression with wrinkled nose",
         "nominal": "Disgust"
       },
+      "06": {
+        "description": "Angry expression with partial mouth occlusion by hand",
+        "nominal": "Anger"
+      },
+      "07": {
+        "description": "Visible natural smile",
+        "nominal": "Happiness"
+      },
       "08": {
-        "description": "Asymmetric contempt expression",
+        "description": "Asymmetric contempt-like expression",
         "nominal": "Contempt"
       },
       "09": {
-        "description": "Head yaw approximately 35 degrees with a smile",
-        "nominal": "Happiness"
+        "description": "Wide-eyed surprised expression with open mouth",
+        "nominal": "Surprise"
       },
       "10": {
-        "description": "Partial mouth occlusion with angry expression",
-        "nominal": "Anger"
+        "description": "Head turned with a slight smile",
+        "nominal": "Happiness"
       },
       "11": {
-        "description": "Difficult uneven low light with sad expression",
-        "nominal": "Sadness"
-      },
-      "12": {
         "description": "Three distinct faces: happy, sad, neutral",
         "nominal": "Mixed"
+      },
+      "12": {
+        "description": "Sad expression under uneven low lighting",
+        "nominal": "Sadness"
       }
     },
     "visualization": "source unchanged + bounding box image + readable detached eight-class cards"
@@ -127,10 +127,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/02_0ec4dd27e244_annotated.png",
-      "output_sha256": "e33e60cefab0fff8be052ac12341715f176e617d086fa73ffdc1ee0d2a5d614d",
+      "output_sha256": "82b07e57a8db8f3369217ecb3a97fe8dc1cc9132c0e4121dc4647f80fc80d460",
       "raw_detections": 1,
-      "scenario_description": "Visible natural smile",
-      "scenario_hint": "Happiness",
+      "scenario_description": "Angry expression",
+      "scenario_hint": "Anger",
       "scenario_number": 2,
       "source_sha256": "9c2fd926c2ba80068a47cd9849a8da9ac6f2acaaf4b7daf40c0cc047f8a66db9",
       "status": "SUCCESS"
@@ -163,10 +163,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/04_1a453e66e8e1_annotated.png",
-      "output_sha256": "002e24a0058977e42ea562808b7cad89d843bb41a65cb5b6b7e8ee4d47d1edf8",
+      "output_sha256": "739af7def33ace900b6d1f2a215bef4945188bb2842745c65821fa74510feda4",
       "raw_detections": 1,
-      "scenario_description": "Angry expression",
-      "scenario_hint": "Anger",
+      "scenario_description": "Wide-eyed fearful expression with slightly open mouth",
+      "scenario_hint": "Fear",
       "scenario_number": 4,
       "source_sha256": "756ade47d15f4072226ecf1d1ca410af017ab91ac5755570a74fd8656e131103",
       "status": "SUCCESS"
@@ -181,10 +181,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/05_8930e35b62e0_annotated.png",
-      "output_sha256": "07a95eb76760f2c50494e8b98f1338a50a871f492622fae0c0acce982b5271df",
+      "output_sha256": "958ce719b066f01c81fa645b9492f913cf1f1bfdc24ef5e7e3a39a7702e1b037",
       "raw_detections": 1,
-      "scenario_description": "Surprised expression",
-      "scenario_hint": "Surprise",
+      "scenario_description": "Disgust expression with wrinkled nose",
+      "scenario_hint": "Disgust",
       "scenario_number": 5,
       "source_sha256": "c0e31579f2c660589d37f1de48c5e3f04883044ce8280cbde67a9b227080211f",
       "status": "SUCCESS"
@@ -199,10 +199,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/06_0ba7ca29d9aa_annotated.png",
-      "output_sha256": "981c11e33c5044e26ce5fec2c665824744e75490909d327fdd3e02e159892984",
+      "output_sha256": "ccc424218407943f4834c55ddff790b84e0297a46a021b043cdf26fcc9257395",
       "raw_detections": 1,
-      "scenario_description": "Fearful expression",
-      "scenario_hint": "Fear",
+      "scenario_description": "Angry expression with partial mouth occlusion by hand",
+      "scenario_hint": "Anger",
       "scenario_number": 6,
       "source_sha256": "e0c0a0c751eeaaf8eacc4df8a14db1c733eb2f3d25204d7d1778c4de4c726d75",
       "status": "SUCCESS"
@@ -217,10 +217,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/07_9e02727d0a17_annotated.png",
-      "output_sha256": "eb3471c66bce2f5007c8161c9b6f7efc8cd67ed58cc3c770b55b1811cf54bd30",
+      "output_sha256": "88f42415997ca97147c346be90240d4b78f6fee029d48a84dba6afa6fcf55db0",
       "raw_detections": 1,
-      "scenario_description": "Disgust expression",
-      "scenario_hint": "Disgust",
+      "scenario_description": "Visible natural smile",
+      "scenario_hint": "Happiness",
       "scenario_number": 7,
       "source_sha256": "2c93e7e140e64df42777e9ef6e31574d0aae5985cb73e8c1dc5f1a86f7ed7cf4",
       "status": "SUCCESS"
@@ -237,7 +237,7 @@
       "output_image": "annotated_images/08_6139571ad89c_annotated.png",
       "output_sha256": "83d6f0ab9c2abcf2da29356967c99230de24425418d6dd964afcba78d40fca33",
       "raw_detections": 1,
-      "scenario_description": "Asymmetric contempt expression",
+      "scenario_description": "Asymmetric contempt-like expression",
       "scenario_hint": "Contempt",
       "scenario_number": 8,
       "source_sha256": "92036247a5e63692538fabea625065b34b590b0255da1489d05bdbb608d19406",
@@ -253,10 +253,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/09_e129a903eff2_annotated.png",
-      "output_sha256": "41142e5bfe4ba6cd0f539f52cdf8ab14a8f0c9b0c721da536ba79aa0dcd1f39b",
+      "output_sha256": "ead1af736c57e96bec050164c8cb946e9264c5dd33b215c453de1922bc2bb875",
       "raw_detections": 1,
-      "scenario_description": "Head yaw approximately 35 degrees with a smile",
-      "scenario_hint": "Happiness",
+      "scenario_description": "Wide-eyed surprised expression with open mouth",
+      "scenario_hint": "Surprise",
       "scenario_number": 9,
       "source_sha256": "46745c491870272d1799d5f459ff6195480491693859410211f70de5a7334f54",
       "status": "SUCCESS"
@@ -271,10 +271,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/10_5a57901b94b6_annotated.png",
-      "output_sha256": "596e68020e6c0ec157f94b86915f91a7baaa050cfde772bf69ae4662f887dd7a",
+      "output_sha256": "585290a75922e1e1c277773caa0f1f1c199a4e7641f2e827365cd7da8f7065e0",
       "raw_detections": 1,
-      "scenario_description": "Partial mouth occlusion with angry expression",
-      "scenario_hint": "Anger",
+      "scenario_description": "Head turned with a slight smile",
+      "scenario_hint": "Happiness",
       "scenario_number": 10,
       "source_sha256": "d8b59cc28e06d05e68d63c02ad59b18f27bc7118308aa0d9c0ad7d4ca2396906",
       "status": "SUCCESS"
@@ -289,10 +289,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/11_501f9bdfba64_annotated.png",
-      "output_sha256": "6e688f8a34bc9068cf42e71a8fa554aa445838eedc028454f9b49371c4118f99",
+      "output_sha256": "83d2062620e289c3e38dc07497c6a2c77a2b9aae7d00cdb7b6388db1323dfa6a",
       "raw_detections": 3,
-      "scenario_description": "Difficult uneven low light with sad expression",
-      "scenario_hint": "Sadness",
+      "scenario_description": "Three distinct faces: happy, sad, neutral",
+      "scenario_hint": "Mixed",
       "scenario_number": 11,
       "source_sha256": "19a460faa087737103187e6d4a00bc90f71b686f4d2b8171fbd6d0bfa5b203a2",
       "status": "SUCCESS"
@@ -307,10 +307,10 @@
       "invalid_face_box": 0,
       "no_face": 0,
       "output_image": "annotated_images/12_9abe4c6267a0_annotated.png",
-      "output_sha256": "5b0952b4879fc4be4d9e6077ad2934ae6d07c26cb09b20110d29fe1e74ccb446",
+      "output_sha256": "5a0752e9171f2cdb6ee65a0688421512d01481527c713fd53d365460800d5a29",
       "raw_detections": 1,
-      "scenario_description": "Three distinct faces: happy, sad, neutral",
-      "scenario_hint": "Mixed",
+      "scenario_description": "Sad expression under uneven low lighting",
+      "scenario_hint": "Sadness",
       "scenario_number": 12,
       "source_sha256": "f66c1a3296ddce65a485550e7f0e97a66170e9b4d2270e51aeebe3f495d496bc",
       "status": "SUCCESS"
@@ -320,9 +320,7 @@
   "images_failed": 0,
   "images_processed": 12,
   "interpretation": "Demonstrates the native FaceAnalysis/FaceEmotion output on independent synthetic image cases. Nominal depicted expressions are illustration descriptions, NOT ground-truth labels. No accuracy is calculated or claimed. Every face (including unavailable predictions) is preserved in CSV and in the scene display, and each valid native eight-class score vector is compared with direct FaceEmotion inference on the identical detector crop. The accepted CAER-S benchmark remains separate.",
-  "limitations": [
-    "Scenario 12 supplied three faces but 1 were detected"
-  ],
+  "limitations": [],
   "numerical_consistency": {
     "comparisons": 14,
     "maximum_confidence_absolute_error": 0.0,
@@ -352,14 +350,14 @@
       "src/physiotrack/face/analysis.py": "9daa22fa5831189614a08fe1f46b30b6753fad698ad3949466e4082674094084",
       "src/physiotrack/face/config.py": "285acdb3c19d13a06c36279badf7d05ceeb11f7989ff50b907d9d2a5986f96dc",
       "src/physiotrack/face/emotion.py": "36acd0007d48678a94eb11cbb3f7641d5b26084b9aac8737682c231e65ad7385",
-      "validation/emotion_recognition/emotion_recognition_synthetic_demo.py": "466c2ddc3468793cb17a3b6c57516c886ef9ca0434ef86524dd4ba7bfc2bef00"
+      "validation/emotion_recognition/emotion_recognition_synthetic_demo.py": "91da6ee4487fcce8339affd02f7e11f98d27190dfb12293dc749212e10550a70"
     },
     "ultralytics": "8.4.177"
   },
-  "runtime_seconds": 7.733014999999796,
+  "runtime_seconds": 7.469890699998359,
   "scientific_accuracy_evidence": false,
   "source_directory": "validation/synthetic_media/emotion_recognition_media",
-  "status": "COMPLETE_WITH_LIMITATIONS",
+  "status": "COMPLETE",
   "totals": {
     "displayed_detections": 14,
     "emotion_available": 14,

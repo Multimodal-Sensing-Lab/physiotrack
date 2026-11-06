@@ -62,17 +62,17 @@ CLASSES = (
 )
 SCENARIOS = {
     1: ("Neutral", "Neutral frontal expression"),
-    2: ("Happiness", "Visible natural smile"),
+    2: ("Anger", "Angry expression"),
     3: ("Sadness", "Sad expression"),
-    4: ("Anger", "Angry expression"),
-    5: ("Surprise", "Surprised expression"),
-    6: ("Fear", "Fearful expression"),
-    7: ("Disgust", "Disgust expression"),
-    8: ("Contempt", "Asymmetric contempt expression"),
-    9: ("Happiness", "Head yaw approximately 35 degrees with a smile"),
-    10: ("Anger", "Partial mouth occlusion with angry expression"),
-    11: ("Sadness", "Difficult uneven low light with sad expression"),
-    12: ("Mixed", "Three distinct faces: happy, sad, neutral"),
+    4: ("Fear", "Wide-eyed fearful expression with slightly open mouth"),
+    5: ("Disgust", "Disgust expression with wrinkled nose"),
+    6: ("Anger", "Angry expression with partial mouth occlusion by hand"),
+    7: ("Happiness", "Visible natural smile"),
+    8: ("Contempt", "Asymmetric contempt-like expression"),
+    9: ("Surprise", "Wide-eyed surprised expression with open mouth"),
+    10: ("Happiness", "Head turned with a slight smile"),
+    11: ("Mixed", "Three distinct faces: happy, sad, neutral"),
+    12: ("Sadness", "Sad expression under uneven low lighting"),
 }
 
 CSV_NAME = "emotion_recognition_observations.csv"
@@ -791,9 +791,9 @@ def run() -> None:
             limitations.append(f"No face was detected in {totals['no_face']} synthetic images")
         if totals["emotion_unavailable"] or totals["invalid_face_box"]:
             limitations.append("Some real detected faces had no usable emotion output")
-        multi_faces = records[11]["raw_detections"]
+        multi_faces = records[10]["raw_detections"]
         if multi_faces < 3:
-            limitations.append(f"Scenario 12 supplied three faces but {multi_faces} were detected")
+            limitations.append(f"Scenario 11 supplied three faces but {multi_faces} were detected")
         predicted_counts = dict(sorted(Counter(r["emotion"] for r in direct_rows).items()))
         summary = {
             "project": "physiotrack-v2", "component": "FaceEmotion",

@@ -389,7 +389,6 @@ The benchmark reports:
 The confusion matrix has:
 
 7 ground-truth rows
-x
 8 prediction columns
 
 because Contempt remains a valid fixed-model prediction even though it is not a
@@ -645,18 +644,35 @@ Maximum class-score absolute error:
 0.0
 
 Recorded status:
-COMPLETE_WITH_LIMITATIONS
+COMPLETE
 
-The run recorded three faces in 11.png and one face in each of the other
-eleven images. In the recorded input collection, 11.png contains the
-three-person scene, whereas 12.png depicts a single sad face under low light.
-The stored scenario descriptions for 11.png and 12.png are therefore not
-aligned with those particular image contents. This accounts for the
-recorded scenario-12 face-count limitation; it is not evidence of two missed
-face detections in that single-face image. Other supplied images also differ
-from the nominal scenario descriptions. Scenario hints are not ground truth,
-and they do not determine or overwrite the model predictions.
-All fourteen actual detected faces have emotion outputs.
+The demonstration detects three faces in 11.png and one face in each of
+the other eleven images. All fourteen detected faces have available emotion
+predictions. The scenario descriptions refer to visible synthetic image
+contents; they are nominal illustration descriptions, not independently
+validated ground-truth emotion labels. They are not used to alter model
+predictions or to compute synthetic classification accuracy.
+
+Nominal scenario descriptions (not ground-truth labels):
+
+Image   Nominal       Illustration description
+-------------------------------------------------------------------------------
+01.png  Neutral       Neutral frontal expression
+02.png  Anger         Angry expression
+03.png  Sadness       Sad expression
+04.png  Fear          Wide-eyed fearful expression with slightly open mouth
+05.png  Disgust       Disgust expression with wrinkled nose
+06.png  Anger         Angry expression with partial mouth occlusion by hand
+07.png  Happiness     Visible natural smile
+08.png  Contempt      Asymmetric contempt-like expression
+09.png  Surprise      Wide-eyed surprised expression with open mouth
+10.png  Happiness     Head turned with a slight smile
+11.png  Mixed         Three distinct faces: happy, sad, neutral
+12.png  Sadness       Sad expression under uneven low lighting
+
+The image numbers refer to the unmodified input files in
+validation/synthetic_media/emotion_recognition_media/. The labels in this
+table are descriptive scenario hints, not verified emotion annotations.
 
 Recorded face-level predictions (from emotion_recognition_observations.csv):
 
@@ -689,10 +705,11 @@ Sadness: 3
 Surprise: 0
 
 Interpretation of individual examples:
-- The input 09.png depicts surprise; the fixed model predicted Fear with
-  49.6882% confidence. The Surprise score was close (approximately 49.02%).
-  This output is retained unchanged as a qualitative illustration of model
-  confusion, not relabeled to match the intended expression.
+- The synthetic image 09.png visibly resembles surprise, while the fixed
+  model predicted Fear (49.6882%) and assigned a close score to Surprise
+  (49.0234%). This illustrates a near-tie in the model output distribution;
+  without independently validated reference labels, it is not counted as a
+  verified classification error. Neither score nor prediction is remapped.
 - The three independent detections in 11.png were reported as Neutral,
   Sadness, and Happiness in CSV face-index order.
 - These observations are demonstration outputs only; no numerical accuracy
@@ -721,6 +738,34 @@ generated replacement has passed the relevant validation checks.
 If required dataset files, accepted result dependencies, or other critical
 inputs are unavailable or invalid, the affected script stops before replacing
 its previously valid final outputs.
+
+For the synthetic demonstration, the script verifies staged CSV, JSON, TXT,
+annotated PNG images, and the montage before publishing. It then attempts to
+move the existing results/synthetic_demo/ directory to a temporary backup and
+install the verified replacement directory. The destination directory must be
+available for the move. A publish failure does not constitute an accepted
+update: the old results may still be present despite successful inference.
+
+Windows rerun precautions (especially for results/synthetic_demo/):
+- Before rerunning, close File Explorer windows displaying synthetic_demo/
+  or any of its subfolders, including annotated_images/.
+- Close any annotated PNGs, the montage, CSV, JSON, or TXT outputs opened in
+  image viewers, Excel, editors, preview panes, or other applications.
+- Close or release other processes that may hold handles to these output
+  files/directories. Merely viewing the folder does not always cause a lock,
+  but a locked handle can prevent the directory move on Windows.
+- Rerun with the same project environment after handles have been released.
+- If PermissionError: [WinError 5] Access is denied occurs while moving
+  synthetic_demo/, stop and resolve the lock or permissions before retrying.
+  Closing File Explorer alone may not be sufficient. Do not delete valid
+  outputs or assume the newly computed results were published.
+- Confirm the console reports "Published:" with the expected destination
+  and "Synthetic demo status: COMPLETE"; then inspect the resulting CSV,
+  JSON, TXT, and annotated images in results/synthetic_demo/.
+
+The accepted output directory is
+validation/emotion_recognition/results/synthetic_demo/. Ensure that the
+CSV, JSON, TXT, and annotated images reviewed belong to the same run.
 
 Each script owns only its own outputs.
 
@@ -752,13 +797,14 @@ emotion_recognition_component_test.py
     Owns:
     - results/component_execution/emotion_recognition_component_results.csv
     - results/component_execution/emotion_recognition_component_summary.json
+
+emotion_recognition_synthetic_demo.py
+    Owns:
     - results/synthetic_demo/
 
 No validation script is intended to replace another script's accepted final
-outputs.
-
-The synthetic demonstration owns only results/synthetic_demo/ and does not
-overwrite the scientific benchmark or isolated component outputs.
+outputs. The synthetic demonstration does not overwrite the CAER-S scientific
+benchmark, CAER-S qualitative evidence, or component_execution results.
 
 Isolated PhysioTrack Emotion Recognition Execution
 --------------------------------------------------
@@ -935,9 +981,19 @@ Supply the twelve synthetic PNG images (01.png through 12.png) under:
 
 validation/synthetic_media/emotion_recognition_media/
 
-Run from validation/emotion_recognition/:
+Activate the configured PhysioTrack-v2 Python environment and run from
+validation/emotion_recognition/:
 
 python emotion_recognition_synthetic_demo.py
+
+Before a rerun, follow the Windows file/directory closing precautions in
+"Safe Rerun Design" above. In particular, close open synthetic_demo outputs
+before the script attempts to replace the existing output directory.
+
+Check that the final console lines show the expected Published destination,
+12 images, 14 detected faces, 14 available emotion predictions, 0 missing
+images, and status COMPLETE. Verify the regenerated files under
+results/synthetic_demo/ before treating them as accepted.
 
 The demonstration produces execution and visualization evidence, not a
 scientific accuracy estimate.
@@ -1098,12 +1154,15 @@ Complete Reproduction Procedure
 14. Verify the component-execution CSV and JSON summary.
 
 15. Supply the separate synthetic images under
-    validation/synthetic_media/emotion_recognition_media/ and run:
+    validation/synthetic_media/emotion_recognition_media/. Close any open
+    synthetic_demo output folders/files as described in "Safe Rerun Design",
+    then run:
 
     python emotion_recognition_synthetic_demo.py
 
-16. Review the face-level CSV, annotated images, montage, and synthetic
-    demonstration summary separately from scientific accuracy metrics.
+16. Confirm successful publication with status COMPLETE; review the face-level
+    CSV, annotated images, montage, and synthetic summary separately from
+    scientific accuracy metrics.
 
 17. Confirm result schemas, failure accounting, numerical consistency, dataset
     read-only handling, output ownership, and expected final artifacts before
@@ -1225,8 +1284,8 @@ Final reproducibility artifacts:
 Generated caches, temporary staging directories, smoke-test-only outputs, and
 obsolete diagnostic files are not part of the final validation deliverables.
 
-emotion recognition Validation Status
--------------------------
+Emotion Recognition Validation Status
+-------------------------------------
 Scientific benchmark:
 ACCEPTED
 
@@ -1240,7 +1299,7 @@ Isolated PhysioTrack component execution:
 PASS
 
 Synthetic qualitative demonstration:
-COMPLETE_WITH_LIMITATIONS
+COMPLETE
 
 The package preserves scientific benchmark evidence, deterministic qualitative
 evidence, safe-rerun safeguards, and real isolated component outputs separately
